@@ -131,6 +131,36 @@ export function createApiClient(config: CreateApiClientConfig): AxiosInstance {
   return client
 }
 
+export const TOKEN_STORAGE_KEYS = {
+  accessToken: 'fidely_access_token',
+  refreshToken: 'fidely_refresh_token',
+}
+
+export function getStoredAccessToken(): string | null {
+  if (typeof window === 'undefined') return null
+  return localStorage.getItem(TOKEN_STORAGE_KEYS.accessToken)
+}
+
+export function getStoredRefreshToken(): string | null {
+  if (typeof window === 'undefined') return null
+  return localStorage.getItem(TOKEN_STORAGE_KEYS.refreshToken)
+}
+
+export function setStoredTokens(accessToken?: string | null, refreshToken?: string | null) {
+  if (typeof window === 'undefined') return
+  if (accessToken) localStorage.setItem(TOKEN_STORAGE_KEYS.accessToken, accessToken)
+  else localStorage.removeItem(TOKEN_STORAGE_KEYS.accessToken)
+
+  if (refreshToken) localStorage.setItem(TOKEN_STORAGE_KEYS.refreshToken, refreshToken)
+  else localStorage.removeItem(TOKEN_STORAGE_KEYS.refreshToken)
+}
+
+export function clearStoredTokens() {
+  if (typeof window === 'undefined') return
+  localStorage.removeItem(TOKEN_STORAGE_KEYS.accessToken)
+  localStorage.removeItem(TOKEN_STORAGE_KEYS.refreshToken)
+}
+
 /**
  * Creates an axios instance for cookie-based auth (no tokens in JS):
  * - No Authorization header; browser sends HTTP-only cookies
@@ -142,6 +172,15 @@ export function createCookieAuthApiClient(config: CreateCookieAuthApiClientConfi
     baseURL: baseURL.replace(/\/$/, ''),
     headers: { 'Content-Type': 'application/json' },
     withCredentials: true,
+  })
+
+  // Automatically attach Bearer token if present (ensures full compatibility with Safari ITP)
+  client.interceptors.request.use((req: InternalAxiosRequestConfig) => {
+    const token = getStoredAccessToken()
+    if (token && !req.headers.Authorization) {
+      req.headers.Authorization = `Bearer ${token}`
+    }
+    return req
   })
 
   let isRefreshing = false

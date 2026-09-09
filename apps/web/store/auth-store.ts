@@ -2,7 +2,13 @@ import { create } from 'zustand'
 import { persist, createJSONStorage } from 'zustand/middleware'
 import axios from 'axios'
 import type { Profile } from '@/lib/db-types'
-import { createCookieAuthApiClient, ApiError } from '@/lib/api-client'
+import {
+  createCookieAuthApiClient,
+  ApiError,
+  setStoredTokens,
+  clearStoredTokens,
+  getStoredRefreshToken,
+} from '@/lib/api-client'
 import type { AxiosInstance } from 'axios'
 import {
   AUTH_ROUTES,
@@ -11,27 +17,29 @@ import {
   mapFrontendRoleToBackend,
   type BackendUserRole,
   type LoginPayload,
+  type LoginResponseData,
   type RegisterPayload,
   type RegisterResult,
-  type LoginResponseData,
 } from '@/features/auth/services/auth-service'
 import { USER_ROUTES } from '@/features/users/services/user-service'
+
+export type { Profile }
 
 export interface AuthState {
   profile: Profile | null
   hasHydrated: boolean
   authLoading: boolean
   authError: string | null
+
   setSession: (session: { profile: Profile }) => void
   clearSession: () => void
   setHasHydrated: (value: boolean) => void
-  /** Revalidate profile from server (GET /users/me). Role comes from JWT; keeps UI in sync with token. */
   revalidateSession: () => Promise<void>
   signIn: (payload: LoginPayload) => Promise<void>
   signUp: (payload: RegisterPayload) => Promise<RegisterResult>
   signOut: () => Promise<void>
   requestPasswordReset: (email: string) => Promise<void>
-  resetPassword: (params: { newPassword: string; accessToken: string }) => Promise<void>
+  resetPassword: (payload: { newPassword: string; accessToken: string }) => Promise<void>
   getGoogleOAuthUrl: (redirectTo?: string) => Promise<string>
   handleGoogleCallback: (code: string, state?: string) => Promise<void>
   handleGoogleTokens: (accessToken: string, refreshToken?: string) => Promise<void>
@@ -61,7 +69,11 @@ function getAuthClient(): AxiosInstance {
     useCookies: true,
     refreshUrl: AUTH_ROUTES.refresh,
     onRefresh: async () => {
-      await refreshClient.post(AUTH_ROUTES.refresh, {})
+      const refreshToken = getStoredRefreshToken()
+      const { data } = await refreshClient.post(AUTH_ROUTES.refresh, { refreshToken })
+      if (data?.data?.accessToken) {
+        setStoredTokens(data.data.accessToken, data.data.refreshToken)
+      }
     },
   })
   return authClient
@@ -88,6 +100,7 @@ export const useAuthStore = create<AuthState>()(
           set({ profile, hasHydrated: true })
         },
         clearSession: () => {
+          clearStoredTokens()
           if (typeof document !== 'undefined') {
             document.cookie = 'user_role=; path=/; max-age=0; SameSite=Lax'
           }
@@ -129,6 +142,7 @@ export const useAuthStore = create<AuthState>()(
             const client = getAuthClient()
             const { data } = await client.post<{ data: LoginResponseData }>(AUTH_ROUTES.login, payload)
             const session = data.data
+            setStoredTokens(session.accessToken, session.refreshToken)
             const profile = normalizeProfile(session.user)
             if (typeof document !== 'undefined' && profile?.role) {
               document.cookie = `user_role=${profile.role}; path=/; max-age=2592000; SameSite=Lax`
@@ -258,7 +272,11 @@ export const useAuthStore = create<AuthState>()(
               { code, state },
             )
             const session = data.data
+            setStoredTokens(session.accessToken, session.refreshToken)
             const profile = normalizeProfile(session.user)
+            if (typeof document !== 'undefined' && profile?.role) {
+              document.cookie = `user_role=${profile.role}; path=/; max-age=2592000; SameSite=Lax`
+            }
             set({
               profile,
               hasHydrated: true,
@@ -283,7 +301,11 @@ export const useAuthStore = create<AuthState>()(
               { accessToken, refreshToken },
             )
             const session = data.data
+            setStoredTokens(session.accessToken || accessToken, session.refreshToken || refreshToken)
             const profile = normalizeProfile(session.user)
+            if (typeof document !== 'undefined' && profile?.role) {
+              document.cookie = `user_role=${profile.role}; path=/; max-age=2592000; SameSite=Lax`
+            }
             set({
               profile,
               hasHydrated: true,
