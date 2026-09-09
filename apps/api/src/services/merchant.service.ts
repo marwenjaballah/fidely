@@ -150,11 +150,13 @@ export class MerchantService {
           } else {
             // Search in Supabase users
             const { data: userList } = await serviceClient.auth.admin.listUsers();
-            const matched = userList?.users?.find((u) => u.email === data.email);
-            if (matched) {
-              authUserId = matched.id;
+            const users: any[] = (userList as any)?.users || [];
+            const matched = users.find((u: any) => u.email === data.email);
+            if (matched && matched.id) {
+              const matchedId: string = String(matched.id);
+              authUserId = matchedId;
               if (data.password) {
-                await serviceClient.auth.admin.updateUserById(authUserId, {
+                await serviceClient.auth.admin.updateUserById(matchedId, {
                   password: data.password,
                   user_metadata: { role: 'CASHIER', fullName: data.fullName },
                 });
