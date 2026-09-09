@@ -79,10 +79,20 @@ export const useAuthStore = create<AuthState>()(
         hasHydrated: false,
         authLoading: false,
         authError: null,
-        setSession: ({ profile }) =>
-          set({ profile, hasHydrated: true }),
-        clearSession: () =>
-          set({ profile: null, hasHydrated: true }),
+        setSession: ({ profile }) => {
+          if (typeof document !== 'undefined') {
+            if (profile?.role) {
+              document.cookie = `user_role=${profile.role}; path=/; max-age=2592000; SameSite=Lax`
+            }
+          }
+          set({ profile, hasHydrated: true })
+        },
+        clearSession: () => {
+          if (typeof document !== 'undefined') {
+            document.cookie = 'user_role=; path=/; max-age=0; SameSite=Lax'
+          }
+          set({ profile: null, hasHydrated: true })
+        },
         setHasHydrated: (value: boolean) => set({ hasHydrated: value }),
 
         revalidateSession: async () => {
@@ -90,13 +100,17 @@ export const useAuthStore = create<AuthState>()(
             const client = getAuthClient()
             const { data } = await client.get<{ data: { id: string; email: string; role: BackendUserRole; profile: { fullName?: string | null; phone?: string | null } } }>(USER_ROUTES.me)
             const d = data.data
+            const mappedRole = mapBackendRoleToFrontend(d.role)
+            if (typeof document !== 'undefined' && mappedRole) {
+              document.cookie = `user_role=${mappedRole}; path=/; max-age=2592000; SameSite=Lax`
+            }
             set({
               profile: {
                 id: d.id,
                 email: d.email,
                 full_name: d.profile?.fullName ?? null,
                 phone: d.profile?.phone ?? null,
-                role: mapBackendRoleToFrontend(d.role),
+                role: mappedRole,
                 avatar_url: null,
                 is_verified: true,
                 created_at: new Date().toISOString(),
@@ -116,6 +130,9 @@ export const useAuthStore = create<AuthState>()(
             const { data } = await client.post<{ data: LoginResponseData }>(AUTH_ROUTES.login, payload)
             const session = data.data
             const profile = normalizeProfile(session.user)
+            if (typeof document !== 'undefined' && profile?.role) {
+              document.cookie = `user_role=${profile.role}; path=/; max-age=2592000; SameSite=Lax`
+            }
             set({
               profile,
               hasHydrated: true,
