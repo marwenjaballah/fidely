@@ -45,7 +45,12 @@ router.openapi(createStoreRoute, async (c) => {
   const service = new MerchantService(prisma);
   
   try {
-    const store = await service.createStore(user.id, data);
+    const store = await service.createStore(user.id, data as {
+      name: string
+      slug: string
+      primaryColor?: string
+      pointsPerTnd?: number
+    });
     return c.json(store, 201);
   } catch (error: any) {
     return c.json({ error: error.message }, 400) as any;
@@ -64,7 +69,11 @@ router.openapi(updateStoreRoute, async (c) => {
   const service = new MerchantService(prisma);
   
   try {
-    const store = await service.updateStore(id, user.id, data);
+    const store = await service.updateStore(id, user.id, data as {
+      name?: string
+      primaryColor?: string
+      pointsPerTnd?: number
+    });
     return c.json(store, 200);
   } catch (error: any) {
     return c.json({ error: error.message }, 400) as any;
@@ -119,7 +128,12 @@ router.openapi(createStoreStaffRoute, async (c) => {
   const service = new MerchantService(prisma);
   
   try {
-    const staff = await service.createStoreStaff(id, user.id, data);
+    const staff = await service.createStoreStaff(id, user.id, data as {
+      fullName: string
+      email: string
+      password?: string
+      phone?: string
+    });
     return c.json(staff, 201);
   } catch (error: any) {
     return c.json({ error: error.message }, 400) as any;
@@ -138,7 +152,10 @@ router.openapi(updateStoreStaffRoute, async (c) => {
   const service = new MerchantService(prisma);
   
   try {
-    const staff = await service.updateStoreStaff(id, user.id, staffId, data);
+    const staff = await service.updateStoreStaff(id, user.id, staffId, data as {
+      fullName?: string
+      phone?: string
+    });
     return c.json(staff, 200);
   } catch (error: any) {
     return c.json({ error: error.message }, 400) as any;
