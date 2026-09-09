@@ -135,7 +135,13 @@ export function Navbar() {
                             </p>
                           </div>
                         </DropdownMenuLabel>
-                        <DropdownMenuSeparator />
+                        {profile?.role === 'SUPER_ADMIN' && (
+                          <DropdownMenuItem asChild>
+                            <Link href="/admin/overview" className="font-semibold text-primary">
+                              Super Admin Panel
+                            </Link>
+                          </DropdownMenuItem>
+                        )}
                         {profile?.role === 'CASHIER' && (
                           <DropdownMenuItem asChild>
                             <Link href="/cashier">Cashier Terminal</Link>
@@ -246,6 +252,13 @@ export function Navbar() {
                         </div>
                       </DropdownMenuLabel>
                       <DropdownMenuSeparator />
+                      {profile?.role === 'SUPER_ADMIN' && (
+                        <DropdownMenuItem asChild>
+                          <Link href="/admin/overview" onClick={closeMobile} className="font-semibold text-primary">
+                            Super Admin Panel
+                          </Link>
+                        </DropdownMenuItem>
+                      )}
                       {profile?.role === 'CASHIER' && (
                         <DropdownMenuItem asChild>
                           <Link href="/cashier" onClick={closeMobile}>

@@ -79,7 +79,9 @@ export default function LoginPage() {
     try {
       await signIn({ email, password })
       const role = useAuthStore.getState().profile?.role
-      if (role === 'CASHIER') {
+      if (role === 'SUPER_ADMIN') {
+        router.push("/admin/overview")
+      } else if (role === 'CASHIER') {
         router.push("/cashier")
       } else if (role === 'CUSTOMER') {
         router.push("/customer/overview")

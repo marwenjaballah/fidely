@@ -54,6 +54,7 @@ const PROTECTED_PATTERNS = [
   '/api/v1/authentication/reset-password',
   '/api/v1/merchant/*',
   '/api/v1/customer/*',
+  '/api/v1/admin/*',
 ] as const
 
 export const authorization: MiddlewareHandler<Env> = async (c, next) => {

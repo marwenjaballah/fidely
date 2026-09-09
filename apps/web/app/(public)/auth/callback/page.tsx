@@ -73,7 +73,9 @@ function CallbackContent() {
 
         const timeout = setTimeout(() => {
           const userRole = useAuthStore.getState().profile?.role
-          if (userRole === 'CASHIER') {
+          if (userRole === 'SUPER_ADMIN') {
+            handlersRef.current.router.push('/admin/overview')
+          } else if (userRole === 'CASHIER') {
             handlersRef.current.router.push('/cashier')
           } else if (userRole === 'CUSTOMER') {
             handlersRef.current.router.push('/customer/overview')
