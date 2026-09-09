@@ -66,17 +66,7 @@ export function HomePageContent() {
     message: "",
   })
 
-  useEffect(() => {
-    if (hasHydrated && isAuthenticated) {
-      if (profile?.role === "CASHIER") {
-        router.replace("/cashier")
-      } else if (profile?.role === "CUSTOMER") {
-        router.replace("/customer/overview")
-      } else if (profile?.role === "MERCHANT" || profile?.role === "SUPER_ADMIN") {
-        router.replace("/merchant/overview")
-      }
-    }
-  }, [hasHydrated, isAuthenticated, profile?.role, router])
+
 
   useEffect(() => {
     let cancelled = false
