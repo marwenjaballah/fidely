@@ -108,7 +108,7 @@ handler.openapi(loginSchema, async (c) => {
 
   try {
     const result = await service.signIn(payload);
-    setAuthCookies(c, result.accessToken, result.refreshToken, result.expiresIn);
+    setAuthCookies(c, result.accessToken, result.refreshToken, result.expiresIn, result.user.role);
     return c.json({ data: result }, 200);
   } catch (error) {
     logger.warn({ error, scope: "auth.login" }, "Login failed");
@@ -200,7 +200,7 @@ handler.openapi(refreshSchema, async (c) => {
 
   try {
     const result = await service.refreshSession({ refreshToken });
-    setAuthCookies(c, result.accessToken, result.refreshToken, result.expiresIn);
+    setAuthCookies(c, result.accessToken, result.refreshToken, result.expiresIn, result.user.role);
     return c.json({ data: result }, 200);
   } catch (error) {
     logger.warn({ error, scope: "auth.refresh" }, "Token refresh failed");
@@ -255,7 +255,7 @@ handler.openapi(googleOAuthCallbackSchema, async (c) => {
 
   try {
     const result = await service.handleGoogleOAuthCallback(payload);
-    setAuthCookies(c, result.accessToken, result.refreshToken, result.expiresIn);
+    setAuthCookies(c, result.accessToken, result.refreshToken, result.expiresIn, result.user.role);
     return c.json({ data: result }, 200);
   } catch (error) {
     logger.warn({ error, scope: "auth.google.callback" }, "Google OAuth callback failed");
@@ -281,7 +281,7 @@ handler.openapi(googleOAuthTokensSchema, async (c) => {
 
   try {
     const result = await service.handleGoogleOAuthTokens(payload);
-    setAuthCookies(c, result.accessToken, result.refreshToken, result.expiresIn);
+    setAuthCookies(c, result.accessToken, result.refreshToken, result.expiresIn, result.user.role);
     return c.json({ data: result }, 200);
   } catch (error) {
     logger.warn({ error, scope: "auth.google.tokens" }, "Google OAuth token validation failed");

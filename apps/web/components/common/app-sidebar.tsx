@@ -39,6 +39,8 @@ import { LogOut, ChevronsUpDown } from "lucide-react"
 import { useRouter } from "next/navigation"
 import { navItems, userNavItems, type NavItem } from "@/config/nav-config"
 
+import { StoreSwitcher } from "@/components/common/store-switcher"
+
 /**
  * Enhanced AppSidebar Component with sidebar-8 pattern
  *
@@ -68,45 +70,13 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
 
   return (
     <Sidebar collapsible="icon" side="left" variant="floating" {...props}>
-      {/* Sidebar Header with Branding - Enhanced */}
+      {/* Sidebar Header with Store/Coffee Switcher */}
       <SidebarHeader
-        className={`border-b border-sidebar-border/50 bg-sidebar-accent/30 px-0 ${
-          sidebarState === "collapsed" ? "flex justify-center" : ""
+        className={`border-b border-sidebar-border/50 bg-sidebar-accent/30 px-2 py-2 ${
+          sidebarState === "collapsed" ? "flex justify-center px-0" : ""
         }`}
       >
-        <SidebarMenu>
-          <SidebarMenuItem>
-            <SidebarMenuButton
-              size="lg"
-              asChild
-              className={`data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground hover:bg-sidebar-accent/50 transition-colors duration-200 ${
-                sidebarState === "collapsed" ? "justify-center px-2" : "px-4"
-              }`}
-            >
-              <Link
-                href="/"
-                className={`flex items-center gap-3 ${sidebarState === "collapsed" ? "justify-center w-full" : ""}`}
-                title={sidebarState === "collapsed" ? strings.app_name : undefined}
-              >
-                <div
-                  className={`flex shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary ${
-                    sidebarState === "collapsed" ? "h-10 w-10" : "h-10 w-10"
-                  }`}
-                >
-                  <LayoutGrid className="h-5 w-5" />
-                </div>
-                {sidebarState !== "collapsed" && (
-                  <div className="grid flex-1 min-w-0 text-left text-sm leading-tight">
-                    <span className="truncate font-semibold text-sidebar-foreground">{strings.app_name}</span>
-                    <span className="truncate text-xs text-sidebar-foreground/60">
-                      {strings.dashboard_overview}
-                    </span>
-                  </div>
-                )}
-              </Link>
-            </SidebarMenuButton>
-          </SidebarMenuItem>
-        </SidebarMenu>
+        <StoreSwitcher variant="sidebar" />
       </SidebarHeader>
 
       {/* Main Navigation Content - Enhanced */}

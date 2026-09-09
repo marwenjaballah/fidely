@@ -20,11 +20,11 @@
 - [x] **Step 5: Customer Portal UI**: Build the digital loyalty card view, rewards listing, and points history UI.
 
 ## Phase 3: Cashier Terminal & Real-Time Scanning
-- [ ] **Step 1: Cashier Routing**: Setup the `/cashier` protected routes.
-- [ ] **Step 2: QR Scanner Integration**: Implement `html5-qrcode` component optimized for fast mobile/tablet scanning.
-- [ ] **Step 3: Point Issuance API**: Build the Hono API endpoint (`/api/transactions/issue`) using secure Drizzle transactions to calculate points based on TND spend and update balances.
-- [ ] **Step 4: Transaction Feedback UI**: Implement immediate audio/visual feedback (success/error states) for the cashier to optimize checkout speed.
-- [ ] **Step 5: Reward Redemption**: Build the flow for scanning customer passes to validate and deduct points for rewards.
+- [x] **Step 1: Cashier Routing**: Setup the `/cashier` protected routes.
+- [x] **Step 2: QR Scanner Integration**: Implement `html5-qrcode` component optimized for fast mobile/tablet scanning.
+- [x] **Step 3: Point Issuance API**: Build the Hono API endpoint (`/api/transactions/issue`) using secure Drizzle/Prisma transactions to calculate points based on TND spend and update balances.
+- [x] **Step 4: Transaction Feedback UI**: Implement immediate audio/visual feedback (success/error states) for the cashier to optimize checkout speed.
+- [x] **Step 5: Reward Redemption**: Build the flow for scanning customer passes to validate and deduct points for rewards.
 
 ## Phase 4: Merchant Dashboard & CRM
 - [ ] **Step 1: Dashboard UI Framework**: Setup the Merchant admin sidebar and overview layout using the boilerplate's dashboard components.

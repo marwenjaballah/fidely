@@ -34,7 +34,15 @@ export default function proxy(request: NextRequest) {
     }
   }
 
-  // 4. Customer PWA - /store/[slug] is generally public for viewing, but actions require CUSTOMER
+  // 4. Customer Routes
+  if (url.pathname.startsWith('/customer')) {
+    if (role !== 'CUSTOMER' && role !== 'SUPER_ADMIN') {
+      url.pathname = '/auth/login';
+      return NextResponse.redirect(url);
+    }
+  }
+
+  // 5. Customer PWA - /store/[slug] is generally public for viewing, but actions require CUSTOMER
   // (We don't strictly block viewing the store page, but you can configure this as needed)
 
   return NextResponse.next();

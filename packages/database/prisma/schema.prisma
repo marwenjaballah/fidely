@@ -23,8 +23,9 @@ model User {
   updatedAt     DateTime @updatedAt
 
   // Relationships
-  stores      Store[]              @relation("StoreOwner")
-  memberships CustomerMembership[]
+  stores        Store[]              @relation("StoreOwner")
+  cashierStores Store[]              @relation("StoreCashiers")
+  memberships   CustomerMembership[]
 
   @@index([email])
   @@map("users")
@@ -50,6 +51,7 @@ model Store {
 
   // Relationships
   owner        User                 @relation("StoreOwner", fields: [ownerId], references: [id])
+  cashiers     User[]               @relation("StoreCashiers")
   memberships  CustomerMembership[]
   rewards      Reward[]
   transactions Transaction[]

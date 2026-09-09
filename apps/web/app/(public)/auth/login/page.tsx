@@ -17,6 +17,8 @@ import { Separator } from "@/components/ui/separator"
 import { Navbar } from "@/components/common/navbar"
 import { Footer } from "@/components/common/footer"
 
+import { useAuthStore } from "@/store/auth-store"
+
 export default function LoginPage() {
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
@@ -76,7 +78,14 @@ export default function LoginPage() {
 
     try {
       await signIn({ email, password })
-      router.push("/overview")
+      const role = useAuthStore.getState().profile?.role
+      if (role === 'CASHIER') {
+        router.push("/cashier")
+      } else if (role === 'CUSTOMER') {
+        router.push("/customer/overview")
+      } else {
+        router.push("/merchant/overview")
+      }
     } catch (error: unknown) {
       if (error instanceof ApiError) {
         setError(error.message)

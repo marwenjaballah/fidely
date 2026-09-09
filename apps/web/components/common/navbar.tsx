@@ -2,7 +2,7 @@
 
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
-import { Menu, LayoutGrid, BookOpen } from "lucide-react"
+import { Menu, Coffee, BookOpen } from "lucide-react"
 import { useState, useEffect } from "react"
 import { useAuth } from "@/features/auth/hooks/use-auth"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
@@ -48,10 +48,9 @@ export function Navbar() {
   const closeMobile = () => setMobileMenuOpen(false)
 
   const landingSections = [
-    { id: "intro" as const, label: strings.nav_intro },
     { id: "features" as const, label: strings.nav_features },
     { id: "use-cases" as const, label: strings.nav_use_cases },
-    { id: "contact" as const, label: strings.nav_contact },
+    { id: "reviews" as const, label: strings.footer_reviews },
   ]
 
   return (
@@ -65,9 +64,9 @@ export function Navbar() {
               aria-label={strings.app_name}
             >
               <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary/15 text-primary ring-1 ring-primary/20 transition-colors group-hover:bg-primary/20">
-                <LayoutGrid className="h-5 w-5" />
+                <Coffee className="h-5 w-5" />
               </span>
-              <span className="hidden font-semibold tracking-tight text-foreground sm:inline truncate max-w-[10rem] md:max-w-none">
+              <span className="hidden font-bold tracking-tight text-foreground sm:inline truncate max-w-[10rem] md:max-w-none text-lg">
                 {strings.app_name}
               </span>
             </Link>
@@ -137,12 +136,26 @@ export function Navbar() {
                           </div>
                         </DropdownMenuLabel>
                         <DropdownMenuSeparator />
-                        <DropdownMenuItem asChild>
-                          <Link href="/overview">{strings.nav_dashboard}</Link>
-                        </DropdownMenuItem>
-                        <DropdownMenuItem asChild>
-                          <Link href="/settings/account">{strings.nav_account_settings}</Link>
-                        </DropdownMenuItem>
+                        {profile?.role === 'CASHIER' && (
+                          <DropdownMenuItem asChild>
+                            <Link href="/cashier">Cashier Terminal</Link>
+                          </DropdownMenuItem>
+                        )}
+                        {profile?.role === 'CUSTOMER' && (
+                          <DropdownMenuItem asChild>
+                            <Link href="/customer/overview">My Loyalty Cards</Link>
+                          </DropdownMenuItem>
+                        )}
+                        {(profile?.role === 'MERCHANT' || profile?.role === 'SUPER_ADMIN') && (
+                          <>
+                            <DropdownMenuItem asChild>
+                              <Link href="/merchant/overview">{strings.nav_dashboard}</Link>
+                            </DropdownMenuItem>
+                            <DropdownMenuItem asChild>
+                              <Link href="/merchant/settings/account">{strings.nav_account_settings}</Link>
+                            </DropdownMenuItem>
+                          </>
+                        )}
                         <DropdownMenuSeparator />
                         <DropdownMenuItem onClick={handleLogout}>{strings.logout}</DropdownMenuItem>
                       </DropdownMenuContent>
@@ -203,11 +216,6 @@ export function Navbar() {
               <div className="flex flex-col gap-2 pt-4">
                 {!isAuthenticated ? (
                   <>
-                    {/* <Button variant="outline" asChild className="w-full bg-transparent">
-                      <Link href="/auth/login" onClick={closeMobile}>
-                        {strings.nav_login}
-                      </Link>
-                    </Button> */}
                     <Button asChild className="w-full">
                       <Link href="/auth/sign-up" onClick={closeMobile}>
                         {strings.nav_get_started}
@@ -238,16 +246,34 @@ export function Navbar() {
                         </div>
                       </DropdownMenuLabel>
                       <DropdownMenuSeparator />
-                      <DropdownMenuItem asChild>
-                        <Link href="/overview" onClick={closeMobile}>
-                          {strings.nav_dashboard}
-                        </Link>
-                      </DropdownMenuItem>
-                      <DropdownMenuItem asChild>
-                        <Link href="/settings/account" onClick={closeMobile}>
-                          {strings.nav_account_settings}
-                        </Link>
-                      </DropdownMenuItem>
+                      {profile?.role === 'CASHIER' && (
+                        <DropdownMenuItem asChild>
+                          <Link href="/cashier" onClick={closeMobile}>
+                            Cashier Terminal
+                          </Link>
+                        </DropdownMenuItem>
+                      )}
+                      {profile?.role === 'CUSTOMER' && (
+                        <DropdownMenuItem asChild>
+                          <Link href="/customer/overview" onClick={closeMobile}>
+                            My Loyalty Cards
+                          </Link>
+                        </DropdownMenuItem>
+                      )}
+                      {(profile?.role === 'MERCHANT' || profile?.role === 'SUPER_ADMIN') && (
+                        <>
+                          <DropdownMenuItem asChild>
+                            <Link href="/merchant/overview" onClick={closeMobile}>
+                              {strings.nav_dashboard}
+                            </Link>
+                          </DropdownMenuItem>
+                          <DropdownMenuItem asChild>
+                            <Link href="/merchant/settings/account" onClick={closeMobile}>
+                              {strings.nav_account_settings}
+                            </Link>
+                          </DropdownMenuItem>
+                        </>
+                      )}
                       <DropdownMenuSeparator />
                       <DropdownMenuItem onClick={handleLogout}>{strings.logout}</DropdownMenuItem>
                     </DropdownMenuContent>

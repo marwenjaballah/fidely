@@ -52,6 +52,8 @@ import { AUTH_COOKIE_NAMES } from './cookie.js'
 const PROTECTED_PATTERNS = [
   '/api/v1/users/*',
   '/api/v1/authentication/reset-password',
+  '/api/v1/merchant/*',
+  '/api/v1/customer/*',
 ] as const
 
 export const authorization: MiddlewareHandler<Env> = async (c, next) => {

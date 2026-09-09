@@ -257,6 +257,9 @@ importers:
       eslint-config-next:
         specifier: ^16.0.3
         version: 16.2.3(@typescript-eslint/parser@8.58.2(eslint@9.39.4(jiti@2.6.1))(typescript@5.9.3))(eslint@9.39.4(jiti@2.6.1))(typescript@5.9.3)
+      html5-qrcode:
+        specifier: ^2.3.8
+        version: 2.3.8
       immer:
         specifier: latest
         version: 11.1.4
@@ -4128,6 +4131,9 @@ packages:
   hono@4.12.12:
     resolution: {integrity: sha512-p1JfQMKaceuCbpJKAPKVqyqviZdS0eUxH9v82oWo1kb9xjQ5wA6iP3FNVAPDFlz5/p7d45lO+BpSk1tuSZMF4Q==}
     engines: {node: '>=16.9.0'}
+
+  html5-qrcode@2.3.8:
+    resolution: {integrity: sha512-jsr4vafJhwoLVEDW3n1KvPnCCXWaQfRng0/EEYk1vNcQGcG/htAdhJX0be8YyqMoSz7+hZvOZSTAepsabiuhiQ==}
 
   husky@9.1.7:
     resolution: {integrity: sha512-5gs5ytaNjBrh5Ow3zrvdUUY+0VxIuWVL4i9irt6friV+BqdCfmV11CQTWMiBYWHbXhco+J1kHfTOUkePhCDvMA==}
@@ -10022,6 +10028,8 @@ snapshots:
 
   hono@4.12.12: {}
 
+  html5-qrcode@2.3.8: {}
+
   husky@9.1.7: {}
 
   i18next-fs-backend@2.6.3: {}
@@ -11682,7 +11690,7 @@ snapshots:
       '@webassemblyjs/wasm-edit': 1.14.1
       '@webassemblyjs/wasm-parser': 1.14.1
       acorn: 8.16.0
-      browserslist: 4.28.2
+      browserslist: 4.28.9
       chrome-trace-event: 1.0.4
       enhanced-resolve: 5.24.5
       es-module-lexer: 2.3.2
@@ -11692,7 +11700,7 @@ snapshots:
       minimizer-webpack-plugin: 5.10.1(postcss@8.5.9)(webpack@5.110.3(postcss@8.5.9))
       neo-async: 2.6.2
       schema-utils: 4.4.0
-      tapable: 2.3.2
+      tapable: 2.3.3
       watchpack: 2.5.2
       webpack-sources: 3.5.1
     transitivePeerDependencies:

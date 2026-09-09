@@ -24,6 +24,8 @@ import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { Settings } from 'lucide-react'
 import { ThemeToggleButton } from '@/components/common/theme-toggle-button'
+import { StoreSwitcher } from '@/components/common/store-switcher'
+import { useMerchantStore } from '@/store/merchant-store'
 
 /**
  * Dashboard Layout
@@ -41,9 +43,16 @@ export default function DashboardLayout({
     children: React.ReactNode
 }) {
     const { isAuthenticated, hasHydrated } = useAuth()
+    const { fetchStores } = useMerchantStore()
     const router = useRouter()
     const pathname = usePathname()
     const [isMounted, setIsMounted] = useState(false)
+
+    useEffect(() => {
+        if (isAuthenticated) {
+            fetchStores()
+        }
+    }, [isAuthenticated, fetchStores])
 
     const getNavTitle = useCallback((title: string): string => {
         const translations: Record<string, string> = {
@@ -248,9 +257,10 @@ export default function DashboardLayout({
                             </Breadcrumb>
                         </div>
                         <div className="ml-auto flex items-center gap-2">
+                            <StoreSwitcher variant="header" />
                             <ThemeToggleButton />
                             <Button variant="outline" size="icon" asChild aria-label={strings.nav_account_settings}>
-                                <Link href="/settings/account">
+                                <Link href="/merchant/settings/account">
                                     <Settings className="h-4 w-4" />
                                 </Link>
                             </Button>

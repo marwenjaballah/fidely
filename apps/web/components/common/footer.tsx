@@ -1,11 +1,9 @@
 "use client"
 
 import Link from "next/link"
-import { LayoutGrid, Github, ExternalLink } from "lucide-react"
+import { Coffee } from "lucide-react"
 import { strings } from "@/lib/strings"
 import { SectionNavLink } from "@/components/common/section-nav-link"
-
-const GITHUB_REPO = "https://github.com/Khalil-Bchir/saas-boilerplate-next-hono"
 
 const footerLinkClass =
   "text-sm text-muted-foreground transition-colors hover:text-foreground"
@@ -14,11 +12,9 @@ export function Footer() {
   const year = new Date().getFullYear()
 
   const sections = [
-    { id: "intro" as const, label: strings.nav_intro },
     { id: "features" as const, label: strings.nav_features },
     { id: "use-cases" as const, label: strings.nav_use_cases },
     { id: "reviews" as const, label: strings.footer_reviews },
-    { id: "contact" as const, label: strings.nav_contact },
   ]
 
   return (
@@ -28,26 +24,16 @@ export function Footer() {
           <div className="lg:col-span-4 space-y-5">
             <Link
               href="/"
-              className="inline-flex items-center gap-2.5 rounded-lg font-semibold text-foreground outline-none ring-offset-background focus-visible:ring-2 focus-visible:ring-ring"
+              className="inline-flex items-center gap-2.5 rounded-lg font-bold text-lg text-foreground outline-none ring-offset-background focus-visible:ring-2 focus-visible:ring-ring"
             >
               <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/15 text-primary ring-1 ring-primary/20">
-                <LayoutGrid className="h-5 w-5" />
+                <Coffee className="h-5 w-5" />
               </span>
               {strings.app_name}
             </Link>
             <p className="max-w-sm text-sm leading-relaxed text-muted-foreground">
               {strings.footer_tagline}
             </p>
-            <a
-              href={GITHUB_REPO}
-              target="_blank"
-              rel="noreferrer"
-              className="inline-flex items-center gap-2 text-sm font-medium text-primary hover:underline"
-            >
-              <Github className="h-4 w-4" />
-              {strings.footer_github}
-              <ExternalLink className="h-3 w-3 opacity-60" />
-            </a>
           </div>
 
           <div className="grid gap-10 sm:grid-cols-2 lg:col-span-5 lg:grid-cols-2">

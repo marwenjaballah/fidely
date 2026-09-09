@@ -1,4 +1,4 @@
-import { LayoutDashboard, Settings, type LucideIcon } from 'lucide-react'
+import { LayoutDashboard, Settings, Users, LineChart, Store, type LucideIcon } from 'lucide-react'
 
 export interface NavItem {
   title: string
@@ -17,20 +17,35 @@ export interface NavSubItem {
 export const navItems: NavItem[] = [
   {
     title: 'Overview',
-    href: '/overview',
+    href: '/merchant/overview',
     icon: LayoutDashboard,
+  },
+  {
+    title: 'CRM',
+    href: '/merchant/crm',
+    icon: Users,
+  },
+  {
+    title: 'Staff',
+    href: '/merchant/staff',
+    icon: Store,
+  },
+  {
+    title: 'Analytics',
+    href: '/merchant/analytics',
+    icon: LineChart,
   },
 ]
 
 export const userNavItems: NavItem[] = [
   {
     title: 'Settings',
-    href: '/settings',
+    href: '/merchant/settings',
     icon: Settings,
     items: [
       {
         title: 'Account',
-        href: '/settings/account',
+        href: '/merchant/settings/account',
       },
     ],
   },

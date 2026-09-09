@@ -4,6 +4,7 @@ import { useEffect, useState, Suspense, useRef } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
 import { Loader2, CheckCircle, XCircle } from "lucide-react"
 import { useAuth } from "@/features/auth/hooks/use-auth"
+import { useAuthStore } from "@/store/auth-store"
 import { ApiError } from "@/features/auth/services/auth-service"
 import { strings } from "@/lib/strings"
 
@@ -71,7 +72,14 @@ function CallbackContent() {
         setState("success")
 
         const timeout = setTimeout(() => {
-          handlersRef.current.router.push("/overview")
+          const userRole = useAuthStore.getState().profile?.role
+          if (userRole === 'CASHIER') {
+            handlersRef.current.router.push('/cashier')
+          } else if (userRole === 'CUSTOMER') {
+            handlersRef.current.router.push('/customer/overview')
+          } else {
+            handlersRef.current.router.push('/merchant/overview')
+          }
         }, 1500)
 
         return () => clearTimeout(timeout)

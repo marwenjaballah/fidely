@@ -20,12 +20,15 @@ if (fs.existsSync(envFile)) {
 const schemaPath = path.resolve(__dirname, "prisma", "schema.prisma");
 const migrationsPath = path.resolve(__dirname, "prisma", "migrations");
 
+const databaseUrl = process.env.DATABASE_URL || "postgresql://postgres:postgres@localhost:5432/postgres?pgbouncer=true";
+const directUrl = process.env.DIRECT_URL || "postgresql://postgres:postgres@localhost:5432/postgres";
+
 export default defineConfig({
   schema: schemaPath,
   migrations: { path: migrationsPath },
   engine: "classic",
   datasource: {
-    url: env("DATABASE_URL"),
-    directUrl: env("DIRECT_URL"),
+    url: databaseUrl,
+    directUrl: directUrl,
   },
 });

@@ -27,22 +27,13 @@ import {
 import { ChevronRight, ChevronLeft, Loader2, LayoutGrid } from "lucide-react"
 import { Separator } from "@/components/ui/separator"
 
-const DEFAULT_SIGNUP_ROLE: UserRole = (() => {
-  const v = (process.env.NEXT_PUBLIC_DEFAULT_SIGNUP_ROLE ?? "CUSTOMER").toUpperCase()
-  return v === "SUPER_ADMIN" || v === "MERCHANT" || v === "CASHIER" || v === "CUSTOMER" ? (v as UserRole) : "CUSTOMER"
-})()
+const DEFAULT_SIGNUP_ROLE: UserRole = "MERCHANT"
 
 interface FieldErrors {
   email: string | null
   password: string | null
   confirmPassword: string | null
   fullName: string | null
-  phone: string | null
-  streetAddress: string | null
-  city: string | null
-  state: string | null
-  postalCode: string | null
-  country: string | null
 }
 
 function SignUpForm() {
@@ -52,12 +43,6 @@ function SignUpForm() {
   const [password, setPassword] = useState("")
   const [repeatPassword, setRepeatPassword] = useState("")
   const [fullName, setFullName] = useState("")
-  const [phone, setPhone] = useState("")
-  const [streetAddress, setStreetAddress] = useState("")
-  const [city, setCity] = useState("")
-  const [state, setState] = useState("")
-  const [postalCode, setPostalCode] = useState("")
-  const [country, setCountry] = useState("")
   const [role, setRole] = useState<UserRole>(() => DEFAULT_SIGNUP_ROLE)
   const [error, setError] = useState<string | null>(null)
   const [isLoading, setIsLoading] = useState(false)
@@ -66,24 +51,12 @@ function SignUpForm() {
     password: false,
     confirmPassword: false,
     fullName: false,
-    phone: false,
-    streetAddress: false,
-    city: false,
-    state: false,
-    postalCode: false,
-    country: false,
   })
   const [fieldErrors, setFieldErrors] = useState<FieldErrors>({
     email: null,
     password: null,
     confirmPassword: null,
     fullName: null,
-    phone: null,
-    streetAddress: null,
-    city: null,
-    state: null,
-    postalCode: null,
-    country: null,
   })
   const router = useRouter()
   const { signUp, signInWithGoogle } = useAuth()
@@ -132,74 +105,22 @@ function SignUpForm() {
     }
   }
 
-  const handlePhoneChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.value
-    setPhone(value)
-    if (touched.phone) {
-      updateFieldError("phone", validatePhone(value))
-    }
-  }
 
-  const handleStreetAddressChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.value
-    setStreetAddress(value)
-    if (touched.streetAddress) {
-      updateFieldError("streetAddress", validateStreetAddress(value))
-    }
-  }
-
-  const handleCityChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.value
-    setCity(value)
-    if (touched.city) {
-      updateFieldError("city", validateCity(value))
-    }
-  }
-
-  const handleStateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.value
-    setState(value)
-    if (touched.state) {
-      updateFieldError("state", validateState(value))
-    }
-  }
-
-  const handlePostalCodeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.value
-    setPostalCode(value)
-    if (touched.postalCode) {
-      updateFieldError("postalCode", validatePostalCode(value))
-    }
-  }
-
-  const handleCountryChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.value
-    setCountry(value)
-    if (touched.country) {
-      updateFieldError("country", validateCountry(value))
-    }
-  }
 
   const validateStep1 = () => {
     const errors: Partial<FieldErrors> = {
       fullName: validateFullName(fullName),
       email: validateEmail(email),
-      phone: validatePhone(phone),
     }
 
     setFieldErrors((prev) => ({ ...prev, ...errors }))
-    setTouched((prev) => ({ ...prev, fullName: true, email: true, phone: true }))
+    setTouched((prev) => ({ ...prev, fullName: true, email: true }))
 
-    return !errors.fullName && !errors.email && !errors.phone && fullName && email
+    return !errors.fullName && !errors.email && !!fullName && !!email
   }
 
   const validateStep2 = () => {
     const errors: Partial<FieldErrors> = {
-      streetAddress: validateStreetAddress(streetAddress),
-      city: validateCity(city),
-      state: validateState(state),
-      postalCode: validatePostalCode(postalCode),
-      country: validateCountry(country),
       password: validatePassword(password),
       confirmPassword: validatePasswordConfirmation(password, repeatPassword),
     }
@@ -207,26 +128,11 @@ function SignUpForm() {
     setFieldErrors((prev) => ({ ...prev, ...errors }))
     setTouched((prev) => ({
       ...prev,
-      streetAddress: true,
-      city: true,
-      state: true,
-      postalCode: true,
-      country: true,
       password: true,
       confirmPassword: true,
     }))
 
-    return (
-      !errors.streetAddress &&
-      !errors.city &&
-      !errors.state &&
-      !errors.postalCode &&
-      !errors.country &&
-      !errors.password &&
-      !errors.confirmPassword &&
-      password &&
-      repeatPassword
-    )
+    return !errors.password && !errors.confirmPassword && !!password && !!repeatPassword
   }
 
   const handleNext = () => {
@@ -254,12 +160,6 @@ function SignUpForm() {
         email,
         password,
         fullName,
-        phone,
-        streetAddress,
-        city,
-        state,
-        postalCode,
-        country,
         role,
       })
       router.push("/auth/sign-up-success")
@@ -316,9 +216,41 @@ function SignUpForm() {
                 }`}>
                   2
                 </div>
-                <span className="text-sm font-medium hidden sm:inline">Address & Password</span>
+                <span className="text-sm font-medium hidden sm:inline">
+                  Password
+                </span>
               </div>
             </div>
+
+            {/* Role Selector */}
+            {step === 1 && (
+              <div className="flex justify-center mb-6">
+                <div className="inline-flex bg-muted p-1 rounded-lg">
+                  <button
+                    type="button"
+                    onClick={() => setRole("MERCHANT")}
+                    className={`px-4 py-2 text-sm font-medium rounded-md transition-colors ${
+                      role === "MERCHANT" 
+                        ? "bg-background text-foreground shadow-sm" 
+                        : "text-muted-foreground hover:text-foreground"
+                    }`}
+                  >
+                    Merchant
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setRole("CUSTOMER")}
+                    className={`px-4 py-2 text-sm font-medium rounded-md transition-colors ${
+                      role === "CUSTOMER" 
+                        ? "bg-background text-foreground shadow-sm" 
+                        : "text-muted-foreground hover:text-foreground"
+                    }`}
+                  >
+                    Customer
+                  </button>
+                </div>
+              </div>
+            )}
 
             <form onSubmit={step === 2 ? handleSignUp : (e) => { e.preventDefault(); handleNext(); }} className="space-y-4">
               {step === 1 ? (
@@ -366,26 +298,7 @@ function SignUpForm() {
                     )}
                   </div>
 
-                  <div className="space-y-2">
-                    <Label htmlFor="phone" className="text-foreground">{strings.auth_phone_label}</Label>
-                    <Input
-                      id="phone"
-                      type="tel"
-                      placeholder={strings.auth_phone_placeholder}
-                      value={phone}
-                      onChange={handlePhoneChange}
-                      onBlur={() => {
-                        setFieldTouched("phone")
-                        updateFieldError("phone", validatePhone(phone))
-                      }}
-                      dir="ltr"
-                      className={`bg-muted/50 text-left ${fieldErrors.phone && touched.phone ? "border-destructive" : ""}`}
-                      maxLength={32}
-                    />
-                    {fieldErrors.phone && touched.phone && (
-                      <p className="text-sm text-destructive">{fieldErrors.phone}</p>
-                    )}
-                  </div>
+
 
                   <Button
                     type="submit"
@@ -399,107 +312,7 @@ function SignUpForm() {
               ) : (
                 /* Step 2: Address & Password */
                 <div className="space-y-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="streetAddress" className="text-foreground">{strings.auth_street_address_label}</Label>
-                    <Input
-                      id="streetAddress"
-                      type="text"
-                      placeholder={strings.auth_street_address_placeholder}
-                      value={streetAddress}
-                      onChange={handleStreetAddressChange}
-                      onBlur={() => {
-                        setFieldTouched("streetAddress")
-                        updateFieldError("streetAddress", validateStreetAddress(streetAddress))
-                      }}
-                      className={`bg-muted/50 ${fieldErrors.streetAddress && touched.streetAddress ? "border-destructive" : ""}`}
-                      maxLength={255}
-                    />
-                    {fieldErrors.streetAddress && touched.streetAddress && (
-                      <p className="text-sm text-destructive">{fieldErrors.streetAddress}</p>
-                    )}
-                  </div>
 
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="city" className="text-foreground">{strings.auth_city_label}</Label>
-                      <Input
-                        id="city"
-                        type="text"
-                        placeholder={strings.auth_city_placeholder}
-                        value={city}
-                        onChange={handleCityChange}
-                        onBlur={() => {
-                          setFieldTouched("city")
-                          updateFieldError("city", validateCity(city))
-                        }}
-                        className={`bg-muted/50 ${fieldErrors.city && touched.city ? "border-destructive" : ""}`}
-                        maxLength={120}
-                      />
-                      {fieldErrors.city && touched.city && (
-                        <p className="text-sm text-destructive">{fieldErrors.city}</p>
-                      )}
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="state" className="text-foreground">{strings.auth_state_label}</Label>
-                      <Input
-                        id="state"
-                        type="text"
-                        placeholder={strings.auth_state_placeholder}
-                        value={state}
-                        onChange={handleStateChange}
-                        onBlur={() => {
-                          setFieldTouched("state")
-                          updateFieldError("state", validateState(state))
-                        }}
-                        className={`bg-muted/50 ${fieldErrors.state && touched.state ? "border-destructive" : ""}`}
-                        maxLength={120}
-                      />
-                      {fieldErrors.state && touched.state && (
-                        <p className="text-sm text-destructive">{fieldErrors.state}</p>
-                      )}
-                    </div>
-                  </div>
-
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="postalCode" className="text-foreground">{strings.auth_postal_code_label}</Label>
-                      <Input
-                        id="postalCode"
-                        type="text"
-                        placeholder={strings.auth_postal_code_placeholder}
-                        value={postalCode}
-                        onChange={handlePostalCodeChange}
-                        onBlur={() => {
-                          setFieldTouched("postalCode")
-                          updateFieldError("postalCode", validatePostalCode(postalCode))
-                        }}
-                        className={`bg-muted/50 ${fieldErrors.postalCode && touched.postalCode ? "border-destructive" : ""}`}
-                        maxLength={20}
-                      />
-                      {fieldErrors.postalCode && touched.postalCode && (
-                        <p className="text-sm text-destructive">{fieldErrors.postalCode}</p>
-                      )}
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="country" className="text-foreground">{strings.auth_country_label}</Label>
-                      <Input
-                        id="country"
-                        type="text"
-                        placeholder={strings.auth_country_placeholder}
-                        value={country}
-                        onChange={handleCountryChange}
-                        onBlur={() => {
-                          setFieldTouched("country")
-                          updateFieldError("country", validateCountry(country))
-                        }}
-                        className={`bg-muted/50 ${fieldErrors.country && touched.country ? "border-destructive" : ""}`}
-                        maxLength={120}
-                      />
-                      {fieldErrors.country && touched.country && (
-                        <p className="text-sm text-destructive">{fieldErrors.country}</p>
-                      )}
-                    </div>
-                  </div>
 
                   <div className="space-y-2">
                     <Label htmlFor="password" className="text-foreground">{strings.auth_password_label}</Label>
