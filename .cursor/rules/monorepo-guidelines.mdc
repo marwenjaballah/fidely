@@ -1,0 +1,42 @@
+---
+description: Triplyy monorepo rules (TurboRepo + pnpm workspaces). Always follow the closest nested rules under apps/* or packages/* first.
+alwaysApply: true
+---
+
+## Monorepo map (high level)
+
+- `apps/web`: Next.js 16 + React 19 + Tailwind CSS (utility-first). Prefer Radix UI + shadcn-style patterns already present.
+- `apps/api`: Hono API on Node (TypeScript, ESM). OpenAPI via `@hono/zod-openapi`.
+- `packages/database`: Prisma + Supabase client utilities, TypeScript build output in `dist/`.
+- `packages/types`: Shared TypeScript types (compiled via `tsc`).
+- `packages/eslint-config`: Shared ESLint config packages.
+- `packages/typescript-config`: Shared TS config package.
+
+## Rule precedence
+
+- When editing files under a subproject, treat the nearest nested rules in that subproject (e.g. `apps/web/.cursor/rules/*`) as higher priority than this global file.
+- If global guidance conflicts with a subproject’s guidance, follow the subproject.
+
+## Repo-wide conventions
+
+- Use `pnpm` (repo pins `pnpm@9.0.0`) and Turbo (`turbo run ...`) for scripts.
+- Node engine is `22.x`.
+- Keep changes scoped: don’t refactor unrelated code, don’t “format the whole repo”.
+- Prefer existing patterns in the repo over introducing new frameworks/libraries.
+
+## TurboRepo workflow & caching
+
+- Prefer `turbo run <task>` over ad-hoc workspace commands so caching stays effective.
+- When adding or changing Turbo tasks (`turbo.json`), ensure:
+  - Tasks declare correct `dependsOn` relationships (including upstream `^build` style dependencies where appropriate).
+  - Tasks declare correct `outputs` so caching is safe (don’t cache the world; don’t forget build artifacts).
+  - Environment variables are handled deliberately:
+    - Avoid leaking secrets via overly-broad “global” env configuration.
+    - Prefer validating required env vars per app/package at runtime boundaries.
+- If a change affects build outputs (e.g. Next build, Prisma generate, TypeScript build), ensure the relevant task produces output into the expected directory (`.next/`, `dist/`, etc.).
+
+## TypeScript
+
+- Keep strict typing. Avoid `any` unless there is a clear boundary (e.g. third-party payload) and you immediately validate/narrow.
+- Prefer `zod` schemas where input validation is needed.
+

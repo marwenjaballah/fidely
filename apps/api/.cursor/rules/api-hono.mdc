@@ -1,0 +1,27 @@
+---
+description: apps/api (Hono on Node, TypeScript ESM). Prefer zod validation and @hono/zod-openapi patterns; keep handlers small and typed.
+alwaysApply: true
+---
+
+## Stack
+
+- Hono (`hono`, `@hono/node-server`)
+- TypeScript, ESM (`"type": "module"`)
+- Dev server uses `tsx watch src/server.ts`
+- OpenAPI tooling: `@hono/zod-openapi`, `@hono/zod-validator`, Swagger UI
+
+## API conventions
+
+- Prefer route-level input validation with `zod` (and OpenAPI schemas where applicable).
+- Keep handlers thin: validate -> call a service function -> return typed response.
+- Use consistent error responses; don’t leak internal error details.
+- Avoid side effects at import time (important for server startup and tests).
+- Prefer guard clauses / early returns to avoid deep nesting.
+- Keep modules cohesive (routes vs services vs schema); avoid duplicating validation logic across endpoints.
+
+## Node/runtime rules
+
+- Use Node-friendly APIs; avoid Edge-only or browser-only constructs.
+- Keep environment access centralized; prefer `process.env` reads in config modules, not scattered throughout handlers.
+- Don’t log secrets. If logging, prefer structured logs (`pino` is present).
+

@@ -1,0 +1,39 @@
+---
+description: apps/web (Next.js 16 + React 19). Use Tailwind CSS utilities + Radix UI patterns; respect Next App Router server/client boundaries.
+alwaysApply: true
+---
+
+## Stack
+
+- Next.js `16.x` (`apps/web`)
+- React `19.x`
+- Tailwind CSS `4.x`
+- Radix UI components are used widely (`@radix-ui/react-*`)
+
+## Styling rules (Tailwind-first)
+
+- Use Tailwind utility classes (and existing utility helpers like `clsx`, `tailwind-merge`, `class-variance-authority`) instead of custom CSS.
+- Only add CSS files when absolutely necessary; prefer component-level Tailwind classes.
+- Match existing UI conventions (Radix primitives + project’s component patterns) before introducing new UI libraries.
+
+## Next.js server/client rules
+
+- Default to Server Components. Add `'use client'` only when you need browser-only APIs, local state, refs, effects, event handlers, or client-side libraries.
+- Never use browser globals (`window`, `document`, `localStorage`, `navigator`) in Server Components.
+- Data fetching:
+  - Prefer server-side fetching when possible.
+  - Use client fetching only for truly interactive, user-driven refetch, polling, etc.
+- Performance:
+  - Minimize `'use client'`, `useState`, and `useEffect`; prefer RSC patterns.
+  - Use `Suspense` boundaries with good fallbacks for async UI where it helps UX.
+  - Use dynamic imports for non-critical UI to keep initial bundles smaller.
+  - Prefer `next/image` for images (sizes, lazy-loading) to improve Core Web Vitals.
+- Accessibility:
+  - Prefer Radix primitives for accessible patterns; keep keyboard navigation working.
+  - Ensure forms and interactive elements have correct labels and ARIA where needed.
+
+## Forms & validation
+
+- Prefer `react-hook-form` + `zod` for complex forms.
+- Validate inputs at boundaries (API calls, actions) and keep types in sync with schemas.
+

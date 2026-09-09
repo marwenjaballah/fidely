@@ -1,0 +1,139 @@
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model User {
+  id            String   @id @default(uuid())
+  email         String   @unique
+  fullName      String?
+  phone         String?
+  streetAddress String?
+  city          String?
+  state         String?
+  postalCode    String?
+  country       String?
+  role          UserRole @default(CUSTOMER)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  // Relationships
+  stores      Store[]              @relation("StoreOwner")
+  memberships CustomerMembership[]
+
+  @@index([email])
+  @@map("users")
+}
+
+enum UserRole {
+  SUPER_ADMIN
+  MERCHANT
+  CASHIER
+  CUSTOMER
+}
+
+model Store {
+  id           String   @id @default(uuid())
+  ownerId      String
+  name         String
+  slug         String   @unique
+  logoUrl      String?
+  primaryColor String   @default("#000000")
+  pointsPerTnd Decimal  @default(10.00) @db.Decimal(10, 2)
+  active       Boolean  @default(true)
+  createdAt    DateTime @default(now())
+
+  // Relationships
+  owner        User                 @relation("StoreOwner", fields: [ownerId], references: [id])
+  memberships  CustomerMembership[]
+  rewards      Reward[]
+  transactions Transaction[]
+
+  @@map("stores")
+}
+
+model CustomerMembership {
+  id            String   @id @default(uuid())
+  customerId    String
+  storeId       String
+  pointsBalance Int      @default(0)
+  qrCodeToken   String   @unique
+  joinedAt      DateTime @default(now())
+
+  // Relationships
+  customer     User          @relation(fields: [customerId], references: [id])
+  store        Store         @relation(fields: [storeId], references: [id])
+  transactions Transaction[]
+  vouchers     Voucher[]
+
+  @@unique([customerId, storeId], name: "customerStoreIdx")
+  @@map("customer_memberships")
+}
+
+model Reward {
+  id          String   @id @default(uuid())
+  storeId     String
+  name        String
+  description String?
+  pointsCost  Int
+  active      Boolean  @default(true)
+  createdAt   DateTime @default(now())
+
+  // Relationships
+  store    Store     @relation(fields: [storeId], references: [id])
+  vouchers Voucher[]
+
+  @@map("rewards")
+}
+
+model Transaction {
+  id             String   @id @default(uuid())
+  storeId        String
+  cashierId      String
+  membershipId   String
+  type           String // 'earn' or 'redeem'
+  amountTnd      Decimal? @db.Decimal(10, 3)
+  pointsAffected Int
+  createdAt      DateTime @default(now())
+
+  // Relationships
+  store      Store              @relation(fields: [storeId], references: [id])
+  membership CustomerMembership @relation(fields: [membershipId], references: [id])
+
+  @@map("transactions")
+}
+
+model Voucher {
+  id           String    @id @default(uuid())
+  membershipId String
+  rewardId     String
+  code         String    @unique
+  status       String    @default("active") // 'active', 'used', 'expired'
+  issuedAt     DateTime  @default(now())
+  usedAt       DateTime?
+
+  // Relationships
+  membership CustomerMembership @relation(fields: [membershipId], references: [id])
+  reward     Reward             @relation(fields: [rewardId], references: [id])
+
+  @@map("vouchers")
+}
+
+model Review {
+  id        String   @id @default(uuid())
+  name      String
+  company   String?
+  rating    Int
+  title     String?
+  message   String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([createdAt])
+  @@map("reviews")
+}
