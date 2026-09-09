@@ -51,6 +51,18 @@ function normalizeError(err: unknown): ApiError {
   return new ApiError(err instanceof Error ? err.message : 'Request failed', 0, undefined)
 }
 
+function isAuthEndpoint(url?: string): boolean {
+  if (!url) return false
+  return (
+    url.includes('/authentication/login') ||
+    url.includes('/authentication/register') ||
+    url.includes('/authentication/refresh') ||
+    url.includes('/authentication/forgot-password') ||
+    url.includes('/authentication/reset-password') ||
+    url.includes('/authentication/google')
+  )
+}
+
 /**
  * Creates an axios instance with Bearer token auth:
  * - Request interceptor: adds Authorization Bearer when getToken() returns a value
@@ -84,26 +96,31 @@ export function createApiClient(config: CreateApiClientConfig): AxiosInstance {
     (res) => res,
     async (err) => {
       const originalRequest = err.config
-      const config = originalRequest as RequestConfigWithRetry
-      if (err.response?.status === 401 && config && !config._retry) {
+      const reqConfig = originalRequest as RequestConfigWithRetry
+      if (
+        err.response?.status === 401 &&
+        reqConfig &&
+        !reqConfig._retry &&
+        !isAuthEndpoint(reqConfig.url)
+      ) {
         if (!isRefreshing) {
           isRefreshing = true
-          config._retry = true
+          reqConfig._retry = true
           try {
             const newToken = await onRefresh()
             isRefreshing = false
             onRefreshed(newToken)
-            config.headers.Authorization = `Bearer ${newToken}`
-            return client(config)
-          } catch (refreshErr) {
+            reqConfig.headers.Authorization = `Bearer ${newToken}`
+            return client(reqConfig)
+          } catch {
             isRefreshing = false
-            throw normalizeError(refreshErr)
+            throw normalizeError(err)
           }
         }
         return new Promise((resolve, reject) => {
           refreshSubscribers.push((token: string) => {
-            config.headers.Authorization = `Bearer ${token}`
-            client(config).then(resolve).catch(reject)
+            reqConfig.headers.Authorization = `Bearer ${token}`
+            client(reqConfig).then(resolve).catch(reject)
           })
         })
       }
@@ -120,7 +137,7 @@ export function createApiClient(config: CreateApiClientConfig): AxiosInstance {
  * - On 401: calls onRefresh() (e.g. POST refresh with credentials), then retries
  */
 export function createCookieAuthApiClient(config: CreateCookieAuthApiClientConfig): AxiosInstance {
-  const { baseURL, refreshUrl, onRefresh } = config
+  const { baseURL, onRefresh } = config
   const client = axios.create({
     baseURL: baseURL.replace(/\/$/, ''),
     headers: { 'Content-Type': 'application/json' },
@@ -139,24 +156,29 @@ export function createCookieAuthApiClient(config: CreateCookieAuthApiClientConfi
     (res) => res,
     async (err) => {
       const originalRequest = err.config
-      const config = originalRequest as RequestConfigWithRetry
-      if (err.response?.status === 401 && config && !config._retry) {
+      const reqConfig = originalRequest as RequestConfigWithRetry
+      if (
+        err.response?.status === 401 &&
+        reqConfig &&
+        !reqConfig._retry &&
+        !isAuthEndpoint(reqConfig.url)
+      ) {
         if (!isRefreshing) {
           isRefreshing = true
-          config._retry = true
+          reqConfig._retry = true
           try {
             await onRefresh()
             isRefreshing = false
             onRefreshed()
-            return client(config)
-          } catch (refreshErr) {
+            return client(reqConfig)
+          } catch {
             isRefreshing = false
-            throw normalizeError(refreshErr)
+            throw normalizeError(err)
           }
         }
         return new Promise((resolve, reject) => {
           refreshSubscribers.push(() => {
-            client(config).then(resolve).catch(reject)
+            client(reqConfig).then(resolve).catch(reject)
           })
         })
       }
