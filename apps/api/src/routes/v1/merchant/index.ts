@@ -11,6 +11,10 @@ import {
   changeStoreStaffPasswordRoute,
   deleteStoreStaffRoute,
   getStoreAnalyticsRoute,
+  getStoreRewardsRoute,
+  createStoreRewardRoute,
+  updateStoreRewardRoute,
+  deleteStoreRewardRoute,
 } from './merchant.route.js';
 import { MerchantService } from '../../../services/merchant.service.js';
 import { requireUser } from '../../../utils/auth.js';
@@ -212,6 +216,89 @@ router.openapi(getStoreAnalyticsRoute, async (c) => {
   try {
     const analytics = await service.getStoreAnalytics(id, user.id);
     return c.json(analytics, 200);
+  } catch (error: any) {
+    return c.json({ error: error.message }, 400) as any;
+  }
+});
+
+router.openapi(getStoreRewardsRoute, async (c) => {
+  const user = requireUser(c);
+  if (user.role !== 'MERCHANT' && user.role !== 'SUPER_ADMIN') {
+    return c.json({ error: 'Unauthorized' }, 401) as any;
+  }
+  
+  const { id } = c.req.valid('param');
+  const prisma = c.get('prisma');
+  const service = new MerchantService(prisma);
+  
+  try {
+    const rewards = await service.getStoreRewards(id, user.id);
+    return c.json(rewards, 200);
+  } catch (error: any) {
+    return c.json({ error: error.message }, 400) as any;
+  }
+});
+
+router.openapi(createStoreRewardRoute, async (c) => {
+  const user = requireUser(c);
+  if (user.role !== 'MERCHANT' && user.role !== 'SUPER_ADMIN') {
+    return c.json({ error: 'Unauthorized' }, 401) as any;
+  }
+  
+  const { id } = c.req.valid('param');
+  const data = c.req.valid('json');
+  const prisma = c.get('prisma');
+  const service = new MerchantService(prisma);
+  
+  try {
+    const reward = await service.createStoreReward(id, user.id, data as {
+      name: string;
+      description?: string;
+      pointsCost: number;
+    });
+    return c.json(reward, 201);
+  } catch (error: any) {
+    return c.json({ error: error.message }, 400) as any;
+  }
+});
+
+router.openapi(updateStoreRewardRoute, async (c) => {
+  const user = requireUser(c);
+  if (user.role !== 'MERCHANT' && user.role !== 'SUPER_ADMIN') {
+    return c.json({ error: 'Unauthorized' }, 401) as any;
+  }
+  
+  const { id, rewardId } = c.req.valid('param');
+  const data = c.req.valid('json');
+  const prisma = c.get('prisma');
+  const service = new MerchantService(prisma);
+  
+  try {
+    const reward = await service.updateStoreReward(id, user.id, rewardId, data as {
+      name?: string;
+      description?: string;
+      pointsCost?: number;
+      active?: boolean;
+    });
+    return c.json(reward, 200);
+  } catch (error: any) {
+    return c.json({ error: error.message }, 400) as any;
+  }
+});
+
+router.openapi(deleteStoreRewardRoute, async (c) => {
+  const user = requireUser(c);
+  if (user.role !== 'MERCHANT' && user.role !== 'SUPER_ADMIN') {
+    return c.json({ error: 'Unauthorized' }, 401) as any;
+  }
+  
+  const { id, rewardId } = c.req.valid('param');
+  const prisma = c.get('prisma');
+  const service = new MerchantService(prisma);
+  
+  try {
+    const result = await service.deleteStoreReward(id, user.id, rewardId);
+    return c.json(result, 200);
   } catch (error: any) {
     return c.json({ error: error.message }, 400) as any;
   }

@@ -336,3 +336,145 @@ export const getStoreAnalyticsRoute = createRoute({
     },
   },
 });
+
+export const getStoreRewardsRoute = createRoute({
+  method: 'get',
+  path: '/stores/{id}/rewards',
+  tags: ['Merchant'],
+  security: [{ bearerAuth: [] }],
+  request: {
+    params: z.object({
+      id: z.string(),
+    }),
+  },
+  responses: {
+    200: {
+      description: 'List of store rewards',
+      content: {
+        'application/json': {
+          schema: z.array(
+            z.object({
+              id: z.string(),
+              storeId: z.string(),
+              name: z.string(),
+              description: z.string().nullable(),
+              pointsCost: z.number(),
+              active: z.boolean(),
+              createdAt: z.date().or(z.string()),
+            })
+          ),
+        },
+      },
+    },
+  },
+});
+
+export const createStoreRewardRoute = createRoute({
+  method: 'post',
+  path: '/stores/{id}/rewards',
+  tags: ['Merchant'],
+  security: [{ bearerAuth: [] }],
+  request: {
+    params: z.object({
+      id: z.string(),
+    }),
+    body: {
+      content: {
+        'application/json': {
+          schema: z.object({
+            name: z.string().min(1),
+            description: z.string().optional(),
+            pointsCost: z.number().positive(),
+          }),
+        },
+      },
+    },
+  },
+  responses: {
+    201: {
+      description: 'Reward created',
+      content: {
+        'application/json': {
+          schema: z.object({
+            id: z.string(),
+            storeId: z.string(),
+            name: z.string(),
+            description: z.string().nullable(),
+            pointsCost: z.number(),
+            active: z.boolean(),
+          }),
+        },
+      },
+    },
+    400: { description: 'Bad request' },
+  },
+});
+
+export const updateStoreRewardRoute = createRoute({
+  method: 'put',
+  path: '/stores/{id}/rewards/{rewardId}',
+  tags: ['Merchant'],
+  security: [{ bearerAuth: [] }],
+  request: {
+    params: z.object({
+      id: z.string(),
+      rewardId: z.string(),
+    }),
+    body: {
+      content: {
+        'application/json': {
+          schema: z.object({
+            name: z.string().min(1).optional(),
+            description: z.string().optional(),
+            pointsCost: z.number().positive().optional(),
+            active: z.boolean().optional(),
+          }),
+        },
+      },
+    },
+  },
+  responses: {
+    200: {
+      description: 'Reward updated',
+      content: {
+        'application/json': {
+          schema: z.object({
+            id: z.string(),
+            storeId: z.string(),
+            name: z.string(),
+            description: z.string().nullable(),
+            pointsCost: z.number(),
+            active: z.boolean(),
+          }),
+        },
+      },
+    },
+    400: { description: 'Bad request' },
+  },
+});
+
+export const deleteStoreRewardRoute = createRoute({
+  method: 'delete',
+  path: '/stores/{id}/rewards/{rewardId}',
+  tags: ['Merchant'],
+  security: [{ bearerAuth: [] }],
+  request: {
+    params: z.object({
+      id: z.string(),
+      rewardId: z.string(),
+    }),
+  },
+  responses: {
+    200: {
+      description: 'Reward deleted successfully',
+      content: {
+        'application/json': {
+          schema: z.object({
+            message: z.string(),
+          }),
+        },
+      },
+    },
+    400: { description: 'Bad request or reward not found' },
+  },
+});

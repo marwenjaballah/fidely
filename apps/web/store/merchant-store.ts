@@ -27,6 +27,16 @@ export interface Staff {
   createdAt: string
 }
 
+export interface Reward {
+  id: string
+  storeId: string
+  name: string
+  description: string | null
+  pointsCost: number
+  active: boolean
+  createdAt: string
+}
+
 export interface Analytics {
   totalMembers: number
   totalPointsIssued: number
@@ -43,12 +53,13 @@ export interface MerchantState {
   activeStore: Store | null
   customers: Customer[]
   staff: Staff[]
+  rewards: Reward[]
   analytics: Analytics | null
   loading: boolean
   error: string | null
 
   fetchStores: () => Promise<void>
-  createStore: (name: string, slug: string) => Promise<Store>
+  createStore: (name: string, slug: string, primaryColor?: string, pointsPerTnd?: number) => Promise<Store>
   setActiveStore: (storeId: string) => void
   updateStore: (storeId: string, data: Partial<Store>) => Promise<void>
   fetchCustomers: (storeId: string) => Promise<void>
@@ -58,6 +69,10 @@ export interface MerchantState {
   updateStaff: (storeId: string, staffId: string, data: { fullName?: string; phone?: string }) => Promise<Staff>
   changeStaffPassword: (storeId: string, staffId: string, password: string) => Promise<void>
   deleteStaff: (storeId: string, staffId: string) => Promise<void>
+  fetchRewards: (storeId: string) => Promise<void>
+  createReward: (storeId: string, data: { name: string; description?: string; pointsCost: number }) => Promise<Reward>
+  updateReward: (storeId: string, rewardId: string, data: { name?: string; description?: string; pointsCost?: number; active?: boolean }) => Promise<Reward>
+  deleteReward: (storeId: string, rewardId: string) => Promise<void>
   fetchAnalytics: (storeId: string) => Promise<void>
 }
 
@@ -88,6 +103,7 @@ export const useMerchantStore = create<MerchantState>((set, get) => ({
   activeStore: null,
   customers: [],
   staff: [],
+  rewards: [],
   analytics: null,
   loading: false,
   error: null,
@@ -100,17 +116,17 @@ export const useMerchantStore = create<MerchantState>((set, get) => ({
       const stores = data
       const savedStoreId = typeof window !== 'undefined' ? localStorage.getItem('fidely_active_store_id') : null
       const currentActiveId = get().activeStore?.id || savedStoreId
-      const activeStore = stores.find(s => s.id === currentActiveId) || (stores.length > 0 ? stores[0] : null)
-      
+      const activeStore = stores.find((s) => s.id === currentActiveId) || (stores.length > 0 ? stores[0] : null)
+
       if (activeStore && typeof window !== 'undefined') {
         localStorage.setItem('fidely_active_store_id', activeStore.id)
       }
-      
-      set({ 
-        stores, 
+
+      set({
+        stores,
         activeStore,
-        loading: false, 
-        error: null 
+        loading: false,
+        error: null,
       })
     } catch (err) {
       const message = err instanceof ApiError ? err.message : 'Failed to load stores.'
@@ -118,20 +134,25 @@ export const useMerchantStore = create<MerchantState>((set, get) => ({
     }
   },
 
-  createStore: async (name: string, slug: string) => {
+  createStore: async (name: string, slug: string, primaryColor?: string, pointsPerTnd?: number) => {
     set({ loading: true, error: null })
     try {
       const client = getMerchantClient()
-      const { data } = await client.post<Store>('/api/v1/merchant/stores', { name, slug })
+      const { data } = await client.post<Store>('/api/v1/merchant/stores', {
+        name,
+        slug,
+        primaryColor: primaryColor || '#ff5722',
+        pointsPerTnd: pointsPerTnd || 10,
+      })
       const stores = [...get().stores, data]
       if (typeof window !== 'undefined') {
         localStorage.setItem('fidely_active_store_id', data.id)
       }
-      set({ 
-        stores, 
+      set({
+        stores,
         activeStore: data,
-        loading: false, 
-        error: null 
+        loading: false,
+        error: null,
       })
       return data
     } catch (err) {
@@ -142,7 +163,7 @@ export const useMerchantStore = create<MerchantState>((set, get) => ({
   },
 
   setActiveStore: (storeId: string) => {
-    const store = get().stores.find(s => s.id === storeId) || null
+    const store = get().stores.find((s) => s.id === storeId) || null
     if (store && typeof window !== 'undefined') {
       localStorage.setItem('fidely_active_store_id', store.id)
     }
@@ -154,10 +175,10 @@ export const useMerchantStore = create<MerchantState>((set, get) => ({
     try {
       const client = getMerchantClient()
       const { data } = await client.put<Store>(`/api/v1/merchant/stores/${storeId}`, payload)
-      
-      const stores = get().stores.map(s => s.id === storeId ? data : s)
+
+      const stores = get().stores.map((s) => (s.id === storeId ? data : s))
       const activeStore = get().activeStore?.id === storeId ? data : get().activeStore
-      
+
       set({ stores, activeStore, loading: false, error: null })
     } catch (err) {
       const message = err instanceof ApiError ? err.message : 'Failed to update store.'
@@ -251,6 +272,62 @@ export const useMerchantStore = create<MerchantState>((set, get) => ({
     }
   },
 
+  fetchRewards: async (storeId: string) => {
+    set({ loading: true, error: null })
+    try {
+      const client = getMerchantClient()
+      const { data } = await client.get<Reward[]>(`/api/v1/merchant/stores/${storeId}/rewards`)
+      set({ rewards: data || [], loading: false, error: null })
+    } catch (err) {
+      const message = err instanceof ApiError ? err.message : 'Failed to load rewards.'
+      set({ error: message, loading: false })
+    }
+  },
+
+  createReward: async (storeId: string, data: { name: string; description?: string; pointsCost: number }) => {
+    set({ loading: true, error: null })
+    try {
+      const client = getMerchantClient()
+      const { data: newReward } = await client.post<Reward>(`/api/v1/merchant/stores/${storeId}/rewards`, data)
+      const rewards = [...get().rewards, newReward].sort((a, b) => a.pointsCost - b.pointsCost)
+      set({ rewards, loading: false, error: null })
+      return newReward
+    } catch (err) {
+      const message = err instanceof ApiError ? err.message : 'Failed to create reward.'
+      set({ error: message, loading: false })
+      throw err
+    }
+  },
+
+  updateReward: async (storeId: string, rewardId: string, data: { name?: string; description?: string; pointsCost?: number; active?: boolean }) => {
+    set({ loading: true, error: null })
+    try {
+      const client = getMerchantClient()
+      const { data: updatedReward } = await client.put<Reward>(`/api/v1/merchant/stores/${storeId}/rewards/${rewardId}`, data)
+      const rewards = get().rewards.map((r) => (r.id === rewardId ? updatedReward : r)).sort((a, b) => a.pointsCost - b.pointsCost)
+      set({ rewards, loading: false, error: null })
+      return updatedReward
+    } catch (err) {
+      const message = err instanceof ApiError ? err.message : 'Failed to update reward.'
+      set({ error: message, loading: false })
+      throw err
+    }
+  },
+
+  deleteReward: async (storeId: string, rewardId: string) => {
+    set({ loading: true, error: null })
+    try {
+      const client = getMerchantClient()
+      await client.delete(`/api/v1/merchant/stores/${storeId}/rewards/${rewardId}`)
+      const rewards = get().rewards.filter((r) => r.id !== rewardId)
+      set({ rewards, loading: false, error: null })
+    } catch (err) {
+      const message = err instanceof ApiError ? err.message : 'Failed to delete reward.'
+      set({ error: message, loading: false })
+      throw err
+    }
+  },
+
   fetchAnalytics: async (storeId: string) => {
     set({ loading: true, error: null })
     try {
@@ -261,5 +338,5 @@ export const useMerchantStore = create<MerchantState>((set, get) => ({
       const message = err instanceof ApiError ? err.message : 'Failed to load analytics.'
       set({ error: message, loading: false })
     }
-  }
+  },
 }))

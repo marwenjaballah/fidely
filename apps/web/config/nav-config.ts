@@ -1,4 +1,4 @@
-import { LayoutDashboard, Settings, Users, LineChart, Store, type LucideIcon } from 'lucide-react'
+import { LayoutDashboard, Settings, Users, LineChart, Store, Palette, type LucideIcon } from 'lucide-react'
 
 export interface NavItem {
   title: string
@@ -19,6 +19,11 @@ export const navItems: NavItem[] = [
     title: 'Overview',
     href: '/merchant/overview',
     icon: LayoutDashboard,
+  },
+  {
+    title: 'Customizer & Rewards',
+    href: '/merchant/settings/store',
+    icon: Palette,
   },
   {
     title: 'CRM',
@@ -43,6 +48,10 @@ export const userNavItems: NavItem[] = [
     href: '/merchant/settings',
     icon: Settings,
     items: [
+      {
+        title: 'Store & Rewards',
+        href: '/merchant/settings/store',
+      },
       {
         title: 'Account',
         href: '/merchant/settings/account',

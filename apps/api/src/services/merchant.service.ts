@@ -358,4 +358,99 @@ export class MerchantService {
       recentTransactions,
     };
   }
+
+  async getStoreRewards(storeId: string, merchantId: string) {
+    const store = await this.prisma.store.findFirst({
+      where: { id: storeId, ownerId: merchantId },
+    });
+
+    if (!store) {
+      throw new Error('Store not found or unauthorized');
+    }
+
+    return this.prisma.reward.findMany({
+      where: { storeId },
+      orderBy: { pointsCost: 'asc' },
+    });
+  }
+
+  async createStoreReward(
+    storeId: string,
+    merchantId: string,
+    data: { name: string; description?: string; pointsCost: number }
+  ) {
+    const store = await this.prisma.store.findFirst({
+      where: { id: storeId, ownerId: merchantId },
+    });
+
+    if (!store) {
+      throw new Error('Store not found or unauthorized');
+    }
+
+    if (!data.name || data.pointsCost <= 0) {
+      throw new Error('Reward name and a positive point cost are required.');
+    }
+
+    return this.prisma.reward.create({
+      data: {
+        storeId,
+        name: data.name,
+        description: data.description,
+        pointsCost: data.pointsCost,
+        active: true,
+      },
+    });
+  }
+
+  async updateStoreReward(
+    storeId: string,
+    merchantId: string,
+    rewardId: string,
+    data: { name?: string; description?: string; pointsCost?: number; active?: boolean }
+  ) {
+    const store = await this.prisma.store.findFirst({
+      where: { id: storeId, ownerId: merchantId },
+    });
+
+    if (!store) {
+      throw new Error('Store not found or unauthorized');
+    }
+
+    const reward = await this.prisma.reward.findFirst({
+      where: { id: rewardId, storeId },
+    });
+
+    if (!reward) {
+      throw new Error('Reward not found');
+    }
+
+    return this.prisma.reward.update({
+      where: { id: rewardId },
+      data,
+    });
+  }
+
+  async deleteStoreReward(storeId: string, merchantId: string, rewardId: string) {
+    const store = await this.prisma.store.findFirst({
+      where: { id: storeId, ownerId: merchantId },
+    });
+
+    if (!store) {
+      throw new Error('Store not found or unauthorized');
+    }
+
+    const reward = await this.prisma.reward.findFirst({
+      where: { id: rewardId, storeId },
+    });
+
+    if (!reward) {
+      throw new Error('Reward not found');
+    }
+
+    await this.prisma.reward.delete({
+      where: { id: rewardId },
+    });
+
+    return { message: 'Reward deleted successfully' };
+  }
 }
