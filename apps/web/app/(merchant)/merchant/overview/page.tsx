@@ -9,11 +9,13 @@ import { Users, Zap, TrendingUp, Award, Plus, Coffee, ExternalLink, Check } from
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { useToast } from '@/hooks/use-toast'
 import { CreateStoreDialog } from '@/components/common/create-store-dialog'
 
 export default function OverviewPage() {
   const { profile } = useAuth()
   const { fetchStores, activeStore, stores, createStore, setActiveStore, fetchAnalytics, analytics, loading, error } = useMerchantStore()
+  const { toast } = useToast()
   
   const [isCreating, setIsCreating] = useState(false)
   const [storeName, setStoreName] = useState('')
@@ -31,13 +33,33 @@ export default function OverviewPage() {
 
   const handleCreateStore = async (e: React.FormEvent) => {
     e.preventDefault()
+    if (!storeName.trim() || !storeSlug.trim()) return
     try {
-      await createStore(storeName, storeSlug)
+      const created = await createStore(storeName.trim(), storeSlug.trim())
+      toast({
+        title: 'Store Created Successfully',
+        description: `'${created.name}' is now ready for loyalty cards and cashiers.`,
+      })
       setIsCreating(false)
       setStoreName('')
       setStoreSlug('')
-    } catch (err) {
-      // Error handled in store
+    } catch (err: any) {
+      toast({
+        title: 'Failed to Create Store',
+        description: err.message || 'Could not create store.',
+        variant: 'destructive',
+      })
+    }
+  }
+
+  const handleSwitchStore = (storeId: string) => {
+    setActiveStore(storeId)
+    const target = stores.find((s) => s.id === storeId)
+    if (target) {
+      toast({
+        title: 'Switched Active Store',
+        description: `Now managing '${target.name}'.`,
+      })
     }
   }
 
@@ -83,7 +105,7 @@ export default function OverviewPage() {
               return (
                 <button
                   key={store.id}
-                  onClick={() => setActiveStore(store.id)}
+                  onClick={() => handleSwitchStore(store.id)}
                   type="button"
                   className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
                     isSelected
@@ -154,7 +176,11 @@ export default function OverviewPage() {
               </div>
               {error && <p className="text-sm text-destructive">{error}</p>}
               <div className="flex gap-2">
-                <Button type="submit" disabled={loading}>
+                <Button
+                  type="submit"
+                  disabled={loading || !storeName.trim() || !storeSlug.trim()}
+                  className={!storeName.trim() || !storeSlug.trim() ? 'opacity-50 cursor-not-allowed bg-muted text-muted-foreground hover:bg-muted' : ''}
+                >
                   {loading ? 'Creating...' : 'Create Store'}
                 </Button>
                 {stores.length > 0 && (

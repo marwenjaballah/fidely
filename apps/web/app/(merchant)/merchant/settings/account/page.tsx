@@ -10,10 +10,12 @@ import { Label } from "@/components/ui/label"
 import { Separator } from "@/components/ui/separator"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { useUserStore } from "@/store/user-store"
+import { useToast } from "@/hooks/use-toast"
 import { strings } from "@/lib/strings"
 
 export default function AccountSettingsPage() {
   const router = useRouter()
+  const { toast } = useToast()
 
   const user = useUserStore((state) => state.user)
   const loading = useUserStore((state) => state.loading)
@@ -53,15 +55,44 @@ export default function AccountSettingsPage() {
   const isChangingPassword = loading
   const isDeleting = loading
 
+  const hasProfileChanges = Boolean(
+    user &&
+      (fullName.trim() !== (user.profile.fullName || "").trim() ||
+        phone.trim() !== (user.profile.phone || "").trim())
+  )
+
+  const hasPasswordChanges = Boolean(
+    newPassword.length >= 8 && newPassword === confirmPassword
+  )
+
   const handleSaveProfile = async (e: React.FormEvent) => {
     e.preventDefault()
     setProfileMessage(null)
-    await updateProfile({
-      fullName: fullName.trim() || undefined,
-      phone: phone.trim() || undefined,
-    })
-    if (!useUserStore.getState().error) {
-      setProfileMessage(strings.settings_profile_success)
+    try {
+      await updateProfile({
+        fullName: fullName.trim() || undefined,
+        phone: phone.trim() || undefined,
+      })
+      const currentError = useUserStore.getState().error
+      if (!currentError) {
+        setProfileMessage(strings.settings_profile_success)
+        toast({
+          title: "Profile Updated",
+          description: "Your account details have been saved successfully.",
+        })
+      } else {
+        toast({
+          title: "Update Failed",
+          description: currentError,
+          variant: "destructive",
+        })
+      }
+    } catch (err: any) {
+      toast({
+        title: "Update Failed",
+        description: err.message || "Failed to update profile.",
+        variant: "destructive",
+      })
     }
   }
 
@@ -71,22 +102,50 @@ export default function AccountSettingsPage() {
 
     if (!newPassword || newPassword.length < 8) {
       setPasswordMessage(strings.settings_password_error_min_length)
+      toast({
+        title: "Invalid Password",
+        description: strings.settings_password_error_min_length,
+        variant: "destructive",
+      })
       return
     }
 
     if (newPassword !== confirmPassword) {
       setPasswordMessage(strings.settings_password_error_mismatch)
+      toast({
+        title: "Passwords Do Not Match",
+        description: strings.settings_password_error_mismatch,
+        variant: "destructive",
+      })
       return
     }
 
-    await changePassword(newPassword)
-    if (useUserStore.getState().error) {
-      setPasswordMessage(useUserStore.getState().error ?? strings.settings_password_error)
-    } else {
-      setPasswordMessage(strings.settings_password_success)
-      setCurrentPassword("")
-      setNewPassword("")
-      setConfirmPassword("")
+    try {
+      await changePassword(newPassword)
+      const currentError = useUserStore.getState().error
+      if (currentError) {
+        setPasswordMessage(currentError)
+        toast({
+          title: "Password Change Failed",
+          description: currentError,
+          variant: "destructive",
+        })
+      } else {
+        setPasswordMessage(strings.settings_password_success)
+        toast({
+          title: "Password Changed",
+          description: "Your password has been updated securely.",
+        })
+        setCurrentPassword("")
+        setNewPassword("")
+        setConfirmPassword("")
+      }
+    } catch (err: any) {
+      toast({
+        title: "Password Change Failed",
+        description: err.message || "Could not change password.",
+        variant: "destructive",
+      })
     }
   }
 
@@ -96,6 +155,11 @@ export default function AccountSettingsPage() {
 
     if (confirmDelete !== "DELETE") {
       setDeleteError(strings.settings_delete_error_confirm)
+      toast({
+        title: "Confirmation Required",
+        description: "Please type DELETE to confirm account deletion.",
+        variant: "destructive",
+      })
       return
     }
 
@@ -103,6 +167,11 @@ export default function AccountSettingsPage() {
     const err = useUserStore.getState().error
     if (err) {
       setDeleteError(err)
+      toast({
+        title: "Deletion Failed",
+        description: err,
+        variant: "destructive",
+      })
     } else {
       router.push("/auth/login")
     }
@@ -175,8 +244,20 @@ export default function AccountSettingsPage() {
                   )}
 
                   <div className="flex justify-end gap-2">
-                    <Button type="submit" disabled={isSavingProfile || isLoadingProfile}>
-                      {isSavingProfile ? strings.settings_profile_saving : strings.settings_profile_save}
+                    <Button
+                      type="submit"
+                      disabled={isSavingProfile || isLoadingProfile || !hasProfileChanges}
+                      className={`transition-all ${
+                        !hasProfileChanges
+                          ? "opacity-50 cursor-not-allowed bg-muted text-muted-foreground hover:bg-muted"
+                          : ""
+                      }`}
+                    >
+                      {isSavingProfile
+                        ? strings.settings_profile_saving
+                        : hasProfileChanges
+                        ? strings.settings_profile_save
+                        : "Saved"}
                     </Button>
                   </div>
                 </form>
@@ -235,8 +316,18 @@ export default function AccountSettingsPage() {
                   )}
 
                   <div className="flex justify-end gap-2">
-                    <Button type="submit" disabled={isChangingPassword}>
-                      {isChangingPassword ? strings.settings_password_updating : strings.settings_password_update}
+                    <Button
+                      type="submit"
+                      disabled={isChangingPassword || !hasPasswordChanges}
+                      className={`transition-all ${
+                        !hasPasswordChanges
+                          ? "opacity-50 cursor-not-allowed bg-muted text-muted-foreground hover:bg-muted"
+                          : ""
+                      }`}
+                    >
+                      {isChangingPassword
+                        ? strings.settings_password_updating
+                        : strings.settings_password_update}
                     </Button>
                   </div>
                 </form>

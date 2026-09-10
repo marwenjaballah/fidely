@@ -224,15 +224,15 @@ export default function StoreSettingsPage() {
     try {
       if (editingReward) {
         await updateReward(activeStore.id, editingReward.id, {
-          name: rewardName,
-          description: rewardDescription,
+          name: rewardName.trim(),
+          description: rewardDescription.trim() || undefined,
           pointsCost: Number(rewardPoints),
         })
         toast({ title: 'Reward Updated', description: `Successfully updated '${rewardName}'.` })
       } else {
         await createReward(activeStore.id, {
-          name: rewardName,
-          description: rewardDescription,
+          name: rewardName.trim(),
+          description: rewardDescription.trim() || undefined,
           pointsCost: Number(rewardPoints),
         })
         toast({ title: 'Reward Created', description: `Added '${rewardName}' to rewards catalog.` })
@@ -248,6 +248,20 @@ export default function StoreSettingsPage() {
       setIsSavingReward(false)
     }
   }
+
+  const hasChanges = Boolean(
+    activeStore &&
+      (name.trim() !== (activeStore.name || '').trim() ||
+        primaryColor.toLowerCase() !== (activeStore.primaryColor || '#D97706').toLowerCase() ||
+        Number(pointsPerTnd) !== (Number(activeStore.pointsPerTnd) || 10) ||
+        (logoUrl || null) !== (activeStore.logoUrl || null))
+  )
+
+  const hasRewardChanges = editingReward
+    ? (rewardName.trim() !== editingReward.name.trim() ||
+       (rewardDescription.trim() || '') !== (editingReward.description || '').trim() ||
+       Number(rewardPoints) !== editingReward.pointsCost)
+    : rewardName.trim().length > 0 && Number(rewardPoints) > 0
 
   const handleToggleRewardActive = async (reward: Reward) => {
     if (!activeStore) return
@@ -504,9 +518,17 @@ export default function StoreSettingsPage() {
                 </div>
               </CardContent>
               <CardFooter className="flex justify-end pt-4 border-t bg-muted/20">
-                <Button type="submit" disabled={isSaving} className="gap-2">
+                <Button
+                  type="submit"
+                  disabled={isSaving || !hasChanges}
+                  className={`gap-2 transition-all ${
+                    !hasChanges
+                      ? 'opacity-50 cursor-not-allowed bg-muted text-muted-foreground hover:bg-muted border border-border/50 shadow-none'
+                      : 'shadow-sm'
+                  }`}
+                >
                   <Save className="h-4 w-4" />
-                  {isSaving ? 'Saving Changes...' : 'Save Store Branding'}
+                  {isSaving ? 'Saving Changes...' : hasChanges ? 'Save Store Branding' : 'Saved (No Changes)'}
                 </Button>
               </CardFooter>
             </Card>
@@ -742,7 +764,11 @@ export default function StoreSettingsPage() {
               <Button type="button" variant="outline" onClick={() => setIsRewardModalOpen(false)}>
                 Cancel
               </Button>
-              <Button type="submit" disabled={isSavingReward}>
+              <Button
+                type="submit"
+                disabled={isSavingReward || !hasRewardChanges}
+                className={!hasRewardChanges ? 'opacity-50 cursor-not-allowed bg-muted text-muted-foreground hover:bg-muted' : ''}
+              >
                 {isSavingReward ? 'Saving...' : editingReward ? 'Update Reward' : 'Create Reward'}
               </Button>
             </DialogFooter>

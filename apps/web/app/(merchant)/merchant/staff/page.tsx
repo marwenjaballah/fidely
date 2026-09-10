@@ -32,6 +32,7 @@ import {
 } from '@/components/ui/dialog'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { Badge } from '@/components/ui/badge'
+import { useToast } from '@/hooks/use-toast'
 import { format } from 'date-fns'
 import {
   Plus,
@@ -63,6 +64,7 @@ export default function StaffPage() {
     loading,
     error,
   } = useMerchantStore()
+  const { toast } = useToast()
 
   // Search filter
   const [searchQuery, setSearchQuery] = useState('')
@@ -116,11 +118,15 @@ export default function StaffPage() {
     setActionError(null)
 
     try {
-      await createStaff(activeStore.id, {
+      const newStaff = await createStaff(activeStore.id, {
         fullName: addFullName.trim(),
         email: addEmail.trim(),
         password: addPassword || undefined,
         phone: addPhone.trim() || undefined,
+      })
+      toast({
+        title: 'Cashier Account Created',
+        description: `'${addFullName.trim() || addEmail.trim()}' can now log in at /cashier.`,
       })
       setIsAddOpen(false)
       setAddFullName('')
@@ -129,6 +135,11 @@ export default function StaffPage() {
       setAddPhone('')
     } catch (err: any) {
       setActionError(err.message || 'Failed to create cashier.')
+      toast({
+        title: 'Failed to Create Cashier',
+        description: err.message || 'An error occurred.',
+        variant: 'destructive',
+      })
     } finally {
       setActionLoading(false)
     }
@@ -153,9 +164,18 @@ export default function StaffPage() {
         fullName: editFullName.trim(),
         phone: editPhone.trim() || undefined,
       })
+      toast({
+        title: 'Cashier Profile Updated',
+        description: `Successfully updated '${editFullName.trim()}'.`,
+      })
       setEditTarget(null)
     } catch (err: any) {
       setActionError(err.message || 'Failed to update cashier.')
+      toast({
+        title: 'Failed to Update',
+        description: err.message || 'Could not save cashier profile.',
+        variant: 'destructive',
+      })
     } finally {
       setActionLoading(false)
     }
@@ -181,10 +201,19 @@ export default function StaffPage() {
 
     try {
       await changeStaffPassword(activeStore.id, passwordTarget.id, newPassword)
+      toast({
+        title: 'Password Updated',
+        description: `New password configured for '${passwordTarget.fullName || passwordTarget.email}'.`,
+      })
       setPasswordTarget(null)
       setNewPassword('')
     } catch (err: any) {
       setActionError(err.message || 'Failed to change password.')
+      toast({
+        title: 'Password Change Failed',
+        description: err.message || 'Could not update cashier password.',
+        variant: 'destructive',
+      })
     } finally {
       setActionLoading(false)
     }
@@ -197,10 +226,20 @@ export default function StaffPage() {
     setActionError(null)
 
     try {
+      const removedName = deleteTarget.fullName || deleteTarget.email
       await deleteStaff(activeStore.id, deleteTarget.id)
+      toast({
+        title: 'Cashier Removed',
+        description: `'${removedName}' was removed from ${activeStore.name}.`,
+      })
       setDeleteTarget(null)
     } catch (err: any) {
       setActionError(err.message || 'Failed to remove cashier.')
+      toast({
+        title: 'Removal Failed',
+        description: err.message || 'Could not remove cashier.',
+        variant: 'destructive',
+      })
     } finally {
       setActionLoading(false)
     }
@@ -486,7 +525,15 @@ export default function StaffPage() {
               >
                 Cancel
               </Button>
-              <Button type="submit" disabled={actionLoading} className="gap-2">
+              <Button
+                type="submit"
+                disabled={actionLoading || !addFullName.trim() || !addEmail.trim() || (!!addPassword && addPassword.length < 6)}
+                className={`gap-2 transition-all ${
+                  !addFullName.trim() || !addEmail.trim() || (!!addPassword && addPassword.length < 6)
+                    ? 'opacity-50 cursor-not-allowed bg-muted text-muted-foreground hover:bg-muted'
+                    : ''
+                }`}
+              >
                 {actionLoading ? (
                   <>
                     <Loader2 className="h-4 w-4 animate-spin" />
@@ -541,19 +588,37 @@ export default function StaffPage() {
               )}
             </div>
 
-            <DialogFooter className="gap-2 sm:gap-0">
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => setEditTarget(null)}
-                disabled={actionLoading}
-              >
-                Cancel
-              </Button>
-              <Button type="submit" disabled={actionLoading}>
-                {actionLoading ? 'Saving...' : 'Save Changes'}
-              </Button>
-            </DialogFooter>
+            {(() => {
+              const hasEditChanges = Boolean(
+                editTarget &&
+                  (editFullName.trim() !== (editTarget.fullName || '').trim() ||
+                    editPhone.trim() !== (editTarget.phone || '').trim()) &&
+                  editFullName.trim().length > 0
+              )
+              return (
+                <DialogFooter className="gap-2 sm:gap-0">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => setEditTarget(null)}
+                    disabled={actionLoading}
+                  >
+                    Cancel
+                  </Button>
+                  <Button
+                    type="submit"
+                    disabled={actionLoading || !hasEditChanges}
+                    className={`gap-2 transition-all ${
+                      !hasEditChanges
+                        ? 'opacity-50 cursor-not-allowed bg-muted text-muted-foreground hover:bg-muted'
+                        : ''
+                    }`}
+                  >
+                    {actionLoading ? 'Saving...' : hasEditChanges ? 'Save Changes' : 'No Changes'}
+                  </Button>
+                </DialogFooter>
+              )
+            })()}
           </form>
         </DialogContent>
       </Dialog>
@@ -624,7 +689,15 @@ export default function StaffPage() {
               >
                 Cancel
               </Button>
-              <Button type="submit" disabled={actionLoading} className="gap-2">
+              <Button
+                type="submit"
+                disabled={actionLoading || newPassword.length < 6}
+                className={`gap-2 transition-all ${
+                  newPassword.length < 6
+                    ? 'opacity-50 cursor-not-allowed bg-muted text-muted-foreground hover:bg-muted'
+                    : ''
+                }`}
+              >
                 {actionLoading ? (
                   <>
                     <Loader2 className="h-4 w-4 animate-spin" />
