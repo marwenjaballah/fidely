@@ -249,6 +249,87 @@ export default function AdminOverviewPage() {
         </Card>
       </div>
 
+      {/* Customer Acquisition & In-Store QR Stand Performance */}
+      <Card className="border border-border/60">
+        <CardHeader className="flex flex-row items-center justify-between pb-3">
+          <div>
+            <CardTitle className="text-base font-semibold flex items-center gap-2">
+              <Users className="h-4 w-4 text-emerald-500" />
+              Customer Acquisition Channels (QR Stands vs Direct)
+            </CardTitle>
+            <CardDescription>
+              Platform-wide breakdown of customer sign-ups generated through physical counter QR stands.
+            </CardDescription>
+          </div>
+          <Badge variant="outline" className="bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/30 text-xs font-bold">
+            {metrics?.kpis?.totalQrReferrals ?? 0} In-Store QR Signups
+          </Badge>
+        </CardHeader>
+        <CardContent>
+          <div className="grid gap-6 md:grid-cols-12 items-start">
+            <div className="md:col-span-4 space-y-3 p-4 rounded-2xl bg-muted/30 border border-border/50">
+              <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
+                Acquisition Summary
+              </span>
+              <div className="space-y-2">
+                <div className="flex justify-between items-center text-xs">
+                  <span className="text-muted-foreground">Total Customer Base:</span>
+                  <span className="font-bold text-foreground">{metrics?.kpis?.totalCustomers ?? 0}</span>
+                </div>
+                <div className="flex justify-between items-center text-xs">
+                  <span className="text-muted-foreground">Via Store Counter QR:</span>
+                  <span className="font-bold text-emerald-600 dark:text-emerald-400">
+                    {metrics?.kpis?.totalQrReferrals ?? 0}
+                  </span>
+                </div>
+                <div className="flex justify-between items-center text-xs">
+                  <span className="text-muted-foreground">Direct / Organic:</span>
+                  <span className="font-bold text-foreground">
+                    {Math.max(0, (metrics?.kpis?.totalCustomers ?? 0) - (metrics?.kpis?.totalQrReferrals ?? 0))}
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            <div className="md:col-span-8 space-y-2">
+              <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground block mb-1">
+                Top In-Store QR Stand Growth Outlets
+              </span>
+              {metrics?.storeAcquisitions && metrics.storeAcquisitions.length > 0 ? (
+                <div className="grid gap-2 sm:grid-cols-2">
+                  {metrics.storeAcquisitions.map((st) => (
+                    <div
+                      key={st.id}
+                      className="flex items-center justify-between p-3 rounded-xl bg-card border border-border/60 hover:bg-muted/30 transition-colors"
+                    >
+                      <div className="flex items-center gap-2.5 min-w-0">
+                        <div
+                          className="w-7 h-7 rounded-lg flex items-center justify-center text-white text-xs font-bold shrink-0"
+                          style={{ backgroundColor: st.primaryColor || '#10b981' }}
+                        >
+                          <Store className="w-3.5 h-3.5" />
+                        </div>
+                        <div className="min-w-0">
+                          <p className="text-xs font-semibold truncate text-foreground">{st.name}</p>
+                          <p className="text-[10px] text-muted-foreground">{st.totalMembersCount} total members</p>
+                        </div>
+                      </div>
+                      <Badge className="bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 text-[11px] font-mono font-bold shrink-0">
+                        {st.referredUsersCount} QR signups
+                      </Badge>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="p-6 text-center text-xs text-muted-foreground bg-muted/20 rounded-xl">
+                  No store referrals recorded yet.
+                </div>
+              )}
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
       {/* Quick Navigation Cards */}
       <div className="grid gap-4 sm:grid-cols-3">
         <Link

@@ -25,6 +25,7 @@ type RegisterPayload = UserProfileInput & {
   email: string;
   password: string;
   role?: DbUserRole;
+  referredByStoreId?: string;
 };
 
 type LoginPayload = {
@@ -117,6 +118,7 @@ export class AuthenticationService {
     const userRecord = await this.upsertUserFromSupabase(supabaseUser, {
       ...profileMetadata,
       role,
+      referredByStoreId: payload.referredByStoreId,
     });
 
     return {
@@ -228,7 +230,7 @@ export class AuthenticationService {
 
   private async upsertUserFromSupabase(
     user: SupabaseUser,
-    overrides?: UserProfileInput & { role?: DbUserRole }
+    overrides?: UserProfileInput & { role?: DbUserRole; referredByStoreId?: string }
   ) {
     const email = user.email;
 
@@ -249,26 +251,62 @@ export class AuthenticationService {
       (user.user_metadata?.role as DbUserRole | undefined) ??
       'CUSTOMER';
 
+    const prismaRole = role as PrismaUserRole;
+
     const profile = this.pickProfileFields({
       ...(user.user_metadata as Record<string, unknown>),
       ...overrides,
     });
-    const prismaRole = role as PrismaUserRole;
+    const referredByStoreId =
+      overrides?.referredByStoreId ??
+      (user.user_metadata?.referredByStoreId as string | undefined);
 
     const dbUser = await this.prisma.user.upsert({
       where: { id: user.id },
       update: {
         email,
         role: prismaRole,
+        ...(referredByStoreId ? { referredByStoreId } : {}),
         ...profile,
       },
       create: {
         id: user.id,
         email,
         role: prismaRole,
+        referredByStoreId: referredByStoreId || null,
         ...profile,
       },
     });
+
+    // If referred by a store, automatically create initial CustomerMembership
+    if (referredByStoreId) {
+      try {
+        const store = await this.prisma.store.findUnique({
+          where: { id: referredByStoreId },
+        });
+
+        if (store && store.active) {
+          await this.prisma.customerMembership.upsert({
+            where: {
+              customerStoreIdx: {
+                customerId: dbUser.id,
+                storeId: store.id,
+              },
+            },
+            update: {},
+            create: {
+              customerId: dbUser.id,
+              storeId: store.id,
+              pointsBalance: 0,
+              qrCodeToken: `${dbUser.id}:${store.id}`,
+              joinSource: 'STORE_QR',
+            },
+          });
+        }
+      } catch (e) {
+        console.warn('Failed to auto-enroll referred customer:', e);
+      }
+    }
 
     // Keep JWT in sync: push DB role into Supabase user_metadata so the next token (login/refresh) contains the correct role (Security First).
     const serviceClient = getSupabaseServiceClient();

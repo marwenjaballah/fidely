@@ -2,12 +2,24 @@
 
 import React, { useEffect, useState, use } from 'react'
 import Link from 'next/link'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { PWAInstallPrompt } from '@/components/pwa-install-prompt'
 import { AppleWalletPass } from '@/components/common/apple-wallet-card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Card, CardContent } from '@/components/ui/card'
-import { Coffee, Sparkles, Gift, ArrowRight, CheckCircle2, Loader2, Store as StoreIcon } from 'lucide-react'
+import {
+  Coffee,
+  Sparkles,
+  Gift,
+  ArrowRight,
+  CheckCircle2,
+  Loader2,
+  Store as StoreIcon,
+  QrCode,
+} from 'lucide-react'
+import { useAuth } from '@/features/auth/hooks/use-auth'
+import { useCustomerStore } from '@/store/customer-store'
 
 interface StoreReward {
   id: string
@@ -29,8 +41,15 @@ interface StorePublicData {
 
 export default function CustomerStorePage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = use(params)
+  const router = useRouter()
+  const searchParams = useSearchParams()
+  const referralStoreId = searchParams.get('ref')
+  const { isAuthenticated, hasHydrated } = useAuth()
+  const { joinStore } = useCustomerStore()
+
   const [store, setStore] = useState<StorePublicData | null>(null)
   const [loading, setLoading] = useState(true)
+  const [joining, setJoining] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
@@ -51,6 +70,26 @@ export default function CustomerStorePage({ params }: { params: Promise<{ slug: 
     }
     loadStore()
   }, [slug])
+
+  const handleJoinClick = async () => {
+    if (!store) return
+
+    if (!isAuthenticated) {
+      // Direct unauthenticated user to sign up with store referral
+      router.push(`/auth/sign-up?ref=${store.id}&joinStore=${store.id}`)
+      return
+    }
+
+    try {
+      setJoining(true)
+      await joinStore(store.id)
+      router.push('/customer/overview')
+    } catch {
+      router.push('/customer/overview')
+    } finally {
+      setJoining(false)
+    }
+  }
 
   if (loading) {
     return (
@@ -78,20 +117,31 @@ export default function CustomerStorePage({ params }: { params: Promise<{ slug: 
     )
   }
 
-  const primaryColor = store.primaryColor || '#D97706'
-
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-zinc-950 flex flex-col items-center p-4 sm:p-6 pb-24">
-      <div className="w-full max-w-md mt-6 space-y-6">
+      <div className="w-full max-w-md mt-4 space-y-5">
+        {/* Referral Invitation Banner */}
+        <div className="bg-primary/10 border border-primary/20 rounded-2xl p-3.5 flex items-center gap-3">
+          <div className="w-9 h-9 rounded-xl bg-primary text-primary-foreground flex items-center justify-center shrink-0">
+            <QrCode className="w-5 h-5" />
+          </div>
+          <div>
+            <h3 className="font-bold text-xs text-foreground">In-Store Loyalty Pass</h3>
+            <p className="text-[11px] text-muted-foreground">
+              You scanned the counter QR stand for <strong className="text-foreground">{store.name}</strong>.
+            </p>
+          </div>
+        </div>
+
         {/* Apple Wallet Pass Graphic */}
         <AppleWalletPass
           storeName={store.name}
           logoUrl={store.logoUrl}
           primaryColor={store.primaryColor || '#D97706'}
-          pointsBalance={1250}
+          pointsBalance={0}
           pointsPerTnd={store.pointsPerTnd}
           qrCodeToken={`JOIN:${store.slug}`}
-          memberName="New Cardholder"
+          memberName={isAuthenticated ? 'Loyalty Member' : 'New Member'}
           memberSince="Available Now"
           rewardsCount={store.rewards.length}
           nextRewardName={store.rewards[0]?.name}
@@ -102,13 +152,30 @@ export default function CustomerStorePage({ params }: { params: Promise<{ slug: 
 
         {/* Action Button */}
         <div className="space-y-3">
-          <Button asChild size="lg" className="w-full text-base font-semibold shadow-lg gap-2 h-12 rounded-2xl">
-            <Link href="/customer/overview">
-              Join & Collect Points <ArrowRight className="h-4 w-4" />
-            </Link>
+          <Button
+            size="lg"
+            onClick={handleJoinClick}
+            disabled={joining}
+            className="w-full text-base font-bold shadow-xl gap-2 h-14 rounded-2xl bg-primary text-primary-foreground"
+          >
+            {joining ? (
+              <>
+                <Loader2 className="h-5 w-5 animate-spin" /> Adding Card...
+              </>
+            ) : isAuthenticated ? (
+              <>
+                Add {store.name} Card <ArrowRight className="h-4 w-4" />
+              </>
+            ) : (
+              <>
+                Sign Up & Collect Points <ArrowRight className="h-4 w-4" />
+              </>
+            )}
           </Button>
           <p className="text-center text-xs text-muted-foreground">
-            Existing member? Tap above to open your digital QR pass.
+            {isAuthenticated
+              ? 'Already registered. Tap above to add to your wallet.'
+              : 'Create a free account in seconds to start earning loyalty points!'}
           </p>
         </div>
 
@@ -122,7 +189,7 @@ export default function CustomerStorePage({ params }: { params: Promise<{ slug: 
 
             <div className="grid gap-2.5">
               {store.rewards.map((reward) => (
-                <Card key={reward.id} className="border-border/60 bg-card/80 backdrop-blur-xs shadow-xs">
+                <Card key={reward.id} className="border-border/60 bg-card/80 backdrop-blur-xs shadow-xs rounded-2xl">
                   <CardContent className="p-4 flex items-center justify-between gap-3">
                     <div className="flex items-center gap-3">
                       <div className="h-9 w-9 rounded-xl bg-primary/10 text-primary flex items-center justify-center font-bold shrink-0">

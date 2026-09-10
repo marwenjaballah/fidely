@@ -41,10 +41,14 @@ function normalizeError(err: unknown): ApiError {
     let message: string | undefined
     if (payload && typeof payload === 'object') {
       const body = payload as Record<string, unknown>
-      if (typeof body?.error === 'object' && body.error !== null && 'message' in body.error) {
+      if (typeof body?.error === 'string') {
+        message = body.error
+      } else if (typeof body?.error === 'object' && body.error !== null && 'message' in body.error) {
         message = (body.error as { message?: string }).message as string | undefined
       }
       if (!message && typeof body?.message === 'string') message = body.message
+    } else if (typeof payload === 'string') {
+      message = payload
     }
     return new ApiError(message ?? err.message ?? 'Request failed', status, payload)
   }

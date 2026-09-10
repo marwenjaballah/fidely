@@ -302,13 +302,16 @@ export class TransactionsService {
         },
       });
 
-      // Create Voucher for customer
+      // Create Voucher for customer marked as used immediately (since cashier handed over the perk at POS)
+      const now = new Date();
       const voucher = await tx.voucher.create({
         data: {
           membershipId: membership.id,
           rewardId: reward.id,
           code: `VOUCHER-${Math.random().toString(36).substring(2, 8).toUpperCase()}`,
-          status: 'active',
+          status: 'used',
+          issuedAt: now,
+          usedAt: now,
         },
       });
 
@@ -319,5 +322,60 @@ export class TransactionsService {
         storeName: store.name,
       };
     });
+  }
+
+  /**
+   * Retrieves active rewards for the target store for the cashier.
+   */
+  async getStoreRewards(userId: string, userRole: string | undefined, storeId?: string) {
+    const store = await this.resolveAndValidateCashierStore(userId, userRole, storeId);
+    const rewards = await this.prisma.reward.findMany({
+      where: { storeId: store.id, active: true },
+      orderBy: { pointsCost: 'asc' },
+    });
+    return rewards.map((r) => ({
+      id: r.id,
+      name: r.name,
+      description: r.description,
+      pointsCost: r.pointsCost,
+    }));
+  }
+
+  /**
+   * Retrieves the most recent transactions processed at the store.
+   */
+  async getRecentTransactions(
+    userId: string,
+    userRole: string | undefined,
+    storeId?: string,
+    limit: number = 10
+  ) {
+    const store = await this.resolveAndValidateCashierStore(userId, userRole, storeId);
+    const transactions = await this.prisma.transaction.findMany({
+      where: { storeId: store.id },
+      orderBy: { createdAt: 'desc' },
+      take: limit,
+      include: {
+        membership: {
+          include: {
+            customer: {
+              select: {
+                fullName: true,
+                email: true,
+              },
+            },
+          },
+        },
+      },
+    });
+
+    return transactions.map((t) => ({
+      id: t.id,
+      type: t.type,
+      amountTnd: t.amountTnd ? Number(t.amountTnd) : null,
+      pointsAffected: t.pointsAffected,
+      createdAt: t.createdAt.toISOString(),
+      customerName: t.membership?.customer?.fullName || t.membership?.customer?.email?.split('@')[0] || 'Customer',
+    }));
   }
 }

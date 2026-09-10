@@ -15,6 +15,16 @@ export interface AdminKpis {
   totalPointsIssued: number
   totalPointsRedeemed: number
   totalVolumeTnd: number
+  totalQrReferrals?: number
+}
+
+export interface AdminStoreAcquisition {
+  id: string
+  name: string
+  slug: string
+  primaryColor: string
+  referredUsersCount: number
+  totalMembersCount: number
 }
 
 export interface AdminDailyTrend {
@@ -26,6 +36,7 @@ export interface AdminDailyTrend {
 
 export interface AdminMetrics {
   kpis: AdminKpis
+  storeAcquisitions?: AdminStoreAcquisition[]
   dailyTrends: AdminDailyTrend[]
 }
 
@@ -58,6 +69,13 @@ export interface AdminUser {
   createdAt: string
   stores: Array<{ id: string; name: string; slug: string }>
   cashierStores: Array<{ id: string; name: string; slug: string }>
+  referredByStore?: { id: string; name: string; slug: string } | null
+  memberships?: Array<{
+    id: string
+    storeId: string
+    joinSource?: string | null
+    store: { id: string; name: string; slug: string }
+  }>
   membershipsCount: number
 }
 

@@ -42,6 +42,7 @@ export interface RegisterPayload {
   postalCode?: string
   country?: string
   role: UserRole
+  referredByStoreId?: string
 }
 
 export interface RegisterResult {

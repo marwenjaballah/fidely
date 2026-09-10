@@ -134,15 +134,71 @@ export const redeemRewardRoute = createRoute({
         },
       },
     },
-    404: {
-      description: 'Reward not found',
+  },
+});
+
+export const getStoreRewardsRoute = createRoute({
+  method: 'get',
+  path: '/store-rewards',
+  tags: ['Transactions'],
+  security: [{ bearerAuth: [] }],
+  request: {
+    query: z.object({
+      storeId: z.string().optional().describe('Target store ID to fetch rewards for'),
+    }),
+  },
+  responses: {
+    200: {
+      description: 'Active rewards for the selected store',
       content: {
         'application/json': {
-          schema: z.object({
-            error: z.string(),
-          }),
+          schema: z.array(
+            z.object({
+              id: z.string(),
+              name: z.string(),
+              description: z.string().nullable().optional(),
+              pointsCost: z.number(),
+            })
+          ),
         },
       },
     },
+    400: { description: 'Bad request' },
+    401: { description: 'Unauthorized' },
+    403: { description: 'Forbidden' },
+  },
+});
+
+export const getRecentTransactionsRoute = createRoute({
+  method: 'get',
+  path: '/recent',
+  tags: ['Transactions'],
+  security: [{ bearerAuth: [] }],
+  request: {
+    query: z.object({
+      storeId: z.string().optional().describe('Target store ID to fetch recent transactions for'),
+    }),
+  },
+  responses: {
+    200: {
+      description: 'Recent transactions processed at this store',
+      content: {
+        'application/json': {
+          schema: z.array(
+            z.object({
+              id: z.string(),
+              type: z.string(),
+              amountTnd: z.number().nullable(),
+              pointsAffected: z.number(),
+              createdAt: z.string(),
+              customerName: z.string(),
+            })
+          ),
+        },
+      },
+    },
+    400: { description: 'Bad request' },
+    401: { description: 'Unauthorized' },
+    403: { description: 'Forbidden' },
   },
 });

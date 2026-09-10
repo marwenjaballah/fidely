@@ -344,7 +344,7 @@ export default function CustomerOverviewPage() {
                         <Gift className="h-3.5 w-3.5" /> Rewards
                       </TabsTrigger>
                       <TabsTrigger value="vouchers" className="rounded-xl text-xs gap-1">
-                        <Ticket className="h-3.5 w-3.5" /> Vouchers ({activeMembership.vouchers.filter((v) => v.status === 'active').length})
+                        <Ticket className="h-3.5 w-3.5" /> Vouchers ({activeMembership.vouchers.length})
                       </TabsTrigger>
                       <TabsTrigger value="history" className="rounded-xl text-xs gap-1">
                         <History className="h-3.5 w-3.5" /> History
@@ -407,16 +407,16 @@ export default function CustomerOverviewPage() {
                     {/* Vouchers Tab */}
                     <TabsContent value="vouchers" className="mt-4 space-y-3">
                       <div className="rounded-2xl border border-border/70 bg-card p-4 shadow-sm">
-                        <h3 className="font-bold text-sm mb-1">My Redeemed Vouchers</h3>
+                        <h3 className="font-bold text-sm mb-1">Redeemed Perk Receipts</h3>
                         <p className="text-xs text-muted-foreground mb-4">
-                          Show active voucher codes to your barista when collecting items.
+                          History and voucher records of rewards redeemed at checkout.
                         </p>
 
                         {activeMembership.vouchers.length === 0 ? (
                           <div className="p-8 text-center space-y-2">
                             <Ticket className="h-8 w-8 text-muted-foreground/40 mx-auto" />
                             <p className="text-xs text-muted-foreground">
-                              No vouchers yet. Redeem rewards with the cashier to generate vouchers.
+                              No vouchers yet. Redeem rewards with the cashier at checkout to generate voucher records.
                             </p>
                           </div>
                         ) : (
@@ -424,24 +424,45 @@ export default function CustomerOverviewPage() {
                             {activeMembership.vouchers.map((voucher) => (
                               <div
                                 key={voucher.id}
-                                className="p-3.5 rounded-2xl border border-border/60 bg-muted/20 flex items-center justify-between"
+                                className="p-3.5 rounded-2xl border border-border/60 bg-muted/20 flex flex-col sm:flex-row sm:items-center justify-between gap-2"
                               >
                                 <div className="space-y-1">
-                                  <p className="font-semibold text-sm">{voucher.rewardName}</p>
-                                  <code className="text-xs bg-muted px-2 py-0.5 rounded font-mono font-bold text-foreground">
-                                    {voucher.code}
-                                  </code>
+                                  <div className="flex items-center gap-2">
+                                    <p className="font-semibold text-sm">{voucher.rewardName}</p>
+                                    <span className="text-[11px] text-muted-foreground font-mono">
+                                      ({voucher.pointsCost} pts)
+                                    </span>
+                                  </div>
+                                  <div className="flex items-center gap-2">
+                                    <code className="text-xs bg-muted px-2 py-0.5 rounded font-mono font-bold text-foreground">
+                                      {voucher.code}
+                                    </code>
+                                    <span className="text-[11px] text-muted-foreground">
+                                      {voucher.usedAt
+                                        ? `Claimed on ${format(new Date(voucher.usedAt), 'MMM d, yyyy')}`
+                                        : `Issued on ${format(new Date(voucher.issuedAt), 'MMM d, yyyy')}`}
+                                    </span>
+                                  </div>
                                 </div>
-                                <Badge
-                                  variant={voucher.status === 'active' ? 'default' : 'outline'}
-                                  className={
-                                    voucher.status === 'active'
-                                      ? 'bg-emerald-600 text-white text-[11px]'
-                                      : 'text-muted-foreground text-[11px]'
-                                  }
-                                >
-                                  {voucher.status.toUpperCase()}
-                                </Badge>
+                                <div className="self-start sm:self-auto">
+                                  <Badge
+                                    variant={voucher.status === 'used' ? 'secondary' : 'default'}
+                                    className={`text-[11px] flex items-center gap-1 font-semibold ${
+                                      voucher.status === 'used'
+                                        ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20'
+                                        : 'bg-primary text-primary-foreground'
+                                    }`}
+                                  >
+                                    {voucher.status === 'used' ? (
+                                      <>
+                                        <CheckCircle2 className="w-3 h-3" />
+                                        CLAIMED AT POS
+                                      </>
+                                    ) : (
+                                      'ACTIVE'
+                                    )}
+                                  </Badge>
+                                </div>
                               </div>
                             ))}
                           </div>

@@ -38,12 +38,13 @@ interface FieldErrors {
 
 function SignUpForm() {
   const searchParams = useSearchParams()
+  const referralStoreId = searchParams.get('ref') || searchParams.get('joinStore') || undefined
   const [step, setStep] = useState(1)
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
   const [repeatPassword, setRepeatPassword] = useState("")
   const [fullName, setFullName] = useState("")
-  const [role, setRole] = useState<UserRole>(() => DEFAULT_SIGNUP_ROLE)
+  const [role, setRole] = useState<UserRole>(() => (referralStoreId ? 'CUSTOMER' : DEFAULT_SIGNUP_ROLE))
   const [error, setError] = useState<string | null>(null)
   const [isLoading, setIsLoading] = useState(false)
   const [touched, setTouched] = useState({
@@ -161,6 +162,7 @@ function SignUpForm() {
         password,
         fullName,
         role,
+        referredByStoreId: referralStoreId,
       })
       router.push("/auth/sign-up-success")
     } catch (error: unknown) {

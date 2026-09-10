@@ -18,6 +18,7 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog'
 import { useToast } from '@/hooks/use-toast'
+import { StoreQRStandCard } from '@/features/merchant/components/store-qr-stand-card'
 import { AppleWalletPass } from '@/components/common/apple-wallet-card'
 import {
   Store,
@@ -569,6 +570,20 @@ export default function StoreSettingsPage() {
           </p>
         </div>
       </div>
+
+      <Separator />
+
+      {/* Counter QR Stand & Marketing Flyer Studio */}
+      <StoreQRStandCard
+        store={{
+          id: activeStore.id,
+          name: name || activeStore.name,
+          slug: activeStore.slug,
+          primaryColor: primaryColor || activeStore.primaryColor,
+          logoUrl: logoUrl,
+          pointsPerTnd: Number(pointsPerTnd) || activeStore.pointsPerTnd || 10,
+        }}
+      />
 
       <Separator />
 

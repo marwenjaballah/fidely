@@ -18,6 +18,7 @@ export class AdminService {
       totalTransactions,
       totalRewards,
       totalVouchers,
+      totalQrReferrals,
     ] = await Promise.all([
       this.prisma.user.count(),
       this.prisma.user.count({ where: { role: UserRole.MERCHANT } }),
@@ -27,6 +28,7 @@ export class AdminService {
       this.prisma.transaction.count(),
       this.prisma.reward.count({ where: { active: true } }),
       this.prisma.voucher.count(),
+      this.prisma.user.count({ where: { referredByStoreId: { not: null } } }),
     ])
 
     const transactions = await this.prisma.transaction.findMany({
@@ -51,6 +53,37 @@ export class AdminService {
     const totalVolumeTnd = transactions
       .filter((t) => t.amountTnd !== null)
       .reduce((sum, t) => sum + Number(t.amountTnd || 0), 0)
+
+    // Calculate store customer acquisition breakdown
+    const storesWithReferrals = await this.prisma.store.findMany({
+      select: {
+        id: true,
+        name: true,
+        slug: true,
+        primaryColor: true,
+        _count: {
+          select: {
+            referredUsers: true,
+            memberships: true,
+          },
+        },
+      },
+      orderBy: {
+        referredUsers: {
+          _count: 'desc',
+        },
+      },
+      take: 10,
+    })
+
+    const storeAcquisitions = storesWithReferrals.map((s) => ({
+      id: s.id,
+      name: s.name,
+      slug: s.slug,
+      primaryColor: s.primaryColor,
+      referredUsersCount: s._count.referredUsers,
+      totalMembersCount: s._count.memberships,
+    }))
 
     // Calculate 14-day daily transaction volume trend
     const dailyVolumeMap = new Map<string, { date: string; issued: number; redeemed: number; volumeTnd: number }>()
@@ -93,7 +126,9 @@ export class AdminService {
         totalPointsIssued,
         totalPointsRedeemed,
         totalVolumeTnd,
+        totalQrReferrals,
       },
+      storeAcquisitions,
       dailyTrends,
     }
   }
@@ -170,6 +205,17 @@ export class AdminService {
         cashierStores: {
           select: { id: true, name: true, slug: true },
         },
+        referredByStore: {
+          select: { id: true, name: true, slug: true },
+        },
+        memberships: {
+          select: {
+            id: true,
+            storeId: true,
+            joinSource: true,
+            store: { select: { id: true, name: true, slug: true } },
+          },
+        },
         _count: {
           select: {
             memberships: true,
@@ -189,6 +235,8 @@ export class AdminService {
       createdAt: u.createdAt.toISOString(),
       stores: u.stores,
       cashierStores: u.cashierStores,
+      referredByStore: u.referredByStore,
+      memberships: u.memberships,
       membershipsCount: u._count.memberships,
     }))
   }

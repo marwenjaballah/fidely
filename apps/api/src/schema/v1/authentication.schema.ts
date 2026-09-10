@@ -60,6 +60,7 @@ export const registerUserSchema = createRoute({
             email: z.string().email(),
             password: z.string().min(8).max(72),
             role: userRoleEnum.optional(),
+            referredByStoreId: z.string().optional(),
           }).extend(userProfileRequestSchema.shape),
         },
       },

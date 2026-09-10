@@ -2,6 +2,8 @@ import { OpenAPIHono } from '@hono/zod-openapi';
 import type { Env } from '../../../types/index.js';
 import {
   getCashierStoresRoute,
+  getStoreRewardsRoute,
+  getRecentTransactionsRoute,
   issuePointsRoute,
   redeemRewardRoute,
 } from './transactions.route.js';
@@ -19,6 +21,34 @@ router.openapi(getCashierStoresRoute, async (c) => {
     return c.json(stores, 200);
   } catch (error: any) {
     const status = error.status || error.statusCode || 401;
+    return c.json({ error: error.message }, status) as any;
+  }
+});
+
+router.openapi(getStoreRewardsRoute, async (c) => {
+  try {
+    const user = requireUser(c);
+    const { storeId } = c.req.valid('query');
+    const prisma = c.get('prisma');
+    const service = new TransactionsService(prisma);
+    const rewards = await service.getStoreRewards(user.id, user.role, storeId);
+    return c.json(rewards, 200);
+  } catch (error: any) {
+    const status = error.status || error.statusCode || 400;
+    return c.json({ error: error.message }, status) as any;
+  }
+});
+
+router.openapi(getRecentTransactionsRoute, async (c) => {
+  try {
+    const user = requireUser(c);
+    const { storeId } = c.req.valid('query');
+    const prisma = c.get('prisma');
+    const service = new TransactionsService(prisma);
+    const transactions = await service.getRecentTransactions(user.id, user.role, storeId);
+    return c.json(transactions, 200);
+  } catch (error: any) {
+    const status = error.status || error.statusCode || 400;
     return c.json({ error: error.message }, status) as any;
   }
 });
@@ -59,3 +89,4 @@ export default {
   priority: 1,
   name: 'Transactions',
 };
+

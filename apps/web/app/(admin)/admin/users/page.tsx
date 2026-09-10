@@ -12,6 +12,7 @@ import {
   Calendar,
   MoreVertical,
   CheckCircle2,
+  QrCode,
 } from 'lucide-react'
 import { useAdminStore, AdminUser } from '@/store/admin-store'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -179,8 +180,9 @@ export default function AdminUsersPage() {
             <Table>
               <TableHeader>
                 <TableRow className="hover:bg-transparent">
-                  <TableHead className="w-[280px]">User Account</TableHead>
+                  <TableHead className="w-[260px]">User Account</TableHead>
                   <TableHead>Role</TableHead>
+                  <TableHead>Acquisition Source</TableHead>
                   <TableHead>Entities & Affiliations</TableHead>
                   <TableHead>Registered</TableHead>
                   <TableHead className="text-right">Actions</TableHead>
@@ -189,13 +191,13 @@ export default function AdminUsersPage() {
               <TableBody>
                 {loading && users.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={5} className="h-32 text-center text-muted-foreground">
+                    <TableCell colSpan={6} className="h-32 text-center text-muted-foreground">
                       Loading users list...
                     </TableCell>
                   </TableRow>
                 ) : users.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={5} className="h-32 text-center text-muted-foreground">
+                    <TableCell colSpan={6} className="h-32 text-center text-muted-foreground">
                       No users found.
                     </TableCell>
                   </TableRow>
@@ -216,6 +218,27 @@ export default function AdminUsersPage() {
                         </div>
                       </TableCell>
                       <TableCell>{getRoleBadge(user.role)}</TableCell>
+                      <TableCell>
+                        {user.referredByStore ? (
+                          <Badge
+                            variant="outline"
+                            className="bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/30 gap-1 text-[11px] font-semibold"
+                          >
+                            <QrCode className="w-3 h-3" />
+                            {user.referredByStore.name} QR
+                          </Badge>
+                        ) : user.memberships && user.memberships.some((m) => m.joinSource === 'STORE_QR') ? (
+                          <Badge
+                            variant="outline"
+                            className="bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-500/30 gap-1 text-[11px] font-semibold"
+                          >
+                            <QrCode className="w-3 h-3" />
+                            Store QR Stand
+                          </Badge>
+                        ) : (
+                          <span className="text-xs text-muted-foreground font-medium">Direct / Organic</span>
+                        )}
+                      </TableCell>
                       <TableCell>
                         <div className="flex items-center gap-2 text-xs">
                           {user.stores && user.stores.length > 0 && (

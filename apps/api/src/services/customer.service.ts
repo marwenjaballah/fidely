@@ -133,7 +133,7 @@ export class CustomerService {
   /**
    * Enrolls a customer in a store's loyalty program.
    */
-  async joinStore(customerId: string, storeId: string) {
+  async joinStore(customerId: string, storeId: string, joinSource: string = 'STORE_QR') {
     const store = await this.prisma.store.findUnique({
       where: { id: storeId },
     });
@@ -161,6 +161,7 @@ export class CustomerService {
         storeId,
         pointsBalance: 0,
         qrCodeToken: `${customerId}:${storeId}`,
+        joinSource,
       },
     });
 
