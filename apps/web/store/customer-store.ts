@@ -65,6 +65,7 @@ export interface CustomerState {
   fetchOverview: () => Promise<void>
   setActiveMembership: (membershipId: string) => void
   joinStore: (storeId: string) => Promise<void>
+  joinStoreBySlug: (slugOrUrl: string) => Promise<any>
 }
 
 const baseURL = (process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3000').replace(/\/$/, '')
@@ -140,6 +141,55 @@ export const useCustomerStore = create<CustomerState>((set, get) => ({
       const message = err instanceof ApiError ? err.message : 'Failed to join coffee shop loyalty.'
       set({ error: message, loading: false })
       throw err
+    }
+  },
+
+  joinStoreBySlug: async (slugOrUrl: string) => {
+    set({ loading: true, error: null })
+    try {
+      const client = getCustomerClient()
+      let cleanSlug = slugOrUrl.trim()
+      // If it's a URL, extract path
+      try {
+        if (cleanSlug.startsWith('http://') || cleanSlug.startsWith('https://')) {
+          const parsed = new URL(cleanSlug)
+          const segments = parsed.pathname.split('/').filter(Boolean)
+          const storeIdx = segments.indexOf('store')
+          if (storeIdx !== -1 && segments[storeIdx + 1]) {
+            cleanSlug = segments[storeIdx + 1]
+          } else if (segments.length > 0) {
+            cleanSlug = segments[segments.length - 1]
+          }
+        } else {
+          cleanSlug = cleanSlug
+            .replace(/^https?:\/\/[^/]+\/store\//i, '')
+            .replace(/^\/?store\//i, '')
+            .replace(/^fidely\.app\/store\//i, '')
+            .split('?')[0]
+            .split('#')[0]
+            .replace(/\/.*$/, '')
+            .trim()
+        }
+      } catch {
+        cleanSlug = cleanSlug.split('?')[0].split('/')[0].trim()
+      }
+
+      if (!cleanSlug) {
+        throw new Error('Please enter a valid store link or identifier.')
+      }
+
+      const res = await fetch(`${baseURL}/api/v1/customer/store/${encodeURIComponent(cleanSlug)}`)
+      if (!res.ok) {
+        throw new Error(`Store "${cleanSlug}" not found. Please verify the link.`)
+      }
+      const storeData = await res.json()
+      await client.post('/api/v1/customer/join', { storeId: storeData.id })
+      await get().fetchOverview()
+      return storeData
+    } catch (err: any) {
+      const message = err instanceof ApiError ? err.message : err.message || 'Failed to join coffee shop.'
+      set({ error: message, loading: false })
+      throw new Error(message)
     }
   },
 }))

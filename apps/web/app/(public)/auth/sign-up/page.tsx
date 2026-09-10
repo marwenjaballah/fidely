@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import Link from "next/link"
 import { useRouter, useSearchParams } from "next/navigation"
-import { useState, Suspense } from "react"
+import { useState, useEffect, Suspense } from "react"
 import type { UserRole } from "@/lib/db-types"
 import { ApiError } from "@/features/auth/services/auth-service"
 import { strings } from "@/lib/strings"
@@ -24,7 +24,7 @@ import {
   validatePostalCode,
   validateCountry,
 } from "@/features/auth/utils/auth-validation"
-import { ChevronRight, ChevronLeft, Loader2, LayoutGrid } from "lucide-react"
+import { ChevronRight, ChevronLeft, Loader2, LayoutGrid, Coffee } from "lucide-react"
 import { Separator } from "@/components/ui/separator"
 
 const DEFAULT_SIGNUP_ROLE: UserRole = "MERCHANT"
@@ -38,15 +38,43 @@ interface FieldErrors {
 
 function SignUpForm() {
   const searchParams = useSearchParams()
-  const referralStoreId = searchParams.get('ref') || searchParams.get('joinStore') || undefined
+  const searchRef = searchParams.get('ref') || searchParams.get('joinStore') || undefined
+  const [referralStoreId, setReferralStoreId] = useState<string | undefined>(searchRef)
+  const [storeInfo, setStoreInfo] = useState<{ name: string; logoUrl?: string | null } | null>(null)
   const [step, setStep] = useState(1)
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
   const [repeatPassword, setRepeatPassword] = useState("")
   const [fullName, setFullName] = useState("")
-  const [role, setRole] = useState<UserRole>(() => (referralStoreId ? 'CUSTOMER' : DEFAULT_SIGNUP_ROLE))
+  const [role, setRole] = useState<UserRole>(() => (searchRef ? 'CUSTOMER' : DEFAULT_SIGNUP_ROLE))
   const [error, setError] = useState<string | null>(null)
   const [isLoading, setIsLoading] = useState(false)
+
+  // Sync and fetch store referral details if available
+  useEffect(() => {
+    let effectiveRef = searchRef
+    if (!effectiveRef && typeof window !== 'undefined') {
+      effectiveRef = localStorage.getItem('fidely_pending_join_store') || undefined
+    }
+
+    if (effectiveRef) {
+      setReferralStoreId(effectiveRef)
+      setRole('CUSTOMER')
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('fidely_pending_join_store', effectiveRef)
+      }
+
+      const apiBase = (process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3000').replace(/\/$/, '')
+      fetch(`${apiBase}/api/v1/customer/store/${encodeURIComponent(effectiveRef)}`)
+        .then((res) => (res.ok ? res.json() : null))
+        .then((data) => {
+          if (data) {
+            setStoreInfo({ name: data.name, logoUrl: data.logoUrl })
+          }
+        })
+        .catch(() => {})
+    }
+  }, [searchRef])
   const [touched, setTouched] = useState({
     email: false,
     password: false,
@@ -201,6 +229,27 @@ function SignUpForm() {
               <p className="text-sm sm:text-base text-muted-foreground">{strings.auth_signup_description}</p>
             </div>
 
+            {/* Store Referral Banner */}
+            {storeInfo && (
+              <div className="bg-primary/10 border border-primary/20 rounded-2xl p-3.5 flex items-center gap-3 text-left shadow-2xs">
+                <div className="h-10 w-10 rounded-xl bg-primary text-primary-foreground flex items-center justify-center font-bold overflow-hidden shrink-0 shadow-xs">
+                  {storeInfo.logoUrl ? (
+                    <img src={storeInfo.logoUrl} alt={storeInfo.name} className="h-full w-full object-cover" />
+                  ) : (
+                    <Coffee className="h-5 w-5" />
+                  )}
+                </div>
+                <div>
+                  <p className="text-xs font-bold text-foreground leading-tight">
+                    Joining {storeInfo.name}&apos;s Loyalty Program
+                  </p>
+                  <p className="text-[11px] text-muted-foreground mt-0.5">
+                    Your coffee loyalty pass will be automatically added to your wallet!
+                  </p>
+                </div>
+              </div>
+            )}
+
             {/* Step Indicator */}
             <div className="flex items-center justify-center gap-2 mb-6">
               <div className={`flex items-center gap-2 ${step >= 1 ? 'text-primary' : 'text-muted-foreground'}`}>
@@ -224,8 +273,8 @@ function SignUpForm() {
               </div>
             </div>
 
-            {/* Role Selector */}
-            {step === 1 && (
+            {/* Role Selector (Only shown if not referred by a specific store) */}
+            {step === 1 && !referralStoreId && (
               <div className="flex justify-center mb-6">
                 <div className="inline-flex bg-muted p-1 rounded-lg">
                   <button
@@ -453,7 +502,10 @@ function SignUpForm() {
 
               <div className="text-center text-sm text-muted-foreground">
                 {strings.auth_signup_login_prompt}{" "}
-                <Link href="/auth/login" className="text-primary hover:underline font-medium">
+                <Link
+                  href={referralStoreId ? `/auth/login?ref=${encodeURIComponent(referralStoreId)}` : "/auth/login"}
+                  className="text-primary hover:underline font-medium"
+                >
                   {strings.auth_signup_login_link}
                 </Link>
               </div>

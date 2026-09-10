@@ -35,18 +35,10 @@ export function CreateStoreDialog({ open, onOpenChange }: CreateStoreDialogProps
       return
     }
 
-    const finalSlug = (slug.trim() || name.trim())
-      .toLowerCase()
-      .replace(/[^a-z0-9]+/g, '-')
-      .replace(/(^-|-$)/g, '')
-
-    if (!finalSlug) {
-      setLocalError('A valid URL slug is required.')
-      return
-    }
+    const candidateSlug = slug.trim() || name.trim()
 
     try {
-      await createStore(name.trim(), finalSlug)
+      await createStore(name.trim(), candidateSlug)
       setName('')
       setSlug('')
       onOpenChange(false)
@@ -57,8 +49,14 @@ export function CreateStoreDialog({ open, onOpenChange }: CreateStoreDialogProps
 
   const handleNameChange = (val: string) => {
     setName(val)
-    if (!slug || slug === name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '')) {
-      setSlug(val.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, ''))
+    const normalized = val
+      .toLowerCase()
+      .normalize('NFKD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .replace(/[^a-z0-9]+/g, '-')
+      .replace(/^-+|-+$/g, '')
+    if (!slug || slug === normalized.slice(0, slug.length)) {
+      setSlug(normalized)
     }
   }
 
@@ -98,11 +96,11 @@ export function CreateStoreDialog({ open, onOpenChange }: CreateStoreDialogProps
                 Store URL Identifier (Slug)
               </Label>
               <div className="flex items-center rounded-md border bg-muted/40 px-3 py-1 text-xs text-muted-foreground">
-                <span>fidely.app/</span>
+                <span className="font-mono text-muted-foreground/80 select-none">fidely.app/store/</span>
                 <input
                   id="create-store-slug"
                   type="text"
-                  className="w-full bg-transparent p-1 text-foreground font-medium outline-none"
+                  className="w-full bg-transparent p-1 text-foreground font-mono font-medium outline-none"
                   placeholder="blue-bottle-coffee"
                   value={slug}
                   onChange={(e) => setSlug(e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, ''))}
@@ -110,7 +108,7 @@ export function CreateStoreDialog({ open, onOpenChange }: CreateStoreDialogProps
                 />
               </div>
               <p className="text-[11px] text-muted-foreground">
-                Unique URL for customer check-ins and loyalty cards.
+                Unique public link for customer check-ins and passes. Duplicates automatically resolve safely.
               </p>
             </div>
 

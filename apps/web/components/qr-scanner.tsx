@@ -8,9 +8,14 @@ import { Button } from '@/components/ui/button';
 interface QRScannerProps {
   onScanSuccess: (decodedText: string) => void;
   onScanError?: (errorMessage: string) => void;
+  containerId?: string;
 }
 
-export function QRScanner({ onScanSuccess, onScanError }: QRScannerProps) {
+export function QRScanner({
+  onScanSuccess,
+  onScanError,
+  containerId = 'qr-reader-container',
+}: QRScannerProps) {
   const [hasPermission, setHasPermission] = useState<boolean | null>(null);
   const [cameras, setCameras] = useState<CameraDevice[]>([]);
   const [currentCameraIndex, setCurrentCameraIndex] = useState(0);
@@ -19,7 +24,6 @@ export function QRScanner({ onScanSuccess, onScanError }: QRScannerProps) {
   const [isInitializing, setIsInitializing] = useState(true);
 
   const scannerRef = useRef<Html5Qrcode | null>(null);
-  const containerId = 'qr-reader-container';
 
   const startScanner = useCallback(
     async (cameraIdOrFacing: string | { facingMode: string }) => {

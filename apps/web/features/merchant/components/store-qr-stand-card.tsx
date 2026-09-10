@@ -202,7 +202,7 @@ export function StoreQRStandCard({ store }: StoreQRStandCardProps) {
       currentY += 45;
       ctx.fillStyle = '#94a3b8';
       ctx.font = '400 26px Inter, system-ui, sans-serif';
-      ctx.fillText('Point your camera to join our loyalty pass in Apple Wallet / Web', width / 2, currentY);
+      ctx.fillText('Point your camera to join our loyalty pass in Fidely Wallet / Web', width / 2, currentY);
 
       // 7. Step bubbles at bottom
       currentY += 90;
@@ -368,7 +368,7 @@ export function StoreQRStandCard({ store }: StoreQRStandCardProps) {
                   Scan to Join & Earn Perks
                 </span>
                 <p className="text-[10px] text-slate-400">
-                  1 TND = {pointsPerTnd} points • Apple Wallet Ready
+                  1 TND = {pointsPerTnd} points • Fidely Wallet Ready
                 </p>
               </div>
 

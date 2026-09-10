@@ -1,5 +1,6 @@
 import type { PrismaClient } from '@repo/database';
 import { getSupabaseServiceClient } from '../lib/supabase.js';
+import { generateUniqueSlug } from '../lib/slug.js';
 
 export class MerchantService {
   constructor(private prisma: PrismaClient, private supabaseAdmin?: any) {}
@@ -10,21 +11,15 @@ export class MerchantService {
     });
   }
 
-  async createStore(merchantId: string, data: { name: string; slug: string; primaryColor?: string; pointsPerTnd?: number; logoUrl?: string | null }) {
-    // Check if slug exists
-    const existing = await this.prisma.store.findUnique({
-      where: { slug: data.slug }
-    });
-
-    if (existing) {
-      throw new Error('Store with this slug already exists');
-    }
+  async createStore(merchantId: string, data: { name: string; slug?: string; primaryColor?: string; pointsPerTnd?: number; logoUrl?: string | null }) {
+    const candidate = data.slug && data.slug.trim() ? data.slug : data.name;
+    const uniqueSlug = await generateUniqueSlug(this.prisma, candidate);
 
     return this.prisma.store.create({
       data: {
         ownerId: merchantId,
         name: data.name,
-        slug: data.slug,
+        slug: uniqueSlug,
         primaryColor: data.primaryColor || '#000000',
         pointsPerTnd: data.pointsPerTnd || 10,
         logoUrl: data.logoUrl ?? null,
@@ -32,7 +27,7 @@ export class MerchantService {
     });
   }
 
-  async updateStore(storeId: string, merchantId: string, data: { name?: string; primaryColor?: string; pointsPerTnd?: number; logoUrl?: string | null }) {
+  async updateStore(storeId: string, merchantId: string, data: { name?: string; slug?: string; primaryColor?: string; pointsPerTnd?: number; logoUrl?: string | null }) {
     // Verify ownership
     const store = await this.prisma.store.findFirst({
       where: { id: storeId, ownerId: merchantId },
@@ -42,9 +37,22 @@ export class MerchantService {
       throw new Error('Store not found or unauthorized');
     }
 
+    let nextSlug = store.slug;
+    if (data.slug && data.slug.trim() && data.slug.trim() !== store.slug) {
+      nextSlug = await generateUniqueSlug(this.prisma, data.slug.trim(), storeId);
+    } else if (data.name && data.name.trim() && data.name.trim() !== store.name && !data.slug) {
+      nextSlug = await generateUniqueSlug(this.prisma, data.name.trim(), storeId);
+    }
+
     return this.prisma.store.update({
       where: { id: storeId },
-      data,
+      data: {
+        ...(data.name !== undefined ? { name: data.name } : {}),
+        slug: nextSlug,
+        ...(data.primaryColor !== undefined ? { primaryColor: data.primaryColor } : {}),
+        ...(data.pointsPerTnd !== undefined ? { pointsPerTnd: data.pointsPerTnd } : {}),
+        ...(data.logoUrl !== undefined ? { logoUrl: data.logoUrl } : {}),
+      },
     });
   }
 

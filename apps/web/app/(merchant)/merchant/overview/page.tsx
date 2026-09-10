@@ -33,12 +33,12 @@ export default function OverviewPage() {
 
   const handleCreateStore = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (!storeName.trim() || !storeSlug.trim()) return
+    if (!storeName.trim()) return
     try {
-      const created = await createStore(storeName.trim(), storeSlug.trim())
+      const created = await createStore(storeName.trim(), storeSlug.trim() || undefined)
       toast({
         title: 'Store Created Successfully',
-        description: `'${created.name}' is now ready for loyalty cards and cashiers.`,
+        description: `'${created.name}' is now ready (Link: /store/${created.slug}).`,
       })
       setIsCreating(false)
       setStoreName('')
@@ -155,8 +155,14 @@ export default function OverviewPage() {
                   value={storeName}
                   onChange={(e) => {
                     setStoreName(e.target.value)
-                    if (!storeSlug) {
-                      setStoreSlug(e.target.value.toLowerCase().replace(/[^a-z0-9]+/g, '-'))
+                    const normalized = e.target.value
+                      .toLowerCase()
+                      .normalize('NFKD')
+                      .replace(/[\u0300-\u036f]/g, '')
+                      .replace(/[^a-z0-9]+/g, '-')
+                      .replace(/^-+|-+$/g, '')
+                    if (!storeSlug || storeSlug === normalized.slice(0, storeSlug.length)) {
+                      setStoreSlug(normalized)
                     }
                   }}
                   placeholder="My Awesome Cafe"
@@ -165,14 +171,18 @@ export default function OverviewPage() {
               </div>
               <div className="space-y-2">
                 <Label htmlFor="storeSlug">URL Slug</Label>
-                <Input
-                  id="storeSlug"
-                  value={storeSlug}
-                  onChange={(e) => setStoreSlug(e.target.value)}
-                  placeholder="my-awesome-cafe"
-                  required
-                />
-                <p className="text-xs text-muted-foreground">This is used for your public store link.</p>
+                <div className="flex items-center rounded-md border bg-muted/40 px-3 py-1 text-xs text-muted-foreground">
+                  <span className="font-mono text-muted-foreground/80 select-none">fidely.app/store/</span>
+                  <input
+                    id="storeSlug"
+                    type="text"
+                    className="w-full bg-transparent p-1 text-foreground font-mono font-medium outline-none"
+                    value={storeSlug}
+                    onChange={(e) => setStoreSlug(e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, ''))}
+                    placeholder="my-awesome-cafe"
+                  />
+                </div>
+                <p className="text-xs text-muted-foreground">Used for your public digital loyalty pass. Collisions resolve automatically.</p>
               </div>
               {error && <p className="text-sm text-destructive">{error}</p>}
               <div className="flex gap-2">

@@ -28,7 +28,7 @@ export class AdminService {
       this.prisma.transaction.count(),
       this.prisma.reward.count({ where: { active: true } }),
       this.prisma.voucher.count(),
-      this.prisma.user.count({ where: { referredByStoreId: { not: null } } }),
+      this.prisma.user.count({ where: { referredByStoreId: { not: null } } }).catch(() => 0),
     ])
 
     const transactions = await this.prisma.transaction.findMany({

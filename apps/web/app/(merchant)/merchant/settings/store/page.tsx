@@ -40,6 +40,9 @@ import {
   Image as ImageIcon,
   X,
   Loader2,
+  Globe,
+  Link as LinkIcon,
+  RefreshCw,
 } from 'lucide-react'
 
 const COLOR_PRESETS = [
@@ -100,12 +103,26 @@ async function optimizeIcon(file: File, maxDimension = 128): Promise<string> {
   })
 }
 
+function slugifyClient(text: string): string {
+  return text
+    .toString()
+    .normalize('NFKD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase()
+    .trim()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '')
+    .replace(/-{2,}/g, '-')
+}
+
 export default function StoreSettingsPage() {
   const { activeStore, updateStore, rewards, fetchRewards, createReward, updateReward, deleteReward, loading } = useMerchantStore()
   const { toast } = useToast()
 
   // Store Customizer Form State
   const [name, setName] = useState('')
+  const [slug, setSlug] = useState('')
+  const [isAutoSyncSlug, setIsAutoSyncSlug] = useState(true)
   const [primaryColor, setPrimaryColor] = useState('#D97706')
   const [pointsPerTnd, setPointsPerTnd] = useState(10)
   const [logoUrl, setLogoUrl] = useState<string | null>(null)
@@ -125,12 +142,26 @@ export default function StoreSettingsPage() {
   useEffect(() => {
     if (activeStore) {
       setName(activeStore.name)
+      setSlug(activeStore.slug)
+      setIsAutoSyncSlug(true)
       setPrimaryColor(activeStore.primaryColor || '#D97706')
       setPointsPerTnd(Number(activeStore.pointsPerTnd) || 10)
       setLogoUrl(activeStore.logoUrl || null)
       fetchRewards(activeStore.id)
     }
   }, [activeStore, fetchRewards])
+
+  const handleNameChange = (val: string) => {
+    setName(val)
+    if (isAutoSyncSlug) {
+      setSlug(slugifyClient(val))
+    }
+  }
+
+  const handleSlugChange = (val: string) => {
+    setSlug(val.toLowerCase().replace(/[^a-z0-9-]/g, ''))
+    setIsAutoSyncSlug(false)
+  }
 
   const handleIconUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
@@ -170,16 +201,29 @@ export default function StoreSettingsPage() {
     if (!activeStore) return
     setIsSaving(true)
     try {
+      const oldSlug = activeStore.slug
       await updateStore(activeStore.id, {
         name,
+        slug: slug.trim() || undefined,
         primaryColor,
         pointsPerTnd: Number(pointsPerTnd),
         logoUrl,
       })
-      toast({
-        title: 'Store Settings Saved',
-        description: 'Branding, custom card icon, and point multipliers updated successfully.',
-      })
+
+      const updatedActive = useMerchantStore.getState().activeStore
+      const finalSlug = updatedActive?.slug || slug
+
+      if (finalSlug !== oldSlug) {
+        toast({
+          title: 'Store & Public Link Updated',
+          description: `Your new public store link is /store/${finalSlug}. Historical links and store ID passes remain active.`,
+        })
+      } else {
+        toast({
+          title: 'Store Settings Saved',
+          description: 'Branding, card configuration, and loyalty perks saved successfully.',
+        })
+      }
     } catch (err: any) {
       toast({
         title: 'Save Failed',
@@ -347,10 +391,78 @@ export default function StoreSettingsPage() {
                   <Input
                     id="storeName"
                     value={name}
-                    onChange={(e) => setName(e.target.value)}
+                    onChange={(e) => handleNameChange(e.target.value)}
                     placeholder="e.g. Artisan Roast Cafe"
                     required
                   />
+                </div>
+
+                {/* Dynamic Store Public Link & URL Identifier */}
+                <div className="rounded-xl border border-border/70 bg-muted/20 p-4 space-y-3">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <Globe className="h-4 w-4 text-primary" />
+                      <Label htmlFor="storeSlug" className="text-xs font-semibold uppercase tracking-wider text-foreground">
+                        Public Store Link
+                      </Label>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span className="text-[11px] text-muted-foreground">Auto-sync with name</span>
+                      <Switch
+                        id="autoSyncSlug"
+                        checked={isAutoSyncSlug}
+                        onCheckedChange={(checked) => {
+                          setIsAutoSyncSlug(checked)
+                          if (checked) {
+                            setSlug(slugifyClient(name))
+                          }
+                        }}
+                      />
+                    </div>
+                  </div>
+
+                  {/* URL Input Box */}
+                  <div className="flex items-center rounded-lg border bg-background px-3 py-1.5 text-xs text-muted-foreground focus-within:ring-1 focus-within:ring-primary shadow-2xs">
+                    <span className="font-mono text-muted-foreground/80 select-none">fidely.app/store/</span>
+                    <input
+                      id="storeSlug"
+                      type="text"
+                      className="w-full bg-transparent px-1 py-0.5 text-foreground font-mono font-medium outline-none text-xs"
+                      placeholder="artisan-roast-cafe"
+                      value={slug}
+                      onChange={(e) => handleSlugChange(e.target.value)}
+                      required
+                    />
+                  </div>
+
+                  <div className="flex flex-wrap items-center justify-between gap-2 pt-0.5">
+                    <p className="text-[11px] text-muted-foreground leading-relaxed">
+                      Unique URL for QR stand cards and customer mobile passes.
+                    </p>
+                    <div className="flex items-center gap-1.5">
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        onClick={handleCopyPublicLink}
+                        className="h-7 text-xs px-2.5 gap-1 text-muted-foreground hover:text-foreground"
+                      >
+                        {copiedLink ? <Check className="h-3 w-3 text-emerald-500" /> : <Copy className="h-3 w-3" />}
+                        {copiedLink ? 'Copied' : 'Copy'}
+                      </Button>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        asChild
+                        className="h-7 text-xs px-2.5 gap-1 text-muted-foreground hover:text-foreground"
+                      >
+                        <a href={`/store/${slug || activeStore.slug}`} target="_blank" rel="noopener noreferrer">
+                          Preview <ExternalLink className="h-3 w-3" />
+                        </a>
+                      </Button>
+                    </div>
+                  </div>
                 </div>
 
                 {/* Custom Store Icon / Card Logo */}
@@ -542,7 +654,7 @@ export default function StoreSettingsPage() {
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2 text-xs font-semibold text-muted-foreground uppercase tracking-wider">
               <Smartphone className="h-4 w-4 text-primary" />
-              Apple Wallet Pass Simulator
+              Fidely Wallet Pass Simulator
             </div>
             <Badge variant="outline" className="text-[10px] bg-primary/5 text-primary border-primary/20">
               Live Preview
@@ -566,7 +678,7 @@ export default function StoreSettingsPage() {
           />
 
           <p className="text-xs text-center text-muted-foreground px-4">
-            This Apple Wallet inspired pass updates in real-time on your customer&apos;s device when they collect or redeem points.
+            This Fidely Wallet pass updates in real-time on your customer&apos;s device when they collect or redeem points.
           </p>
         </div>
       </div>

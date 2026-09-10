@@ -6,20 +6,22 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import Link from "next/link"
-import { useRouter } from "next/navigation"
-import { useState } from "react"
+import { useRouter, useSearchParams } from "next/navigation"
+import { useState, useEffect, Suspense } from "react"
 import { ApiError } from "@/features/auth/services/auth-service"
 import { strings } from "@/lib/strings"
 import { useAuth } from "@/features/auth/hooks/use-auth"
 import { validateEmail, validatePassword } from "@/features/auth/utils/auth-validation"
-import { Eye, EyeOff, Loader2, LayoutGrid } from "lucide-react"
+import { Eye, EyeOff, Loader2, LayoutGrid, Coffee } from "lucide-react"
 import { Separator } from "@/components/ui/separator"
 import { Navbar } from "@/components/common/navbar"
 import { Footer } from "@/components/common/footer"
 
 import { useAuthStore } from "@/store/auth-store"
 
-export default function LoginPage() {
+function LoginForm() {
+  const searchParams = useSearchParams()
+  const searchRef = searchParams.get('ref') || searchParams.get('joinStore') || undefined
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
   const [emailError, setEmailError] = useState<string | null>(null)
@@ -28,9 +30,32 @@ export default function LoginPage() {
   const [isLoading, setIsLoading] = useState(false)
   const [touched, setTouched] = useState({ email: false, password: false })
   const [showPassword, setShowPassword] = useState(false)
+  const [storeName, setStoreName] = useState<string | null>(null)
   const router = useRouter()
   const { signIn, signInWithGoogle } = useAuth()
   const [isGoogleLoading, setIsGoogleLoading] = useState(false)
+
+  useEffect(() => {
+    let effectiveRef = searchRef
+    if (!effectiveRef && typeof window !== 'undefined') {
+      effectiveRef = localStorage.getItem('fidely_pending_join_store') || undefined
+    }
+
+    if (effectiveRef) {
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('fidely_pending_join_store', effectiveRef)
+      }
+      const apiBase = (process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3000').replace(/\/$/, '')
+      fetch(`${apiBase}/api/v1/customer/store/${encodeURIComponent(effectiveRef)}`)
+        .then((res) => (res.ok ? res.json() : null))
+        .then((data) => {
+          if (data?.name) {
+            setStoreName(data.name)
+          }
+        })
+        .catch(() => {})
+    }
+  }, [searchRef])
 
   const handleEmailChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value
@@ -124,6 +149,23 @@ export default function LoginPage() {
               <p className="text-sm sm:text-base text-muted-foreground">{strings.auth_login_description}</p>
             </div>
 
+            {/* Store Referral Banner */}
+            {storeName && (
+              <div className="bg-primary/10 border border-primary/20 rounded-2xl p-3.5 flex items-center gap-3 text-left shadow-2xs">
+                <div className="h-10 w-10 rounded-xl bg-primary text-primary-foreground flex items-center justify-center font-bold overflow-hidden shrink-0 shadow-xs">
+                  <Coffee className="h-5 w-5" />
+                </div>
+                <div>
+                  <p className="text-xs font-bold text-foreground leading-tight">
+                    Sign in to {storeName} Loyalty
+                  </p>
+                  <p className="text-[11px] text-muted-foreground mt-0.5">
+                    Your loyalty card will be automatically added to your wallet!
+                  </p>
+                </div>
+              </div>
+            )}
+
             <form onSubmit={handleLogin} className="space-y-6">
               <div className="space-y-4">
                 <div className="space-y-2">
@@ -204,7 +246,6 @@ export default function LoginPage() {
                 variant="outline"
                 className="w-full bg-muted/50 cursor-not-allowed"
                 size="lg"
-                // disabled={isGoogleLoading || isLoading}
                 disabled={true}
                 style={{ cursor: 'not-allowed' }}
                 onClick={async () => {
@@ -254,7 +295,10 @@ export default function LoginPage() {
 
               <div className="text-center text-sm text-muted-foreground">
                 {strings.auth_login_register_prompt}{" "}
-                <Link href="/auth/sign-up" className="text-primary hover:underline font-medium">
+                <Link
+                  href={searchRef ? `/auth/sign-up?ref=${encodeURIComponent(searchRef)}` : "/auth/sign-up"}
+                  className="text-primary hover:underline font-medium"
+                >
                   {strings.auth_login_register_link}
                 </Link>
               </div>
@@ -271,5 +315,13 @@ export default function LoginPage() {
         </div>
       </div>
     </div>
+  )
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen flex items-center justify-center">Loading...</div>}>
+      <LoginForm />
+    </Suspense>
   )
 }

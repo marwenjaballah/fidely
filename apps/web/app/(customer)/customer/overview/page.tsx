@@ -10,6 +10,9 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { ThemeToggleButton } from '@/components/common/theme-toggle-button'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
+import { useToast } from '@/hooks/use-toast'
 import {
   Dialog,
   DialogContent,
@@ -38,13 +41,17 @@ import {
   Ticket,
   ChevronRight,
   TrendingUp,
+  Search,
+  Globe,
 } from 'lucide-react'
 
+import { QRScanner } from '@/components/qr-scanner'
 import { AppleWalletPass } from '@/components/common/apple-wallet-card'
 import { format } from 'date-fns'
 
 export default function CustomerOverviewPage() {
   const router = useRouter()
+  const { toast } = useToast()
   const { profile, signOut, isAuthenticated, hasHydrated } = useAuth()
   const {
     memberships,
@@ -55,12 +62,17 @@ export default function CustomerOverviewPage() {
     fetchOverview,
     setActiveMembership,
     joinStore,
+    joinStoreBySlug,
   } = useCustomerStore()
 
   const [qrModalOpen, setQrModalOpen] = useState(false)
   const [joinModalOpen, setJoinModalOpen] = useState(false)
+  const [activeJoinTab, setActiveJoinTab] = useState<'scan' | 'explore' | 'code'>('scan')
   const [joiningStoreId, setJoiningStoreId] = useState<string | null>(null)
   const [copiedToken, setCopiedToken] = useState(false)
+  const [slugInput, setSlugInput] = useState('')
+  const [isJoiningSlug, setIsJoiningSlug] = useState(false)
+  const [joinSlugError, setJoinSlugError] = useState<string | null>(null)
 
   useEffect(() => {
     if (hasHydrated && !isAuthenticated) {
@@ -71,8 +83,26 @@ export default function CustomerOverviewPage() {
   useEffect(() => {
     if (isAuthenticated) {
       fetchOverview()
+
+      // Auto-join pending store from QR scan/referral if present in localStorage
+      if (typeof window !== 'undefined') {
+        const pending = localStorage.getItem('fidely_pending_join_store')
+        if (pending) {
+          joinStoreBySlug(pending)
+            .then((joined) => {
+              localStorage.removeItem('fidely_pending_join_store')
+              toast({
+                title: 'Welcome!',
+                description: `Successfully added ${joined.name}'s loyalty card to your wallet.`,
+              })
+            })
+            .catch(() => {
+              localStorage.removeItem('fidely_pending_join_store')
+            })
+        }
+      }
     }
-  }, [isAuthenticated, fetchOverview])
+  }, [isAuthenticated, fetchOverview, joinStoreBySlug, toast])
 
   const handleLogout = async () => {
     await signOut()
@@ -83,11 +113,53 @@ export default function CustomerOverviewPage() {
     setJoiningStoreId(storeId)
     try {
       await joinStore(storeId)
+      toast({
+        title: 'Coffee Card Added!',
+        description: 'Successfully joined the loyalty program.',
+      })
       setJoinModalOpen(false)
     } catch {
       // Error handled in store
     } finally {
       setJoiningStoreId(null)
+    }
+  }
+
+  const handleJoinBySlug = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!slugInput.trim()) return
+    setIsJoiningSlug(true)
+    setJoinSlugError(null)
+    try {
+      const joined = await joinStoreBySlug(slugInput.trim())
+      toast({
+        title: 'Coffee Card Added!',
+        description: `Successfully joined ${joined.name}'s loyalty program.`,
+      })
+      setSlugInput('')
+      setJoinModalOpen(false)
+    } catch (err: any) {
+      setJoinSlugError(err.message || 'Failed to find or join store.')
+    } finally {
+      setIsJoiningSlug(false)
+    }
+  }
+
+  const handleQrScanSuccess = async (decodedText: string) => {
+    if (isJoiningSlug) return
+    setIsJoiningSlug(true)
+    setJoinSlugError(null)
+    try {
+      const joined = await joinStoreBySlug(decodedText.trim())
+      toast({
+        title: 'QR Code Scanned!',
+        description: `Successfully added ${joined.name}'s loyalty pass!`,
+      })
+      setJoinModalOpen(false)
+    } catch (err: any) {
+      setJoinSlugError(err.message || 'Could not recognize store QR code.')
+    } finally {
+      setIsJoiningSlug(false)
     }
   }
 
@@ -168,10 +240,24 @@ export default function CustomerOverviewPage() {
               </p>
             </div>
 
+            <div className="space-y-3 pt-2">
+              <Button
+                size="lg"
+                onClick={() => {
+                  setActiveJoinTab('scan')
+                  setJoinModalOpen(true)
+                }}
+                className="w-full gap-2 rounded-2xl h-12 font-semibold shadow-md"
+              >
+                <QrCode className="h-5 w-5" />
+                Scan In-Store QR Stand
+              </Button>
+            </div>
+
             {availableStores.length > 0 ? (
               <div className="space-y-3 pt-2">
                 <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                  Available Coffee Shops
+                  Available Partner Cafes
                 </p>
                 <div className="grid gap-2 text-left">
                   {availableStores.map((store) => (
@@ -209,11 +295,40 @@ export default function CustomerOverviewPage() {
                   ))}
                 </div>
               </div>
-            ) : (
-              <div className="p-4 rounded-2xl bg-muted/40 text-xs text-muted-foreground">
-                No stores currently registered. Ask your barista to scan your account code to link automatically.
-              </div>
-            )}
+            ) : null}
+
+            {/* Direct Link / Code Input in Empty State */}
+            <div className="pt-2 border-t border-border/40">
+              <form onSubmit={handleJoinBySlug} className="space-y-3 text-left">
+                <Label htmlFor="empty-store-slug-input" className="text-xs font-semibold text-foreground">
+                  Or Join with Coffee Shop Link / Code
+                </Label>
+                <div className="flex items-center gap-2">
+                  <div className="flex flex-1 items-center rounded-lg border bg-background px-3 py-1.5 text-xs text-muted-foreground focus-within:ring-1 focus-within:ring-primary shadow-2xs">
+                    <span className="font-mono text-muted-foreground/80 select-none">fidely.app/store/</span>
+                    <input
+                      id="empty-store-slug-input"
+                      type="text"
+                      className="w-full bg-transparent px-1 py-0.5 text-foreground font-mono font-medium outline-none text-xs"
+                      placeholder="artisan-cafe"
+                      value={slugInput}
+                      onChange={(e) => {
+                        setSlugInput(e.target.value)
+                        setJoinSlugError(null)
+                      }}
+                    />
+                  </div>
+                  <Button type="submit" size="sm" disabled={isJoiningSlug || !slugInput.trim()} className="h-9 px-4 text-xs font-medium shrink-0">
+                    {isJoiningSlug ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : 'Join Cafe'}
+                  </Button>
+                </div>
+                {joinSlugError && (
+                  <p className="text-xs font-medium text-destructive bg-destructive/10 p-2.5 rounded-lg border border-destructive/20">
+                    {joinSlugError}
+                  </p>
+                )}
+              </form>
+            </div>
           </div>
         ) : (
           <>
@@ -226,59 +341,177 @@ export default function CustomerOverviewPage() {
                 </p>
               </div>
 
-              {availableStores.length > 0 && (
+              <div className="flex items-center gap-2 self-start sm:self-auto">
+                <Button
+                  variant="default"
+                  size="sm"
+                  onClick={() => {
+                    setActiveJoinTab('scan')
+                    setJoinModalOpen(true)
+                  }}
+                  className="gap-1.5 shadow-2xs font-semibold"
+                >
+                  <QrCode className="h-4 w-4" />
+                  Scan QR Stand
+                </Button>
+
                 <Dialog open={joinModalOpen} onOpenChange={setJoinModalOpen}>
                   <DialogTrigger asChild>
-                    <Button variant="outline" size="sm" className="gap-1.5 self-start sm:self-auto">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setActiveJoinTab('explore')}
+                      className="gap-1.5 shadow-2xs"
+                    >
                       <Plus className="h-4 w-4" />
                       Add Coffee Card
                     </Button>
                   </DialogTrigger>
-                  <DialogContent>
+                  <DialogContent className="sm:max-w-[480px]">
                     <DialogHeader>
-                      <DialogTitle>Join a Coffee Shop</DialogTitle>
+                      <DialogTitle className="flex items-center gap-2 text-lg">
+                        <Coffee className="h-5 w-5 text-primary" />
+                        Add Coffee Loyalty Card
+                      </DialogTitle>
                       <DialogDescription>
-                        Select a partner cafe to start collecting loyalty points.
+                        Scan a table QR poster, browse partner cafes, or enter a store link.
                       </DialogDescription>
                     </DialogHeader>
-                    <div className="space-y-3 pt-2">
-                      {availableStores.map((store) => (
-                        <div
-                          key={store.id}
-                          className="flex items-center justify-between p-3.5 rounded-2xl border border-border/60 bg-muted/30"
-                        >
-                          <div className="flex items-center gap-3">
-                            <div className="h-10 w-10 rounded-xl bg-primary/10 text-primary flex items-center justify-center font-bold overflow-hidden border border-border/40 shrink-0">
-                              {store.logoUrl ? (
-                                <img src={store.logoUrl} alt={store.name} className="h-full w-full object-cover" />
-                              ) : (
-                                <Coffee className="h-5 w-5" />
-                              )}
-                            </div>
-                            <div>
-                              <p className="font-semibold text-sm">{store.name}</p>
-                              <p className="text-xs text-muted-foreground">
-                                {store.rewardsCount} rewards available
-                              </p>
-                            </div>
+
+                    <Tabs value={activeJoinTab} onValueChange={(val) => setActiveJoinTab(val as any)} className="w-full pt-2">
+                      <TabsList className="grid grid-cols-3 w-full mb-4">
+                        <TabsTrigger value="scan" className="text-xs gap-1">
+                          <QrCode className="h-3.5 w-3.5" /> Scan QR
+                        </TabsTrigger>
+                        <TabsTrigger value="explore" className="text-xs gap-1">
+                          <Coffee className="h-3.5 w-3.5" /> Browse {availableStores.length > 0 && `(${availableStores.length})`}
+                        </TabsTrigger>
+                        <TabsTrigger value="code" className="text-xs gap-1">
+                          <Globe className="h-3.5 w-3.5" /> Enter Link
+                        </TabsTrigger>
+                      </TabsList>
+
+                      {/* Tab 1: Live Optical Camera QR Scanner */}
+                      <TabsContent value="scan" className="space-y-3">
+                        <div className="rounded-2xl overflow-hidden bg-black/90 p-1">
+                          <QRScanner
+                            containerId="customer-modal-qr-scanner"
+                            onScanSuccess={handleQrScanSuccess}
+                          />
+                        </div>
+                        <p className="text-[11px] text-muted-foreground text-center">
+                          Point your camera at any table stand QR poster or pass link to instantly add the store.
+                        </p>
+                        {joinSlugError && (
+                          <p className="text-xs font-medium text-destructive bg-destructive/10 p-2.5 rounded-lg border border-destructive/20 text-center">
+                            {joinSlugError}
+                          </p>
+                        )}
+                      </TabsContent>
+
+                      {/* Tab 2: Available partner stores */}
+                      <TabsContent value="explore" className="space-y-3">
+                        {availableStores.length > 0 ? (
+                          <div className="space-y-2.5 max-h-[320px] overflow-y-auto pr-1">
+                            {availableStores.map((store) => (
+                              <div
+                                key={store.id}
+                                className="flex items-center justify-between p-3.5 rounded-2xl border border-border/60 bg-muted/30 hover:bg-muted/50 transition"
+                              >
+                                <div className="flex items-center gap-3">
+                                  <div className="h-10 w-10 rounded-xl bg-primary/10 text-primary flex items-center justify-center font-bold overflow-hidden border border-border/40 shrink-0">
+                                    {store.logoUrl ? (
+                                      <img src={store.logoUrl} alt={store.name} className="h-full w-full object-cover" />
+                                    ) : (
+                                      <Coffee className="h-5 w-5" />
+                                    )}
+                                  </div>
+                                  <div>
+                                    <p className="font-semibold text-sm text-foreground">{store.name}</p>
+                                    <p className="text-xs text-muted-foreground">
+                                      {store.rewardsCount} rewards available • /{store.slug}
+                                    </p>
+                                  </div>
+                                </div>
+                                <Button
+                                  size="sm"
+                                  onClick={() => handleJoinStore(store.id)}
+                                  disabled={joiningStoreId === store.id}
+                                  className="h-8 text-xs font-semibold px-3"
+                                >
+                                  {joiningStoreId === store.id ? (
+                                    <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                                  ) : (
+                                    'Join'
+                                  )}
+                                </Button>
+                              </div>
+                            ))}
                           </div>
-                          <Button
-                            size="sm"
-                            onClick={() => handleJoinStore(store.id)}
-                            disabled={joiningStoreId === store.id}
-                          >
-                            {joiningStoreId === store.id ? (
-                              <Loader2 className="h-4 w-4 animate-spin" />
+                        ) : (
+                          <div className="p-6 rounded-2xl bg-muted/40 text-center space-y-2 border border-border/40">
+                            <CheckCircle2 className="h-8 w-8 text-emerald-500 mx-auto" />
+                            <p className="text-sm font-semibold">You've joined all partner cafes!</p>
+                            <p className="text-xs text-muted-foreground">
+                              When visiting a new cafe, you can scan their in-store QR code or enter their store link in the other tabs.
+                            </p>
+                          </div>
+                        )}
+                      </TabsContent>
+
+                      {/* Tab 3: Join by Slug / URL */}
+                      <TabsContent value="code" className="space-y-4">
+                        <form onSubmit={handleJoinBySlug} className="space-y-4">
+                          <div className="space-y-2">
+                            <Label htmlFor="store-slug-input" className="text-xs font-medium">
+                              Store Link or Identifier
+                            </Label>
+                            <div className="flex items-center rounded-lg border bg-background px-3 py-1.5 text-xs text-muted-foreground focus-within:ring-1 focus-within:ring-primary shadow-2xs">
+                              <span className="font-mono text-muted-foreground/80 select-none">fidely.app/store/</span>
+                              <input
+                                id="store-slug-input"
+                                type="text"
+                                className="w-full bg-transparent px-1 py-0.5 text-foreground font-mono font-medium outline-none text-xs"
+                                placeholder="artisan-cafe"
+                                value={slugInput}
+                                onChange={(e) => {
+                                  setSlugInput(e.target.value)
+                                  setJoinSlugError(null)
+                                }}
+                                autoFocus
+                                required
+                              />
+                            </div>
+                            <p className="text-[11px] text-muted-foreground">
+                              Enter the coffee shop URL handle or paste their public link.
+                            </p>
+                          </div>
+
+                          {joinSlugError && (
+                            <p className="text-xs font-medium text-destructive bg-destructive/10 p-2.5 rounded-lg border border-destructive/20">
+                              {joinSlugError}
+                            </p>
+                          )}
+
+                          <Button type="submit" disabled={isJoiningSlug || !slugInput.trim()} className="w-full gap-2 text-xs">
+                            {isJoiningSlug ? (
+                              <>
+                                <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                                Adding Coffee Card...
+                              </>
                             ) : (
-                              'Join'
+                              <>
+                                <Plus className="h-3.5 w-3.5" />
+                                Add Coffee Card
+                              </>
                             )}
                           </Button>
-                        </div>
-                      ))}
-                    </div>
+                        </form>
+                      </TabsContent>
+                    </Tabs>
                   </DialogContent>
                 </Dialog>
-              )}
+              </div>
             </div>
 
             {/* ── Horizontal Coffee Passes Pills ── */}

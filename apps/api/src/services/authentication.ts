@@ -261,28 +261,57 @@ export class AuthenticationService {
       overrides?.referredByStoreId ??
       (user.user_metadata?.referredByStoreId as string | undefined);
 
-    const dbUser = await this.prisma.user.upsert({
-      where: { id: user.id },
-      update: {
-        email,
-        role: prismaRole,
-        ...(referredByStoreId ? { referredByStoreId } : {}),
-        ...profile,
-      },
-      create: {
-        id: user.id,
-        email,
-        role: prismaRole,
-        referredByStoreId: referredByStoreId || null,
-        ...profile,
-      },
-    });
+    let dbUser: any;
+    try {
+      dbUser = await this.prisma.user.upsert({
+        where: { id: user.id },
+        update: {
+          email,
+          role: prismaRole,
+          ...(referredByStoreId ? { referredByStoreId } : {}),
+          ...profile,
+        },
+        create: {
+          id: user.id,
+          email,
+          role: prismaRole,
+          referredByStoreId: referredByStoreId || null,
+          ...profile,
+        },
+      });
+    } catch (err: any) {
+      // Graceful fallback if database schema is missing `referredByStoreId` or other optional columns
+      console.warn(
+        '⚠️ Prisma user upsert with referredByStoreId failed. Falling back to core fields. (Please run "prisma db push" or add the column to PostgreSQL):',
+        err.message
+      );
+      dbUser = await this.prisma.user.upsert({
+        where: { id: user.id },
+        update: {
+          email,
+          role: prismaRole,
+          ...profile,
+        },
+        create: {
+          id: user.id,
+          email,
+          role: prismaRole,
+          ...profile,
+        },
+      });
+    }
 
-    // If referred by a store, automatically create initial CustomerMembership
+    // If referred by a store (either by store UUID or store slug), automatically create initial CustomerMembership
     if (referredByStoreId) {
       try {
-        const store = await this.prisma.store.findUnique({
-          where: { id: referredByStoreId },
+        const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(referredByStoreId);
+        const store = await this.prisma.store.findFirst({
+          where: {
+            OR: [
+              ...(isUuid ? [{ id: referredByStoreId }] : []),
+              { slug: referredByStoreId },
+            ],
+          },
         });
 
         if (store && store.active) {
@@ -308,14 +337,18 @@ export class AuthenticationService {
       }
     }
 
-    // Keep JWT in sync: push DB role into Supabase user_metadata so the next token (login/refresh) contains the correct role (Security First).
-    const serviceClient = getSupabaseServiceClient();
-    await serviceClient.auth.admin.updateUserById(user.id, {
-      user_metadata: {
-        ...(user.user_metadata as Record<string, unknown>),
-        role: dbUser.role,
-      },
-    });
+    // Keep JWT in sync: push DB role into Supabase user_metadata
+    try {
+      const serviceClient = getSupabaseServiceClient();
+      await serviceClient.auth.admin.updateUserById(user.id, {
+        user_metadata: {
+          ...(user.user_metadata as Record<string, unknown>),
+          role: dbUser.role,
+        },
+      });
+    } catch (e: any) {
+      console.warn('Failed to sync DB role to Supabase metadata:', e?.message || e);
+    }
 
     return dbUser;
   }

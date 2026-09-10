@@ -95,6 +95,31 @@ const definitions: MiddlewareDefinition[] = PROTECTED_PATTERNS.map((pattern, ind
 export default definitions
 
 async function enforceAuth(c: Parameters<MiddlewareHandler<Env>>[0], next: () => Promise<void>) {
+  // Public store landing pages and digital passes are publicly accessible
+  if (c.req.path.startsWith('/api/v1/customer/store/')) {
+    const cookieToken = getCookie(c, AUTH_COOKIE_NAMES.accessToken)
+    const authHeader = c.req.header('Authorization')
+    const token =
+      cookieToken ?? (authHeader?.startsWith('Bearer ') ? authHeader.slice(7) : null)
+
+    if (token) {
+      try {
+        const supabase = getSupabaseClient()
+        const { data: { user } } = await supabase.auth.getUser(token)
+        if (user) {
+          c.set('user', {
+            id: user.id,
+            email: user.email ?? undefined,
+            role: user.user_metadata?.role as string | undefined,
+          })
+        }
+      } catch {
+        // Ignore optional auth error on public route
+      }
+    }
+    return next()
+  }
+
   const cookieToken = getCookie(c, AUTH_COOKIE_NAMES.accessToken)
   const authHeader = c.req.header('Authorization')
   const token =

@@ -51,7 +51,7 @@ router.openapi(createStoreRoute, async (c) => {
   try {
     const store = await service.createStore(user.id, data as {
       name: string
-      slug: string
+      slug?: string
       primaryColor?: string
       pointsPerTnd?: number
       logoUrl?: string | null
@@ -76,6 +76,7 @@ router.openapi(updateStoreRoute, async (c) => {
   try {
     const store = await service.updateStore(id, user.id, data as {
       name?: string
+      slug?: string
       primaryColor?: string
       pointsPerTnd?: number
       logoUrl?: string | null

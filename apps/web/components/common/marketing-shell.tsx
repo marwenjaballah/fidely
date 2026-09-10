@@ -2,8 +2,8 @@
 
 import { useEffect } from "react"
 import { usePathname } from "next/navigation"
-import { Navbar } from "@/components/common/navbar"
-import { Footer } from "@/components/common/footer"
+import { SiteHeader } from "@/features/site/components/site-header"
+import { SiteFooter } from "@/features/site/components/site-footer"
 
 export function MarketingShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname()
@@ -22,10 +22,10 @@ export function MarketingShell({ children }: { children: React.ReactNode }) {
   }, [pathname])
 
   return (
-    <div className="flex min-h-screen flex-col bg-background">
-      <Navbar />
+    <div className="flex min-h-screen flex-col bg-background text-foreground selection:bg-primary/20 selection:text-primary">
+      <SiteHeader />
       <main className="flex-1">{children}</main>
-      <Footer />
+      <SiteFooter />
     </div>
   )
 }

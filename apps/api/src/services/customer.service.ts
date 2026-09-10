@@ -99,8 +99,14 @@ export class CustomerService {
    * Retrieves public details of a store by its slug.
    */
   async getStoreBySlug(slug: string) {
-    const store = await this.prisma.store.findUnique({
-      where: { slug },
+    const trimmed = slug.trim();
+    const store = await this.prisma.store.findFirst({
+      where: {
+        OR: [
+          { slug: trimmed.toLowerCase() },
+          { id: trimmed },
+        ],
+      },
       include: {
         rewards: {
           where: { active: true },

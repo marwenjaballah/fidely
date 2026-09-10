@@ -35,7 +35,7 @@ export const createStoreRoute = createRoute({
         'application/json': {
           schema: z.object({
             name: z.string(),
-            slug: z.string(),
+            slug: z.string().optional(),
             primaryColor: z.string().optional().default('#000000'),
             pointsPerTnd: z.number().positive().optional().default(10),
             logoUrl: z.string().nullable().optional(),
@@ -61,7 +61,7 @@ export const createStoreRoute = createRoute({
       },
     },
     400: {
-      description: 'Bad request or slug already exists',
+      description: 'Bad request or unable to create store',
     },
   },
 });
@@ -80,6 +80,7 @@ export const updateStoreRoute = createRoute({
         'application/json': {
           schema: z.object({
             name: z.string().optional(),
+            slug: z.string().optional(),
             primaryColor: z.string().optional(),
             pointsPerTnd: z.number().positive().optional(),
             logoUrl: z.string().nullable().optional(),
@@ -96,6 +97,7 @@ export const updateStoreRoute = createRoute({
           schema: z.object({
             id: z.string(),
             name: z.string(),
+            slug: z.string(),
             primaryColor: z.string(),
             pointsPerTnd: z.number(),
             logoUrl: z.string().nullable().optional(),

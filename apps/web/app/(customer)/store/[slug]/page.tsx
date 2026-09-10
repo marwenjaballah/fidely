@@ -39,6 +39,8 @@ interface StorePublicData {
   rewards: StoreReward[]
 }
 
+const apiBase = (process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3000').replace(/\/$/, '')
+
 export default function CustomerStorePage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = use(params)
   const router = useRouter()
@@ -56,12 +58,27 @@ export default function CustomerStorePage({ params }: { params: Promise<{ slug: 
     async function loadStore() {
       try {
         setLoading(true)
-        const res = await fetch(`/api/v1/customer/store/${slug}`)
-        if (!res.ok) {
-          throw new Error('Store not found or unavailable')
+        setError(null)
+        const targetSlug = decodeURIComponent(slug).trim()
+        
+        // 1. Try fetching by slug
+        let res = await fetch(`${apiBase}/api/v1/customer/store/${encodeURIComponent(targetSlug)}`)
+        
+        // 2. Fallback to referral ID if slug not found and ref parameter exists
+        if (!res.ok && referralStoreId && referralStoreId !== targetSlug) {
+          res = await fetch(`${apiBase}/api/v1/customer/store/${encodeURIComponent(referralStoreId)}`)
         }
+
+        if (!res.ok) {
+          const errData = await res.json().catch(() => null)
+          throw new Error(errData?.error || errData?.message || 'Store not found or unavailable')
+        }
+
         const data = await res.json()
         setStore(data)
+        if (typeof window !== 'undefined') {
+          localStorage.setItem('fidely_pending_join_store', data.slug || data.id)
+        }
       } catch (err: any) {
         setError(err.message || 'Failed to load store')
       } finally {
@@ -69,20 +86,27 @@ export default function CustomerStorePage({ params }: { params: Promise<{ slug: 
       }
     }
     loadStore()
-  }, [slug])
+  }, [slug, referralStoreId])
 
   const handleJoinClick = async () => {
     if (!store) return
 
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('fidely_pending_join_store', store.slug || store.id)
+    }
+
     if (!isAuthenticated) {
       // Direct unauthenticated user to sign up with store referral
-      router.push(`/auth/sign-up?ref=${store.id}&joinStore=${store.id}`)
+      router.push(`/auth/sign-up?ref=${encodeURIComponent(store.slug || store.id)}&joinStore=${encodeURIComponent(store.slug || store.id)}`)
       return
     }
 
     try {
       setJoining(true)
       await joinStore(store.id)
+      if (typeof window !== 'undefined') {
+        localStorage.removeItem('fidely_pending_join_store')
+      }
       router.push('/customer/overview')
     } catch {
       router.push('/customer/overview')
@@ -108,11 +132,16 @@ export default function CustomerStorePage({ params }: { params: Promise<{ slug: 
         </div>
         <h1 className="text-xl font-bold">Store Not Found</h1>
         <p className="text-sm text-muted-foreground mt-1 max-w-sm">
-          We couldn&apos;t find a loyalty program for &quot;{slug}&quot;. It may have been moved or renamed.
+          We couldn&apos;t find a loyalty program for &quot;{decodeURIComponent(slug)}&quot;. It may have been moved or renamed.
         </p>
-        <Button asChild className="mt-6">
-          <Link href="/customer/overview">Go to Customer Wallet</Link>
-        </Button>
+        <div className="flex flex-col sm:flex-row items-center gap-3 mt-6">
+          <Button variant="outline" onClick={() => window.location.reload()}>
+            Try Again
+          </Button>
+          <Button asChild>
+            <Link href="/customer/overview">Go to Customer Wallet</Link>
+          </Button>
+        </div>
       </div>
     )
   }

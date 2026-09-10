@@ -60,7 +60,7 @@ export interface MerchantState {
   error: string | null
 
   fetchStores: () => Promise<void>
-  createStore: (name: string, slug: string, primaryColor?: string, pointsPerTnd?: number) => Promise<Store>
+  createStore: (name: string, slug?: string, primaryColor?: string, pointsPerTnd?: number) => Promise<Store>
   setActiveStore: (storeId: string) => void
   updateStore: (storeId: string, data: Partial<Store>) => Promise<void>
   fetchCustomers: (storeId: string) => Promise<void>
@@ -135,13 +135,13 @@ export const useMerchantStore = create<MerchantState>((set, get) => ({
     }
   },
 
-  createStore: async (name: string, slug: string, primaryColor?: string, pointsPerTnd?: number) => {
+  createStore: async (name: string, slug?: string, primaryColor?: string, pointsPerTnd?: number) => {
     set({ loading: true, error: null })
     try {
       const client = getMerchantClient()
       const { data } = await client.post<Store>('/api/v1/merchant/stores', {
         name,
-        slug,
+        slug: slug || undefined,
         primaryColor: primaryColor || '#ff5722',
         pointsPerTnd: pointsPerTnd || 10,
       })
