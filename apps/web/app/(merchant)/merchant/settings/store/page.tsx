@@ -18,6 +18,7 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog'
 import { useToast } from '@/hooks/use-toast'
+import { AppleWalletPass } from '@/components/common/apple-wallet-card'
 import {
   Store,
   Palette,
@@ -536,71 +537,35 @@ export default function StoreSettingsPage() {
         </div>
 
         {/* Right Column: Live Digital Pass Simulator */}
-        <div className="lg:col-span-5 space-y-4">
-          <div className="flex items-center gap-2 text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-            <Smartphone className="h-4 w-4 text-primary" />
-            Live Digital Pass Simulator
+        <div className="lg:col-span-5 space-y-4 sticky top-6">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2 text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+              <Smartphone className="h-4 w-4 text-primary" />
+              Apple Wallet Pass Simulator
+            </div>
+            <Badge variant="outline" className="text-[10px] bg-primary/5 text-primary border-primary/20">
+              Live Preview
+            </Badge>
           </div>
 
-          {/* Wallet Pass Card Mockup */}
-          <div
-            className="rounded-3xl p-6 text-white shadow-xl transition-all duration-300 relative overflow-hidden"
-            style={{
-              backgroundColor: primaryColor,
-              backgroundImage: 'radial-gradient(circle at top right, rgba(255,255,255,0.18), transparent 70%)',
-            }}
-          >
-            {/* Header / Brand */}
-            <div className="flex items-center justify-between mb-8">
-              <div className="flex items-center gap-2.5">
-                <div className="h-10 w-10 rounded-xl bg-white/20 backdrop-blur-md flex items-center justify-center font-bold text-lg overflow-hidden border border-white/20 shrink-0">
-                  {logoUrl ? (
-                    <img src={logoUrl} alt={name} className="h-full w-full object-cover" />
-                  ) : (
-                    <Coffee className="h-5 w-5 text-white" />
-                  )}
-                </div>
-                <div>
-                  <h3 className="font-bold text-base tracking-tight leading-tight">{name || 'Your Coffee Shop'}</h3>
-                  <p className="text-[11px] text-white/80">Digital Loyalty Pass</p>
-                </div>
-              </div>
-              <Badge className="bg-white/20 hover:bg-white/20 text-white border-0 text-[10px] backdrop-blur-md px-2 py-0.5">
-                1 TND = {pointsPerTnd} pts
-              </Badge>
-            </div>
-
-            {/* Middle Balance Section */}
-            <div className="my-6 bg-black/15 backdrop-blur-md rounded-2xl p-4 border border-white/10 flex items-center justify-between">
-              <div>
-                <p className="text-[11px] uppercase tracking-wider text-white/70 font-semibold">Current Balance</p>
-                <div className="flex items-baseline gap-1.5 mt-0.5">
-                  <span className="text-3xl font-extrabold tracking-tight">180</span>
-                  <span className="text-xs text-white/80 font-medium">pts</span>
-                </div>
-              </div>
-              <div className="text-right">
-                <p className="text-[11px] text-white/70 font-medium">Rewards Ready</p>
-                <Badge className="bg-emerald-500 text-white border-0 text-[10px] mt-1 font-bold shadow-xs">
-                  2 Available
-                </Badge>
-              </div>
-            </div>
-
-            {/* Bottom Pass Barcode Mockup */}
-            <div className="mt-6 pt-4 border-t border-white/15 flex items-center justify-between">
-              <div>
-                <p className="text-[10px] text-white/70 uppercase tracking-wider">Cardholder</p>
-                <p className="text-xs font-semibold text-white">Sarah Jenkins</p>
-              </div>
-              <div className="p-1.5 rounded-lg bg-white shadow-xs">
-                <QrCode className="h-7 w-7 text-black" />
-              </div>
-            </div>
-          </div>
+          <AppleWalletPass
+            storeName={name || activeStore.name || 'Your Coffee Shop'}
+            logoUrl={logoUrl}
+            primaryColor={primaryColor}
+            pointsBalance={180}
+            pointsPerTnd={Number(pointsPerTnd) || 10}
+            qrCodeToken={`${activeStore.id}:SAMPLE-PASS`}
+            memberName="Sarah Jenkins"
+            memberSince="Sep 2026"
+            rewardsCount={rewards.filter((r) => r.active).length}
+            nextRewardName={rewards[0]?.name}
+            nextRewardCost={rewards[0]?.pointsCost}
+            showQr={true}
+            interactive={true}
+          />
 
           <p className="text-xs text-center text-muted-foreground px-4">
-            This digital pass updates in real-time in your customer&apos;s wallet when they earn or redeem points.
+            This Apple Wallet inspired pass updates in real-time on your customer&apos;s device when they collect or redeem points.
           </p>
         </div>
       </div>

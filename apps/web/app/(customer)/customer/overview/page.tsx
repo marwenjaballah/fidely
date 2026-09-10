@@ -40,6 +40,9 @@ import {
   TrendingUp,
 } from 'lucide-react'
 
+import { AppleWalletPass } from '@/components/common/apple-wallet-card'
+import { format } from 'date-fns'
+
 export default function CustomerOverviewPage() {
   const router = useRouter()
   const { profile, signOut, isAuthenticated, hasHydrated } = useAuth()
@@ -310,150 +313,31 @@ export default function CustomerOverviewPage() {
 
             {/* ── Active Loyalty Card & QR Section ── */}
             {activeMembership && (
-              <div className="grid gap-6 lg:grid-cols-12">
-                {/* Left: Digital Pass Graphic + QR Presentation (7 cols) */}
-                <div className="lg:col-span-7 space-y-6">
-                  {/* Digital Pass Card */}
-                  <div className="rounded-3xl border border-border/70 bg-card p-6 sm:p-8 shadow-xl relative overflow-hidden flex flex-col justify-between">
-                    {/* Header */}
-                    <div className="flex items-center justify-between border-b border-border/40 pb-4 mb-6">
-                      <div className="flex items-center gap-3">
-                        <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-primary/10 text-primary font-bold overflow-hidden border border-border/40 shrink-0">
-                          {activeMembership.logoUrl ? (
-                            <img src={activeMembership.logoUrl} alt={activeMembership.storeName} className="h-full w-full object-cover" />
-                          ) : (
-                            <Coffee className="h-6 w-6" />
-                          )}
-                        </div>
-                        <div>
-                          <h2 className="font-bold text-lg text-foreground leading-tight">
-                            {activeMembership.storeName}
-                          </h2>
-                          <p className="text-xs text-muted-foreground">Digital Coffee Card</p>
-                        </div>
-                      </div>
-                      <Badge variant="outline" className="bg-primary/5 text-primary border-primary/20 text-xs">
-                        Active Member
-                      </Badge>
-                    </div>
-
-                    {/* Points Hero Banner */}
-                    <div
-                      className="rounded-2xl text-white p-6 sm:p-8 shadow-lg relative overflow-hidden mb-6"
-                      style={{
-                        backgroundColor: activeMembership.primaryColor || '#D97706',
-                        backgroundImage: 'radial-gradient(circle at top right, rgba(255,255,255,0.22), transparent 70%)',
-                      }}
-                    >
-                      <div className="flex justify-between items-start">
-                        <div>
-                          <p className="text-xs font-semibold uppercase tracking-wider text-white/80">
-                            Points Balance
-                          </p>
-                          <p className="text-4xl sm:text-5xl font-black mt-1 tracking-tight text-white">
-                            {activeMembership.pointsBalance.toLocaleString()}{' '}
-                            <span className="text-lg font-medium opacity-80">pts</span>
-                          </p>
-                        </div>
-                        <div className="h-12 w-12 rounded-2xl bg-white/15 flex items-center justify-center backdrop-blur-xs">
-                          <Sparkles className="h-6 w-6 text-white" />
-                        </div>
-                      </div>
-
-                      {/* Next Reward Progress */}
-                      {nextReward ? (
-                        <div className="mt-6 pt-4 border-t border-white/20 space-y-2">
-                          <div className="flex items-center justify-between text-xs">
-                            <span className="font-medium">Next: {nextReward.name}</span>
-                            <span className="font-bold">
-                              {nextReward.pointsCost - activeMembership.pointsBalance} pts away
-                            </span>
-                          </div>
-                          <div className="w-full bg-white/20 h-2 rounded-full overflow-hidden">
-                            <div
-                              className="bg-white h-full rounded-full transition-all duration-500"
-                              style={{
-                                width: `${Math.min(
-                                  100,
-                                  Math.round((activeMembership.pointsBalance / nextReward.pointsCost) * 100)
-                                )}%`,
-                              }}
-                            />
-                          </div>
-                        </div>
-                      ) : reachableRewards.length > 0 ? (
-                        <div className="mt-6 pt-4 border-t border-white/20 flex items-center justify-between text-xs">
-                          <span className="font-medium">
-                            🎉 You have {reachableRewards.length} reward{reachableRewards.length > 1 ? 's' : ''} ready to redeem!
-                          </span>
-                        </div>
-                      ) : null}
-                    </div>
-
-                    {/* QR Code Presentation Box */}
-                    <div className="flex flex-col items-center justify-center text-center p-6 bg-muted/40 rounded-2xl border border-border/40 space-y-4">
-                      <div className="p-4 bg-white rounded-2xl shadow-md border border-slate-200">
-                        <QRCodeSVG
-                          value={activeMembership.qrCodeToken}
-                          size={180}
-                          level="Q"
-                          includeMargin={false}
-                        />
-                      </div>
-
-                      <div className="space-y-1">
-                        <p className="text-sm font-semibold text-foreground">Scan at checkout</p>
-                        <p className="text-xs text-muted-foreground">
-                          Hold your screen in front of the barista camera to collect points
-                        </p>
-                      </div>
-
-                      <div className="flex items-center gap-2 pt-1">
-                        <Dialog open={qrModalOpen} onOpenChange={setQrModalOpen}>
-                          <DialogTrigger asChild>
-                            <Button variant="outline" size="sm" className="gap-1.5 text-xs h-8">
-                              <Maximize2 className="h-3.5 w-3.5" /> Fullscreen QR
-                            </Button>
-                          </DialogTrigger>
-                          <DialogContent className="sm:max-w-md text-center">
-                            <DialogHeader>
-                              <DialogTitle className="text-center">{activeMembership.storeName}</DialogTitle>
-                              <DialogDescription className="text-center">
-                                Maximum brightness pass for barista scanner
-                              </DialogDescription>
-                            </DialogHeader>
-                            <div className="flex flex-col items-center justify-center py-6">
-                              <div className="p-6 bg-white rounded-3xl shadow-xl border">
-                                <QRCodeSVG
-                                  value={activeMembership.qrCodeToken}
-                                  size={260}
-                                  level="Q"
-                                  includeMargin={true}
-                                />
-                              </div>
-                              <p className="text-xs text-muted-foreground mt-4 font-medium">
-                                Token: {activeMembership.qrCodeToken}
-                              </p>
-                            </div>
-                          </DialogContent>
-                        </Dialog>
-
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => handleCopyQrToken(activeMembership.qrCodeToken)}
-                          className="gap-1.5 text-xs h-8 text-muted-foreground"
-                        >
-                          {copiedToken ? <Check className="h-3.5 w-3.5 text-emerald-500" /> : <Copy className="h-3.5 w-3.5" />}
-                          {copiedToken ? 'Copied' : 'Copy ID'}
-                        </Button>
-                      </div>
-                    </div>
-                  </div>
+              <div className="grid gap-6 lg:grid-cols-12 items-start">
+                {/* Left: Authentic Apple Wallet Loyalty Pass (5 cols) */}
+                <div className="lg:col-span-5 space-y-4">
+                  <AppleWalletPass
+                    storeName={activeMembership.storeName}
+                    logoUrl={activeMembership.logoUrl}
+                    primaryColor={activeMembership.primaryColor || '#D97706'}
+                    pointsBalance={activeMembership.pointsBalance}
+                    pointsPerTnd={activeMembership.pointsPerTnd}
+                    qrCodeToken={activeMembership.qrCodeToken}
+                    memberName={profile?.full_name || 'Loyalty Member'}
+                    memberSince={activeMembership.joinedAt ? format(new Date(activeMembership.joinedAt), 'MMM yyyy') : 'Active'}
+                    rewardsCount={reachableRewards.length}
+                    nextRewardName={nextReward?.name}
+                    nextRewardCost={nextReward?.pointsCost}
+                    showQr={true}
+                    interactive={true}
+                  />
+                  <p className="text-center text-[11px] text-muted-foreground">
+                    Tap the pass or barcode to view fullscreen brightness pass or flip for details.
+                  </p>
                 </div>
 
-                {/* Right: Rewards, Vouchers, & History Tabs (5 cols) */}
-                <div className="lg:col-span-5 space-y-6">
+                {/* Right: Rewards, Vouchers, & History Tabs (7 cols) */}
+                <div className="lg:col-span-7 space-y-6">
                   <Tabs defaultValue="rewards" className="w-full">
                     <TabsList className="grid grid-cols-3 w-full bg-muted/60 p-1 rounded-2xl">
                       <TabsTrigger value="rewards" className="rounded-xl text-xs gap-1">

@@ -3,6 +3,7 @@
 import React, { useEffect, useState, use } from 'react'
 import Link from 'next/link'
 import { PWAInstallPrompt } from '@/components/pwa-install-prompt'
+import { AppleWalletPass } from '@/components/common/apple-wallet-card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Card, CardContent } from '@/components/ui/card'
@@ -82,55 +83,22 @@ export default function CustomerStorePage({ params }: { params: Promise<{ slug: 
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-zinc-950 flex flex-col items-center p-4 sm:p-6 pb-24">
       <div className="w-full max-w-md mt-6 space-y-6">
-        {/* Pass Graphic Card */}
-        <div
-          className="rounded-3xl p-6 sm:p-8 text-white shadow-2xl relative overflow-hidden transition-all"
-          style={{
-            backgroundColor: primaryColor,
-            backgroundImage: 'radial-gradient(circle at top right, rgba(255,255,255,0.25), transparent 70%)',
-          }}
-        >
-          {/* Header */}
-          <div className="flex items-center justify-between mb-8">
-            <div className="flex items-center gap-3">
-              <div className="h-12 w-12 rounded-2xl bg-white/20 backdrop-blur-md flex items-center justify-center font-bold text-xl overflow-hidden border border-white/25 shrink-0 shadow-xs">
-                {store.logoUrl ? (
-                  <img src={store.logoUrl} alt={store.name} className="h-full w-full object-cover" />
-                ) : (
-                  <Coffee className="h-6 w-6 text-white" />
-                )}
-              </div>
-              <div>
-                <h1 className="text-xl font-bold tracking-tight leading-tight">{store.name}</h1>
-                <p className="text-xs text-white/80 font-medium">Official Loyalty Pass</p>
-              </div>
-            </div>
-            <Badge className="bg-white/20 hover:bg-white/20 text-white border-0 text-xs backdrop-blur-md px-2.5 py-1">
-              Active Cafe
-            </Badge>
-          </div>
-
-          {/* Value Proposition */}
-          <div className="my-6 bg-black/15 backdrop-blur-md rounded-2xl p-5 border border-white/10 space-y-2">
-            <div className="flex items-center justify-between">
-              <p className="text-xs uppercase tracking-wider text-white/75 font-semibold">Loyalty Rate</p>
-              <Sparkles className="h-4 w-4 text-amber-300" />
-            </div>
-            <p className="text-2xl font-black tracking-tight">
-              {store.pointsPerTnd * 10}{' '}
-              <span className="text-sm font-medium text-white/85">pts per 10 TND</span>
-            </p>
-            <p className="text-xs text-white/75 leading-relaxed">
-              Earn points automatically with every coffee or meal you purchase at {store.name}.
-            </p>
-          </div>
-
-          {/* Pass Footer */}
-          <div className="pt-2 flex items-center justify-between text-xs text-white/80 border-t border-white/15">
-            <span>Powered by Fidely</span>
-            <span className="font-semibold text-white">Instant Rewards</span>
-          </div>
-        </div>
+        {/* Apple Wallet Pass Graphic */}
+        <AppleWalletPass
+          storeName={store.name}
+          logoUrl={store.logoUrl}
+          primaryColor={store.primaryColor || '#D97706'}
+          pointsBalance={1250}
+          pointsPerTnd={store.pointsPerTnd}
+          qrCodeToken={`JOIN:${store.slug}`}
+          memberName="New Cardholder"
+          memberSince="Available Now"
+          rewardsCount={store.rewards.length}
+          nextRewardName={store.rewards[0]?.name}
+          nextRewardCost={store.rewards[0]?.pointsCost}
+          showQr={true}
+          interactive={true}
+        />
 
         {/* Action Button */}
         <div className="space-y-3">
