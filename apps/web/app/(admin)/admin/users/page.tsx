@@ -218,27 +218,27 @@ export default function AdminUsersPage() {
                       <TableCell>{getRoleBadge(user.role)}</TableCell>
                       <TableCell>
                         <div className="flex items-center gap-2 text-xs">
-                          {user.ownedStoresCount > 0 && (
+                          {user.stores && user.stores.length > 0 && (
                             <Badge variant="secondary" className="gap-1 py-0.5">
                               <Store className="h-3 w-3 text-blue-500" />
-                              {user.ownedStoresCount} Owned
+                              {user.stores.length} Owned
                             </Badge>
                           )}
-                          {user.staffStoreCount > 0 && (
+                          {user.cashierStores && user.cashierStores.length > 0 && (
                             <Badge variant="secondary" className="gap-1 py-0.5">
                               <UserCheck className="h-3 w-3 text-emerald-500" />
-                              Staff in {user.staffStoreCount}
+                              Staff in {user.cashierStores.length}
                             </Badge>
                           )}
-                          {user.storeMembershipsCount > 0 && (
+                          {user.membershipsCount > 0 && (
                             <Badge variant="secondary" className="gap-1 py-0.5">
                               <CreditCard className="h-3 w-3 text-amber-500" />
-                              {user.storeMembershipsCount} Cards
+                              {user.membershipsCount} Cards
                             </Badge>
                           )}
-                          {user.ownedStoresCount === 0 &&
-                            user.staffStoreCount === 0 &&
-                            user.storeMembershipsCount === 0 && (
+                          {(!user.stores || user.stores.length === 0) &&
+                            (!user.cashierStores || user.cashierStores.length === 0) &&
+                            user.membershipsCount === 0 && (
                               <span className="text-muted-foreground italic text-xs">None</span>
                             )}
                         </div>

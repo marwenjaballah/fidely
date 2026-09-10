@@ -46,11 +46,11 @@ export default function AdminStoresPage() {
   }, [stores, searchQuery])
 
   const totalMemberships = useMemo(() => {
-    return stores.reduce((acc, s) => acc + (s._count?.memberships || 0), 0)
+    return stores.reduce((acc, s) => acc + (s.stats?.membersCount || 0), 0)
   }, [stores])
 
   const totalStaff = useMemo(() => {
-    return stores.reduce((acc, s) => acc + (s._count?.staff || 0), 0)
+    return stores.reduce((acc, s) => acc + (s.stats?.cashiersCount || 0), 0)
   }, [stores])
 
   return (
@@ -196,15 +196,15 @@ export default function AdminStoresPage() {
                         <div className="flex items-center gap-2">
                           <Badge variant="secondary" className="gap-1 text-xs py-0.5">
                             <Users className="h-3 w-3 text-blue-500" />
-                            {store._count?.memberships || 0}
+                            {store.stats?.membersCount ?? 0}
                           </Badge>
                           <Badge variant="secondary" className="gap-1 text-xs py-0.5">
                             <UserCheck className="h-3 w-3 text-emerald-500" />
-                            {store._count?.staff || 0}
+                            {store.stats?.cashiersCount ?? 0}
                           </Badge>
                           <Badge variant="secondary" className="gap-1 text-xs py-0.5">
                             <Receipt className="h-3 w-3 text-amber-500" />
-                            {store._count?.transactions || 0}
+                            {store.stats?.transactionsCount ?? 0}
                           </Badge>
                         </div>
                       </TableCell>

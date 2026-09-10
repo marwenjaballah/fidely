@@ -12,6 +12,8 @@ import {
   TrendingUp,
   Activity,
   ShoppingBag,
+  Award,
+  Ticket,
 } from 'lucide-react'
 import { useAdminStore } from '@/store/admin-store'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
@@ -28,42 +30,46 @@ import {
 } from 'recharts'
 
 export default function AdminOverviewPage() {
-  const { metrics, loading, fetchMetrics } = useAdminStore()
+  const { metrics, transactions, loading, fetchMetrics, fetchTransactions } = useAdminStore()
 
   useEffect(() => {
     fetchMetrics()
-  }, [fetchMetrics])
+    fetchTransactions()
+  }, [fetchMetrics, fetchTransactions])
 
   const kpis = [
     {
       title: 'Total Platform Volume',
-      value: metrics ? `${metrics.totalRevenue.toLocaleString()} TND` : '...',
+      value: metrics?.kpis?.totalVolumeTnd != null ? `${Number(metrics.kpis.totalVolumeTnd).toLocaleString()} TND` : '...',
       description: 'Cumulative transaction volume',
       icon: DollarSign,
       gradient: 'from-emerald-500/10 to-teal-500/10 text-emerald-600 dark:text-emerald-400',
     },
     {
-      title: 'Total Stores',
-      value: metrics ? metrics.totalStores.toString() : '...',
+      title: 'Registered Stores',
+      value: metrics?.kpis?.totalStores != null ? metrics.kpis.totalStores.toString() : '...',
       description: 'Active merchant outlets',
       icon: Store,
       gradient: 'from-blue-500/10 to-indigo-500/10 text-blue-600 dark:text-blue-400',
     },
     {
       title: 'Platform Users',
-      value: metrics ? metrics.totalUsers.toString() : '...',
-      description: 'Merchants, cashiers & customers',
+      value: metrics?.kpis?.totalUsers != null ? metrics.kpis.totalUsers.toString() : '...',
+      description: `${metrics?.kpis?.totalMerchants ?? 0} Merchants, ${metrics?.kpis?.totalCashiers ?? 0} Cashiers, ${metrics?.kpis?.totalCustomers ?? 0} Customers`,
       icon: Users,
       gradient: 'from-purple-500/10 to-pink-500/10 text-purple-600 dark:text-purple-400',
     },
     {
-      title: 'Points Circulating',
-      value: metrics ? metrics.totalPointsCirculating.toLocaleString() : '...',
-      description: 'Active loyalty balance pool',
+      title: 'Points Issued Pool',
+      value: metrics?.kpis?.totalPointsIssued != null ? `${metrics.kpis.totalPointsIssued.toLocaleString()} pts` : '...',
+      description: `${metrics?.kpis?.totalPointsRedeemed ?? 0} redeemed`,
       icon: Coins,
       gradient: 'from-amber-500/10 to-orange-500/10 text-amber-600 dark:text-amber-400',
     },
   ]
+
+  const chartData = metrics?.dailyTrends || []
+  const recentFeed = (transactions || []).slice(0, 6)
 
   return (
     <div className="space-y-8">
@@ -79,7 +85,10 @@ export default function AdminOverviewPage() {
           <Button
             variant="outline"
             size="sm"
-            onClick={() => fetchMetrics()}
+            onClick={() => {
+              fetchMetrics()
+              fetchTransactions()
+            }}
             disabled={loading}
             className="gap-2"
           >
@@ -105,7 +114,7 @@ export default function AdminOverviewPage() {
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold">{kpi.value}</div>
-                <p className="text-xs text-muted-foreground mt-1">{kpi.description}</p>
+                <p className="text-xs text-muted-foreground mt-1 truncate">{kpi.description}</p>
               </CardContent>
             </Card>
           )
@@ -127,10 +136,10 @@ export default function AdminOverviewPage() {
           </CardHeader>
           <CardContent>
             <div className="h-[280px] w-full mt-2">
-              {metrics?.chartData && metrics.chartData.length > 0 ? (
+              {chartData.length > 0 ? (
                 <ResponsiveContainer width="100%" height="100%">
                   <AreaChart
-                    data={metrics.chartData}
+                    data={chartData}
                     margin={{ top: 10, right: 10, left: -20, bottom: 0 }}
                   >
                     <defs>
@@ -166,7 +175,8 @@ export default function AdminOverviewPage() {
                     />
                     <Area
                       type="monotone"
-                      dataKey="volume"
+                      dataKey="volumeTnd"
+                      name="Volume"
                       stroke="hsl(var(--primary))"
                       strokeWidth={2}
                       fillOpacity={1}
@@ -201,8 +211,8 @@ export default function AdminOverviewPage() {
             </Button>
           </CardHeader>
           <CardContent className="flex-1 overflow-y-auto max-h-[300px] space-y-3 pr-1">
-            {metrics?.recentActivity && metrics.recentActivity.length > 0 ? (
-              metrics.recentActivity.map((act) => (
+            {recentFeed.length > 0 ? (
+              recentFeed.map((act) => (
                 <div
                   key={act.id}
                   className="flex items-center justify-between p-2.5 rounded-lg bg-muted/40 border border-border/40 hover:bg-muted/70 transition-colors"
@@ -213,7 +223,7 @@ export default function AdminOverviewPage() {
                     </div>
                     <div className="min-w-0">
                       <p className="text-xs font-semibold truncate text-foreground">
-                        {act.customerName}
+                        {act.customer?.fullName || act.customer?.email || 'Anonymous Customer'}
                       </p>
                       <p className="text-[11px] text-muted-foreground truncate">
                         at <span className="font-medium text-foreground">{act.storeName}</span>
@@ -222,9 +232,9 @@ export default function AdminOverviewPage() {
                   </div>
                   <div className="text-right shrink-0">
                     <div className="text-xs font-bold text-emerald-600 dark:text-emerald-400">
-                      +{act.amount} TND
+                      {act.amountTnd != null ? `+${act.amountTnd} TND` : `${act.pointsAffected} pts`}
                     </div>
-                    <Badge variant="secondary" className="text-[9px] px-1 py-0 h-4">
+                    <Badge variant="secondary" className="text-[9px] px-1 py-0 h-4 uppercase">
                       {act.type}
                     </Badge>
                   </div>

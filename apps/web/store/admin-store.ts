@@ -3,21 +3,30 @@ import { createCookieAuthApiClient, ApiError } from '@/lib/api-client'
 import { AUTH_ROUTES } from '@/features/auth/services/auth-service'
 import axios from 'axios'
 
-export interface AdminMetrics {
-  totalRevenue: number
-  totalStores: number
+export interface AdminKpis {
   totalUsers: number
-  totalPointsCirculating: number
-  activeTodayCount: number
-  chartData: Array<{ date: string; volume: number }>
-  recentActivity: Array<{
-    id: string
-    type: string
-    amount: number
-    storeName: string
-    customerName: string
-    createdAt: string
-  }>
+  totalMerchants: number
+  totalCashiers: number
+  totalCustomers: number
+  totalStores: number
+  totalTransactions: number
+  totalRewards: number
+  totalVouchers: number
+  totalPointsIssued: number
+  totalPointsRedeemed: number
+  totalVolumeTnd: number
+}
+
+export interface AdminDailyTrend {
+  date: string
+  issued: number
+  redeemed: number
+  volumeTnd: number
+}
+
+export interface AdminMetrics {
+  kpis: AdminKpis
+  dailyTrends: AdminDailyTrend[]
 }
 
 export interface AdminStore {
@@ -32,10 +41,11 @@ export interface AdminStore {
     email: string
     fullName: string | null
   }
-  _count: {
-    memberships: number
-    staff: number
-    transactions: number
+  stats: {
+    cashiersCount: number
+    membersCount: number
+    rewardsCount: number
+    transactionsCount: number
   }
 }
 
@@ -44,22 +54,22 @@ export interface AdminUser {
   email: string
   role: string
   fullName: string | null
+  phone?: string | null
   createdAt: string
-  storeMembershipsCount: number
-  staffStoreCount: number
-  ownedStoresCount: number
+  stores: Array<{ id: string; name: string; slug: string }>
+  cashierStores: Array<{ id: string; name: string; slug: string }>
+  membershipsCount: number
 }
 
 export interface AdminTransaction {
   id: string
+  storeId: string
+  storeName: string
+  storeSlug: string
   type: string
-  amount: number
-  points: number
+  amountTnd: number | null
+  pointsAffected: number
   createdAt: string
-  store: {
-    id: string
-    name: string
-  }
   customer: {
     id: string
     fullName: string | null
@@ -129,7 +139,7 @@ export const useAdminStore = create<AdminState>((set, get) => ({
     try {
       const client = getAdminClient()
       const { data } = await client.get<AdminStore[]>('/api/v1/admin/stores')
-      set({ stores: data, loading: false, error: null })
+      set({ stores: data || [], loading: false, error: null })
     } catch (err) {
       const message = err instanceof ApiError ? err.message : 'Failed to load stores.'
       set({ error: message, loading: false })
@@ -146,7 +156,7 @@ export const useAdminStore = create<AdminState>((set, get) => ({
 
       const endpoint = `/api/v1/admin/users${params.toString() ? `?${params.toString()}` : ''}`
       const { data } = await client.get<AdminUser[]>(endpoint)
-      set({ users: data, loading: false, error: null })
+      set({ users: data || [], loading: false, error: null })
     } catch (err) {
       const message = err instanceof ApiError ? err.message : 'Failed to load users.'
       set({ error: message, loading: false })
@@ -157,7 +167,7 @@ export const useAdminStore = create<AdminState>((set, get) => ({
     set({ loading: true, error: null })
     try {
       const client = getAdminClient()
-      await client.patch(`/api/v1/admin/users/${userId}/role`, { role })
+      await client.put(`/api/v1/admin/users/${userId}/role`, { role })
       // Update locally
       const users = get().users.map((u) => (u.id === userId ? { ...u, role } : u))
       set({ users, loading: false, error: null })
@@ -173,7 +183,7 @@ export const useAdminStore = create<AdminState>((set, get) => ({
     try {
       const client = getAdminClient()
       const { data } = await client.get<AdminTransaction[]>('/api/v1/admin/transactions')
-      set({ transactions: data, loading: false, error: null })
+      set({ transactions: data || [], loading: false, error: null })
     } catch (err) {
       const message = err instanceof ApiError ? err.message : 'Failed to load transactions.'
       set({ error: message, loading: false })

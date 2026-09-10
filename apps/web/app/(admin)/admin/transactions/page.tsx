@@ -44,26 +44,26 @@ export default function AdminTransactionsPage() {
 
   const filteredTransactions = useMemo(() => {
     return transactions.filter((tx) => {
-      const matchesType = typeFilter === 'ALL' || tx.type === typeFilter
+      const matchesType = typeFilter === 'ALL' || tx.type.toUpperCase() === typeFilter.toUpperCase()
       if (!matchesType) return false
 
       if (!searchQuery.trim()) return true
       const q = searchQuery.toLowerCase()
       return (
         tx.id.toLowerCase().includes(q) ||
-        tx.store?.name.toLowerCase().includes(q) ||
-        tx.customer?.email.toLowerCase().includes(q) ||
+        tx.storeName?.toLowerCase().includes(q) ||
+        tx.customer?.email?.toLowerCase().includes(q) ||
         (tx.customer?.fullName && tx.customer.fullName.toLowerCase().includes(q))
       )
     })
   }, [transactions, searchQuery, typeFilter])
 
   const totalVolume = useMemo(() => {
-    return transactions.reduce((sum, tx) => sum + (tx.amount || 0), 0)
+    return transactions.reduce((sum, tx) => sum + (tx.amountTnd || 0), 0)
   }, [transactions])
 
   const totalPoints = useMemo(() => {
-    return transactions.reduce((sum, tx) => sum + (tx.points || 0), 0)
+    return transactions.reduce((sum, tx) => sum + (tx.pointsAffected || 0), 0)
   }, [transactions])
 
   return (
@@ -151,7 +151,6 @@ export default function AdminTransactionsPage() {
               <SelectItem value="ALL">All Types</SelectItem>
               <SelectItem value="EARN">EARN (Points Issued)</SelectItem>
               <SelectItem value="REDEEM">REDEEM (Reward Used)</SelectItem>
-              <SelectItem value="ADJUST">ADJUST (Manual Correction)</SelectItem>
             </SelectContent>
           </Select>
         </div>
@@ -187,75 +186,74 @@ export default function AdminTransactionsPage() {
                     </TableCell>
                   </TableRow>
                 ) : (
-                  filteredTransactions.map((tx) => (
-                    <TableRow key={tx.id} className="hover:bg-muted/40 transition-colors">
-                      <TableCell className="font-mono text-xs text-muted-foreground">
-                        {tx.id.slice(0, 8)}...
-                      </TableCell>
-                      <TableCell>
-                        {tx.type === 'EARN' ? (
-                          <Badge className="bg-emerald-600 hover:bg-emerald-700 text-white gap-1 text-[10px] py-0.5">
-                            <ArrowUpRight className="h-3 w-3" />
-                            EARN
-                          </Badge>
-                        ) : tx.type === 'REDEEM' ? (
-                          <Badge className="bg-destructive hover:bg-destructive/90 text-white gap-1 text-[10px] py-0.5">
-                            <ArrowDownLeft className="h-3 w-3" />
-                            REDEEM
-                          </Badge>
-                        ) : (
-                          <Badge variant="secondary" className="text-[10px] py-0.5">
-                            {tx.type}
-                          </Badge>
-                        )}
-                      </TableCell>
-                      <TableCell className="font-semibold text-sm">
-                        {tx.amount > 0 ? `${tx.amount} TND` : '-'}
-                      </TableCell>
-                      <TableCell>
-                        <span
-                          className={`font-semibold text-xs ${
-                            tx.points >= 0
-                              ? 'text-emerald-600 dark:text-emerald-400'
-                              : 'text-destructive'
-                          }`}
-                        >
-                          {tx.points > 0 ? `+${tx.points}` : tx.points} pts
-                        </span>
-                      </TableCell>
-                      <TableCell>
-                        <div className="flex items-center gap-1.5 text-xs font-medium text-foreground">
-                          <Store className="h-3.5 w-3.5 text-primary" />
-                          <span>{tx.store?.name || 'Unknown Store'}</span>
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        {tx.customer ? (
-                          <div className="space-y-0.5">
-                            <p className="text-xs font-medium text-foreground">
-                              {tx.customer.fullName || 'Customer'}
-                            </p>
-                            <p className="text-[11px] text-muted-foreground font-mono">
-                              {tx.customer.email}
-                            </p>
+                  filteredTransactions.map((tx) => {
+                    const isEarn = tx.type?.toLowerCase() === 'earn'
+                    return (
+                      <TableRow key={tx.id} className="hover:bg-muted/40 transition-colors">
+                        <TableCell className="font-mono text-xs text-muted-foreground">
+                          {tx.id.slice(0, 8)}...
+                        </TableCell>
+                        <TableCell>
+                          {isEarn ? (
+                            <Badge className="bg-emerald-600 hover:bg-emerald-700 text-white gap-1 text-[10px] py-0.5">
+                              <ArrowUpRight className="h-3 w-3" />
+                              EARN
+                            </Badge>
+                          ) : (
+                            <Badge className="bg-destructive hover:bg-destructive/90 text-white gap-1 text-[10px] py-0.5">
+                              <ArrowDownLeft className="h-3 w-3" />
+                              REDEEM
+                            </Badge>
+                          )}
+                        </TableCell>
+                        <TableCell className="font-semibold text-sm">
+                          {tx.amountTnd != null ? `${tx.amountTnd} TND` : '-'}
+                        </TableCell>
+                        <TableCell>
+                          <span
+                            className={`font-semibold text-xs ${
+                              tx.pointsAffected >= 0
+                                ? 'text-emerald-600 dark:text-emerald-400'
+                                : 'text-destructive'
+                            }`}
+                          >
+                            {tx.pointsAffected > 0 ? `+${tx.pointsAffected}` : tx.pointsAffected} pts
+                          </span>
+                        </TableCell>
+                        <TableCell>
+                          <div className="flex items-center gap-1.5 text-xs font-medium text-foreground">
+                            <Store className="h-3.5 w-3.5 text-primary" />
+                            <span>{tx.storeName || 'Unknown Store'}</span>
                           </div>
-                        ) : (
-                          <span className="text-xs text-muted-foreground italic">Anonymous</span>
-                        )}
-                      </TableCell>
-                      <TableCell className="text-xs text-muted-foreground">
-                        <div className="flex items-center gap-1">
-                          <Clock className="h-3.5 w-3.5 text-muted-foreground/70" />
-                          {new Date(tx.createdAt).toLocaleString(undefined, {
-                            month: 'short',
-                            day: 'numeric',
-                            hour: '2-digit',
-                            minute: '2-digit',
-                          })}
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                  ))
+                        </TableCell>
+                        <TableCell>
+                          {tx.customer ? (
+                            <div className="space-y-0.5">
+                              <p className="text-xs font-medium text-foreground">
+                                {tx.customer.fullName || 'Customer'}
+                              </p>
+                              <p className="text-[11px] text-muted-foreground font-mono">
+                                {tx.customer.email}
+                              </p>
+                            </div>
+                          ) : (
+                            <span className="text-xs text-muted-foreground italic">Anonymous</span>
+                          )}
+                        </TableCell>
+                        <TableCell className="text-xs text-muted-foreground">
+                          <div className="flex items-center gap-1">
+                            <Clock className="h-3.5 w-3.5 text-muted-foreground/70" />
+                            {new Date(tx.createdAt).toLocaleString(undefined, {
+                              month: 'short',
+                              day: 'numeric',
+                              hour: '2-digit',
+                              minute: '2-digit',
+                            })}
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    )
+                  })
                 )}
               </TableBody>
             </Table>
