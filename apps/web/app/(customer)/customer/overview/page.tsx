@@ -177,8 +177,12 @@ export default function CustomerOverviewPage() {
                       className="flex items-center justify-between p-3.5 rounded-2xl border border-border/60 bg-muted/30 hover:bg-muted/60 transition"
                     >
                       <div className="flex items-center gap-3">
-                        <div className="h-10 w-10 rounded-xl bg-primary/15 text-primary flex items-center justify-center font-bold">
-                          <Coffee className="h-5 w-5" />
+                        <div className="h-10 w-10 rounded-xl bg-primary/15 text-primary flex items-center justify-center font-bold overflow-hidden border border-border/40 shrink-0">
+                          {store.logoUrl ? (
+                            <img src={store.logoUrl} alt={store.name} className="h-full w-full object-cover" />
+                          ) : (
+                            <Coffee className="h-5 w-5" />
+                          )}
                         </div>
                         <div>
                           <p className="font-semibold text-sm">{store.name}</p>
@@ -241,8 +245,12 @@ export default function CustomerOverviewPage() {
                           className="flex items-center justify-between p-3.5 rounded-2xl border border-border/60 bg-muted/30"
                         >
                           <div className="flex items-center gap-3">
-                            <div className="h-10 w-10 rounded-xl bg-primary/10 text-primary flex items-center justify-center font-bold">
-                              <Coffee className="h-5 w-5" />
+                            <div className="h-10 w-10 rounded-xl bg-primary/10 text-primary flex items-center justify-center font-bold overflow-hidden border border-border/40 shrink-0">
+                              {store.logoUrl ? (
+                                <img src={store.logoUrl} alt={store.name} className="h-full w-full object-cover" />
+                              ) : (
+                                <Coffee className="h-5 w-5" />
+                              )}
                             </div>
                             <div>
                               <p className="font-semibold text-sm">{store.name}</p>
@@ -285,7 +293,11 @@ export default function CustomerOverviewPage() {
                           : 'border-border/60 bg-card text-muted-foreground hover:bg-muted/50'
                       }`}
                     >
-                      <Coffee className="h-4 w-4" />
+                      {m.logoUrl ? (
+                        <img src={m.logoUrl} alt={m.storeName} className="h-4 w-4 rounded-sm object-cover shrink-0" />
+                      ) : (
+                        <Coffee className="h-4 w-4 shrink-0" />
+                      )}
                       <span>{m.storeName}</span>
                       <Badge variant={isSelected ? 'default' : 'secondary'} className="text-[11px] ml-1">
                         {m.pointsBalance} pts
@@ -306,8 +318,12 @@ export default function CustomerOverviewPage() {
                     {/* Header */}
                     <div className="flex items-center justify-between border-b border-border/40 pb-4 mb-6">
                       <div className="flex items-center gap-3">
-                        <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-primary/10 text-primary font-bold">
-                          <Coffee className="h-6 w-6" />
+                        <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-primary/10 text-primary font-bold overflow-hidden border border-border/40 shrink-0">
+                          {activeMembership.logoUrl ? (
+                            <img src={activeMembership.logoUrl} alt={activeMembership.storeName} className="h-full w-full object-cover" />
+                          ) : (
+                            <Coffee className="h-6 w-6" />
+                          )}
                         </div>
                         <div>
                           <h2 className="font-bold text-lg text-foreground leading-tight">
@@ -322,18 +338,24 @@ export default function CustomerOverviewPage() {
                     </div>
 
                     {/* Points Hero Banner */}
-                    <div className="rounded-2xl bg-gradient-to-br from-primary via-primary/95 to-primary/80 text-primary-foreground p-6 sm:p-8 shadow-lg relative overflow-hidden mb-6">
+                    <div
+                      className="rounded-2xl text-white p-6 sm:p-8 shadow-lg relative overflow-hidden mb-6"
+                      style={{
+                        backgroundColor: activeMembership.primaryColor || '#D97706',
+                        backgroundImage: 'radial-gradient(circle at top right, rgba(255,255,255,0.22), transparent 70%)',
+                      }}
+                    >
                       <div className="flex justify-between items-start">
                         <div>
-                          <p className="text-xs font-semibold uppercase tracking-wider text-primary-foreground/80">
+                          <p className="text-xs font-semibold uppercase tracking-wider text-white/80">
                             Points Balance
                           </p>
-                          <p className="text-4xl sm:text-5xl font-black mt-1 tracking-tight">
+                          <p className="text-4xl sm:text-5xl font-black mt-1 tracking-tight text-white">
                             {activeMembership.pointsBalance.toLocaleString()}{' '}
                             <span className="text-lg font-medium opacity-80">pts</span>
                           </p>
                         </div>
-                        <div className="h-12 w-12 rounded-2xl bg-white/10 flex items-center justify-center backdrop-blur-xs">
+                        <div className="h-12 w-12 rounded-2xl bg-white/15 flex items-center justify-center backdrop-blur-xs">
                           <Sparkles className="h-6 w-6 text-white" />
                         </div>
                       </div>

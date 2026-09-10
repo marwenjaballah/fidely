@@ -9,6 +9,7 @@ export interface Store {
   slug: string
   primaryColor: string
   pointsPerTnd: number
+  logoUrl?: string | null
 }
 
 export interface Customer {

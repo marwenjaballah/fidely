@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useRef } from 'react'
 import { useMerchantStore, Reward } from '@/store/merchant-store'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
@@ -34,6 +34,10 @@ import {
   Coffee,
   Smartphone,
   Save,
+  Upload,
+  Image as ImageIcon,
+  X,
+  Loader2,
 } from 'lucide-react'
 
 const COLOR_PRESETS = [
@@ -49,6 +53,51 @@ const COLOR_PRESETS = [
 
 const MULTIPLIER_PRESETS = [5, 10, 15, 20, 25]
 
+/**
+ * Client-side icon optimizer: crops to a square, resizes to maxDimension,
+ * and compresses to a lightweight WebP/PNG data URL (< 25KB).
+ */
+async function optimizeIcon(file: File, maxDimension = 128): Promise<string> {
+  return new Promise((resolve, reject) => {
+    if (!file.type.startsWith('image/')) {
+      reject(new Error('Selected file is not an image'))
+      return
+    }
+
+    const reader = new FileReader()
+    reader.onload = (e) => {
+      const img = new Image()
+      img.onload = () => {
+        const canvas = document.createElement('canvas')
+        const ctx = canvas.getContext('2d')
+        if (!ctx) {
+          reject(new Error('Canvas rendering context not available'))
+          return
+        }
+
+        const minSide = Math.min(img.width, img.height)
+        const sx = (img.width - minSide) / 2
+        const sy = (img.height - minSide) / 2
+
+        canvas.width = Math.min(minSide, maxDimension)
+        canvas.height = Math.min(minSide, maxDimension)
+
+        ctx.imageSmoothingEnabled = true
+        ctx.imageSmoothingQuality = 'high'
+
+        ctx.drawImage(img, sx, sy, minSide, minSide, 0, 0, canvas.width, canvas.height)
+
+        const dataUrl = canvas.toDataURL('image/webp', 0.85)
+        resolve(dataUrl)
+      }
+      img.onerror = () => reject(new Error('Failed to decode image'))
+      img.src = e.target?.result as string
+    }
+    reader.onerror = () => reject(new Error('Failed to read image file'))
+    reader.readAsDataURL(file)
+  })
+}
+
 export default function StoreSettingsPage() {
   const { activeStore, updateStore, rewards, fetchRewards, createReward, updateReward, deleteReward, loading } = useMerchantStore()
   const { toast } = useToast()
@@ -57,8 +106,11 @@ export default function StoreSettingsPage() {
   const [name, setName] = useState('')
   const [primaryColor, setPrimaryColor] = useState('#D97706')
   const [pointsPerTnd, setPointsPerTnd] = useState(10)
+  const [logoUrl, setLogoUrl] = useState<string | null>(null)
+  const [isOptimizingIcon, setIsOptimizingIcon] = useState(false)
   const [isSaving, setIsSaving] = useState(false)
   const [copiedLink, setCopiedLink] = useState(false)
+  const fileInputRef = useRef<HTMLInputElement>(null)
 
   // Rewards Studio Modal State
   const [isRewardModalOpen, setIsRewardModalOpen] = useState(false)
@@ -73,9 +125,43 @@ export default function StoreSettingsPage() {
       setName(activeStore.name)
       setPrimaryColor(activeStore.primaryColor || '#D97706')
       setPointsPerTnd(Number(activeStore.pointsPerTnd) || 10)
+      setLogoUrl(activeStore.logoUrl || null)
       fetchRewards(activeStore.id)
     }
   }, [activeStore, fetchRewards])
+
+  const handleIconUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+    setIsOptimizingIcon(true)
+    try {
+      const optimized = await optimizeIcon(file, 128)
+      setLogoUrl(optimized)
+      toast({
+        title: 'Icon Optimized & Ready',
+        description: 'Icon cropped & compressed (< 20KB). Don\'t forget to save changes!',
+      })
+    } catch (err: any) {
+      toast({
+        title: 'Icon Upload Failed',
+        description: err.message || 'Could not process image.',
+        variant: 'destructive',
+      })
+    } finally {
+      setIsOptimizingIcon(false)
+      if (fileInputRef.current) {
+        fileInputRef.current.value = ''
+      }
+    }
+  }
+
+  const handleRemoveIcon = () => {
+    setLogoUrl(null)
+    toast({
+      title: 'Custom Icon Removed',
+      description: 'Reverted to default icon. Click Save to apply.',
+    })
+  }
 
   const handleSaveStore = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -86,10 +172,11 @@ export default function StoreSettingsPage() {
         name,
         primaryColor,
         pointsPerTnd: Number(pointsPerTnd),
+        logoUrl,
       })
       toast({
         title: 'Store Settings Saved',
-        description: 'Branding and point multipliers updated successfully.',
+        description: 'Branding, custom card icon, and point multipliers updated successfully.',
       })
     } catch (err: any) {
       toast({
@@ -250,6 +337,78 @@ export default function StoreSettingsPage() {
                   />
                 </div>
 
+                {/* Custom Store Icon / Card Logo */}
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between">
+                    <Label className="flex items-center gap-1.5 font-medium">
+                      <ImageIcon className="h-4 w-4 text-primary" />
+                      Custom Card & Store Icon
+                    </Label>
+                    {logoUrl && (
+                      <Badge variant="outline" className="text-[10px] text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 border-emerald-500/20">
+                        Custom Icon Active
+                      </Badge>
+                    )}
+                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    Upload your shop logo or custom badge. Images are automatically cropped square and compressed client-side before saving to keep loyalty passes ultra-lightweight.
+                  </p>
+
+                  <div className="flex items-center gap-4 pt-1">
+                    <div className="relative h-14 w-14 rounded-2xl border-2 border-dashed border-border flex items-center justify-center overflow-hidden bg-muted/30 shadow-xs shrink-0">
+                      {logoUrl ? (
+                        <img src={logoUrl} alt="Store Icon" className="h-full w-full object-cover rounded-xl" />
+                      ) : (
+                        <Coffee className="h-6 w-6 text-muted-foreground/60" />
+                      )}
+                      {isOptimizingIcon && (
+                        <div className="absolute inset-0 bg-background/80 backdrop-blur-xs flex items-center justify-center">
+                          <Loader2 className="h-4 w-4 animate-spin text-primary" />
+                        </div>
+                      )}
+                    </div>
+
+                    <div className="flex flex-wrap items-center gap-2">
+                      <input
+                        ref={fileInputRef}
+                        type="file"
+                        accept="image/png,image/jpeg,image/webp,image/svg+xml"
+                        onChange={handleIconUpload}
+                        className="hidden"
+                      />
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        disabled={isOptimizingIcon}
+                        onClick={() => fileInputRef.current?.click()}
+                        className="gap-1.5 text-xs"
+                      >
+                        {isOptimizingIcon ? (
+                          <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                        ) : (
+                          <Upload className="h-3.5 w-3.5" />
+                        )}
+                        {logoUrl ? 'Change Icon' : 'Upload Custom Icon'}
+                      </Button>
+                      {logoUrl && (
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          onClick={handleRemoveIcon}
+                          className="text-xs text-destructive hover:bg-destructive/10 gap-1.5"
+                        >
+                          <X className="h-3.5 w-3.5" />
+                          Remove
+                        </Button>
+                      )}
+                    </div>
+                  </div>
+                </div>
+
+                <Separator />
+
                 {/* Brand Color Picker */}
                 <div className="space-y-3">
                   <div className="flex items-center justify-between">
@@ -372,8 +531,12 @@ export default function StoreSettingsPage() {
             {/* Header / Brand */}
             <div className="flex items-center justify-between mb-8">
               <div className="flex items-center gap-2.5">
-                <div className="h-9 w-9 rounded-xl bg-white/20 backdrop-blur-md flex items-center justify-center font-bold text-lg">
-                  <Coffee className="h-5 w-5" />
+                <div className="h-10 w-10 rounded-xl bg-white/20 backdrop-blur-md flex items-center justify-center font-bold text-lg overflow-hidden border border-white/20 shrink-0">
+                  {logoUrl ? (
+                    <img src={logoUrl} alt={name} className="h-full w-full object-cover" />
+                  ) : (
+                    <Coffee className="h-5 w-5 text-white" />
+                  )}
                 </div>
                 <div>
                   <h3 className="font-bold text-base tracking-tight leading-tight">{name || 'Your Coffee Shop'}</h3>

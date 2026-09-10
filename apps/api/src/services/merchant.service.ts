@@ -10,7 +10,7 @@ export class MerchantService {
     });
   }
 
-  async createStore(merchantId: string, data: { name: string; slug: string; primaryColor?: string; pointsPerTnd?: number }) {
+  async createStore(merchantId: string, data: { name: string; slug: string; primaryColor?: string; pointsPerTnd?: number; logoUrl?: string | null }) {
     // Check if slug exists
     const existing = await this.prisma.store.findUnique({
       where: { slug: data.slug }
@@ -27,11 +27,12 @@ export class MerchantService {
         slug: data.slug,
         primaryColor: data.primaryColor || '#000000',
         pointsPerTnd: data.pointsPerTnd || 10,
+        logoUrl: data.logoUrl ?? null,
       }
     });
   }
 
-  async updateStore(storeId: string, merchantId: string, data: { name?: string; primaryColor?: string; pointsPerTnd?: number }) {
+  async updateStore(storeId: string, merchantId: string, data: { name?: string; primaryColor?: string; pointsPerTnd?: number; logoUrl?: string | null }) {
     // Verify ownership
     const store = await this.prisma.store.findFirst({
       where: { id: storeId, ownerId: merchantId },

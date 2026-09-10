@@ -1,10 +1,23 @@
 import { OpenAPIHono } from '@hono/zod-openapi';
 import type { Env } from '../../../types/index.js';
-import { getCustomerOverviewRoute, joinStoreRoute } from './customer.route.js';
+import { getCustomerOverviewRoute, joinStoreRoute, getStoreBySlugRoute } from './customer.route.js';
 import { CustomerService } from '../../../services/customer.service.js';
 import { requireUser } from '../../../utils/auth.js';
 
 const router = new OpenAPIHono<Env>();
+
+router.openapi(getStoreBySlugRoute, async (c) => {
+  const { slug } = c.req.valid('param');
+  const prisma = c.get('prisma');
+  const service = new CustomerService(prisma);
+
+  try {
+    const store = await service.getStoreBySlug(slug);
+    return c.json(store, 200);
+  } catch (error: any) {
+    return c.json({ error: error.message }, error.status || 404) as any;
+  }
+});
 
 router.openapi(getCustomerOverviewRoute, async (c) => {
   const user = requireUser(c);

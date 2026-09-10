@@ -36,6 +36,7 @@ export interface CustomerMembership {
   storeSlug: string
   primaryColor: string
   pointsPerTnd: number
+  logoUrl?: string | null
   pointsBalance: number
   qrCodeToken: string
   joinedAt: string
@@ -50,6 +51,7 @@ export interface AvailableStore {
   slug: string
   primaryColor: string
   pointsPerTnd: number
+  logoUrl?: string | null
   rewardsCount: number
 }
 

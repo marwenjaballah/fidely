@@ -55,6 +55,7 @@ export class CustomerService {
         storeSlug: m.store.slug,
         primaryColor: m.store.primaryColor,
         pointsPerTnd: m.store.pointsPerTnd,
+        logoUrl: m.store.logoUrl,
         pointsBalance: m.pointsBalance,
         qrCodeToken: `${customerId}:${m.storeId}`,
         joinedAt: m.joinedAt.toISOString(),
@@ -88,7 +89,43 @@ export class CustomerService {
         slug: s.slug,
         primaryColor: s.primaryColor,
         pointsPerTnd: s.pointsPerTnd,
+        logoUrl: s.logoUrl,
         rewardsCount: s.rewards.length,
+      })),
+    };
+  }
+
+  /**
+   * Retrieves public details of a store by its slug.
+   */
+  async getStoreBySlug(slug: string) {
+    const store = await this.prisma.store.findUnique({
+      where: { slug },
+      include: {
+        rewards: {
+          where: { active: true },
+          orderBy: { pointsCost: 'asc' },
+        },
+      },
+    });
+
+    if (!store) {
+      throw new HTTPException(404, { message: 'Store not found' });
+    }
+
+    return {
+      id: store.id,
+      name: store.name,
+      slug: store.slug,
+      primaryColor: store.primaryColor,
+      pointsPerTnd: store.pointsPerTnd,
+      logoUrl: store.logoUrl,
+      rewards: store.rewards.map((r) => ({
+        id: r.id,
+        name: r.name,
+        description: r.description,
+        pointsCost: r.pointsCost,
+        active: r.active,
       })),
     };
   }

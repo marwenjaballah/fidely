@@ -19,6 +19,7 @@ export const getCustomerOverviewRoute = createRoute({
                 storeSlug: z.string(),
                 primaryColor: z.string(),
                 pointsPerTnd: z.number(),
+                logoUrl: z.string().nullable().optional(),
                 pointsBalance: z.number(),
                 qrCodeToken: z.string(),
                 joinedAt: z.string(),
@@ -60,6 +61,7 @@ export const getCustomerOverviewRoute = createRoute({
                 slug: z.string(),
                 primaryColor: z.string(),
                 pointsPerTnd: z.number(),
+                logoUrl: z.string().nullable().optional(),
                 rewardsCount: z.number(),
               })
             ),
@@ -69,6 +71,53 @@ export const getCustomerOverviewRoute = createRoute({
     },
     401: {
       description: 'Unauthorized',
+      content: {
+        'application/json': {
+          schema: z.object({
+            error: z.string(),
+          }),
+        },
+      },
+    },
+  },
+});
+
+export const getStoreBySlugRoute = createRoute({
+  method: 'get',
+  path: '/store/{slug}',
+  tags: ['Customer'],
+  request: {
+    params: z.object({
+      slug: z.string(),
+    }),
+  },
+  responses: {
+    200: {
+      description: 'Store public profile',
+      content: {
+        'application/json': {
+          schema: z.object({
+            id: z.string(),
+            name: z.string(),
+            slug: z.string(),
+            primaryColor: z.string(),
+            pointsPerTnd: z.number(),
+            logoUrl: z.string().nullable().optional(),
+            rewards: z.array(
+              z.object({
+                id: z.string(),
+                name: z.string(),
+                description: z.string().nullable().optional(),
+                pointsCost: z.number(),
+                active: z.boolean(),
+              })
+            ),
+          }),
+        },
+      },
+    },
+    404: {
+      description: 'Store not found',
       content: {
         'application/json': {
           schema: z.object({

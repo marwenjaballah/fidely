@@ -54,6 +54,7 @@ router.openapi(createStoreRoute, async (c) => {
       slug: string
       primaryColor?: string
       pointsPerTnd?: number
+      logoUrl?: string | null
     });
     return c.json(store, 201);
   } catch (error: any) {
@@ -77,6 +78,7 @@ router.openapi(updateStoreRoute, async (c) => {
       name?: string
       primaryColor?: string
       pointsPerTnd?: number
+      logoUrl?: string | null
     });
     return c.json(store, 200);
   } catch (error: any) {
