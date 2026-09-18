@@ -16,6 +16,7 @@ import {
   FileText,
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { useI18n } from '@/lib/i18n';
 
 interface StoreQRStandCardProps {
   store: {
@@ -31,6 +32,7 @@ interface StoreQRStandCardProps {
 
 export function StoreQRStandCard({ store }: StoreQRStandCardProps) {
   const { toast } = useToast();
+  const { t } = useI18n();
   const [copied, setCopied] = useState(false);
   const [origin, setOrigin] = useState('');
   const [isGenerating, setIsGenerating] = useState(false);

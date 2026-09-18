@@ -29,8 +29,12 @@ import {
 import { ThemeToggleButton } from "@/components/common/theme-toggle-button"
 import { useAuth } from "@/features/auth/hooks/use-auth"
 
+import { LanguageSwitcher } from "@/components/common/language-switcher"
+import { useI18n } from "@/lib/i18n"
+
 export function SiteHeader() {
   const { isAuthenticated, profile, signOut } = useAuth()
+  const { t } = useI18n()
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const [isMounted, setIsMounted] = useState(false)
   const router = useRouter()
@@ -63,13 +67,13 @@ export function SiteHeader() {
           </div>
           <div className="flex flex-col">
             <div className="flex items-center gap-1.5">
-              <span className="text-lg font-black tracking-tight text-foreground">Fidely</span>
+              <span className="text-lg font-black tracking-tight text-foreground">{t('app_name')}</span>
               <span className="rounded-md bg-primary/10 px-1.5 py-0.5 text-[10px] font-bold text-primary">
                 PRO
               </span>
             </div>
             <span className="text-[10px] font-medium text-muted-foreground -mt-1 hidden sm:block">
-              Universal Digital Loyalty
+              {t('landing_badge')}
             </span>
           </div>
         </Link>
@@ -77,29 +81,34 @@ export function SiteHeader() {
         {/* Navigation Links */}
         <nav className="hidden md:flex items-center gap-7 text-sm font-medium text-muted-foreground">
           <a href="/#interactive-playground" className="transition-colors hover:text-foreground">
-            Live Simulator
+            {t('nav_intro')}
           </a>
           <a href="/#features" className="transition-colors hover:text-foreground">
-            Capabilities
+            {t('nav_features')}
           </a>
           <a href="/#how-it-works" className="transition-colors hover:text-foreground">
-            How It Works
+            {t('nav_use_cases')}
           </a>
           <a href="/#reviews" className="transition-colors hover:text-foreground">
-            Reviews
+            {t('footer_reviews')}
           </a>
           <a href="/#faq" className="transition-colors hover:text-foreground">
             FAQ
           </a>
           <Link href="/docs" className="flex items-center gap-1.5 transition-colors hover:text-foreground">
             <BookOpen className="w-3.5 h-3.5 opacity-70" />
-            <span>Docs</span>
+            <span>{t('nav_docs')}</span>
           </Link>
         </nav>
 
         {/* Right CTA Actions */}
-        <div className="flex items-center gap-2.5 sm:gap-3">
-          {isMounted && <ThemeToggleButton />}
+        <div className="flex items-center gap-2 sm:gap-2.5">
+          {isMounted && (
+            <>
+              <LanguageSwitcher />
+              <ThemeToggleButton />
+            </>
+          )}
 
           {isAuthenticated ? (
             <div className="flex items-center gap-2">

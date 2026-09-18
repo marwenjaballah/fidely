@@ -17,11 +17,14 @@ import { Separator } from "@/components/ui/separator"
 import { Navbar } from "@/components/common/navbar"
 import { Footer } from "@/components/common/footer"
 
+import { useI18n } from "@/lib/i18n"
+import { LanguageSwitcher } from "@/components/common/language-switcher"
 import { useAuthStore } from "@/store/auth-store"
 
 function LoginForm() {
   const searchParams = useSearchParams()
   const searchRef = searchParams.get('ref') || searchParams.get('joinStore') || undefined
+  const { t } = useI18n()
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
   const [emailError, setEmailError] = useState<string | null>(null)
@@ -118,7 +121,7 @@ function LoginForm() {
         setError(error.message)
         return
       }
-      setError(strings.auth_generic_error)
+      setError(t('auth_generic_error'))
     } finally {
       setIsLoading(false)
     }
@@ -132,24 +135,25 @@ function LoginForm() {
       <div className="flex-1 flex">
         {/* Left Side - Form */}
         <div className="flex-1 flex flex-col bg-background p-4 sm:p-6 lg:p-8 xl:p-12">
-          {/* Logo */}
-          <div className="flex items-center gap-2 mb-6 lg:mb-8">
+          {/* Logo & Lang */}
+          <div className="flex items-center justify-between gap-2 mb-6 lg:mb-8">
             <Link href="/" className="flex items-center gap-2.5 group">
               <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary text-primary-foreground shadow-md shadow-primary/20 transition-transform group-hover:scale-105">
                 <Sparkles className="h-5 w-5" />
               </div>
               <span className="font-extrabold text-xl tracking-tight text-foreground">
-                {strings.app_name}
+                {t('app_name')}
               </span>
             </Link>
+            <LanguageSwitcher />
           </div>
 
         {/* Form Container - Centered */}
         <div className="flex-1 flex items-center justify-center">
           <div className="w-full max-w-md space-y-6">
             <div className="space-y-2 text-center">
-              <h1 className="text-2xl sm:text-3xl font-bold text-foreground">{strings.auth_login_title}</h1>
-              <p className="text-sm sm:text-base text-muted-foreground">{strings.auth_login_description}</p>
+              <h1 className="text-2xl sm:text-3xl font-bold text-foreground">{t('auth_login_title')}</h1>
+              <p className="text-sm sm:text-base text-muted-foreground">{t('auth_login_description')}</p>
             </div>
 
             {/* Store Referral Banner */}
@@ -172,11 +176,11 @@ function LoginForm() {
             <form onSubmit={handleLogin} className="space-y-6">
               <div className="space-y-4">
                 <div className="space-y-2">
-                  <Label htmlFor="email" className="text-foreground">{strings.auth_email_label}</Label>
+                  <Label htmlFor="email" className="text-foreground">{t('auth_email_label')}</Label>
                   <Input
                     id="email"
                     type="email"
-                    placeholder="m@example.com"
+                    placeholder="name@example.com"
                     required
                     value={email}
                     onChange={handleEmailChange}
@@ -191,9 +195,9 @@ function LoginForm() {
 
                 <div className="space-y-2">
                   <div className="flex items-center justify-between">
-                    <Label htmlFor="password" className="text-foreground">{strings.auth_password_label}</Label>
+                    <Label htmlFor="password" className="text-foreground">{t('auth_password_label')}</Label>
                     <Link href="/auth/forgot-password" className="text-sm text-primary hover:underline">
-                      {strings.auth_forgot_link}
+                      {t('auth_forgot_link')}
                     </Link>
                   </div>
                   <div className="relative">
@@ -204,7 +208,7 @@ function LoginForm() {
                       value={password}
                       onChange={handlePasswordChange}
                       onBlur={handlePasswordBlur}
-                      placeholder={strings.auth_password_placeholder}
+                      placeholder={t('auth_password_placeholder')}
                       className={`bg-muted/50 ${passwordError && touched.password ? 'border-destructive' : ''} pr-10`}
                     />
                     <button
@@ -231,7 +235,7 @@ function LoginForm() {
                   size="lg"
                   disabled={isLoading || !isFormValid}
                 >
-                  {isLoading ? strings.auth_login_loading : strings.auth_login_button}
+                  {isLoading ? t('auth_login_loading') : t('auth_login_button')}
                 </Button>
               </div>
 
@@ -241,7 +245,7 @@ function LoginForm() {
                 </div>
                 <div className="relative flex justify-center text-xs uppercase">
                   <span className="bg-background px-3 text-muted-foreground font-semibold">
-                    Or continue with
+                    {t('auth_signup_or_divider')}
                   </span>
                 </div>
               </div>
@@ -260,7 +264,7 @@ function LoginForm() {
                     if (error instanceof ApiError) {
                       setError(error.message)
                     } else {
-                      setError(strings.auth_generic_error)
+                      setError(t('auth_generic_error'))
                     }
                     setIsGoogleLoading(false)
                   }
@@ -269,7 +273,7 @@ function LoginForm() {
                 {isGoogleLoading ? (
                   <>
                     <Loader2 className="mr-2 h-4 w-4 animate-spin text-primary" />
-                    {strings.auth_google_loading}
+                    {t('auth_google_loading')}
                   </>
                 ) : (
                   <>
@@ -291,18 +295,18 @@ function LoginForm() {
                         d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
                       />
                     </svg>
-                    <span>{strings.auth_google_continue}</span>
+                    <span>{t('auth_google_continue')}</span>
                   </>
                 )}
               </Button>
 
               <div className="text-center text-sm text-muted-foreground">
-                {strings.auth_login_register_prompt}{" "}
+                {t('auth_login_register_prompt')}{" "}
                 <Link
                   href={searchRef ? `/auth/sign-up?ref=${encodeURIComponent(searchRef)}` : "/auth/sign-up"}
                   className="text-primary hover:underline font-bold"
                 >
-                  {strings.auth_login_register_link}
+                  {t('auth_login_register_link')}
                 </Link>
               </div>
             </form>

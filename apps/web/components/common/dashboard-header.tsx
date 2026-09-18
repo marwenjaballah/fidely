@@ -8,9 +8,13 @@ import { ThemeSwitcher } from "@/components/common/theme-switcher"
 import { strings } from "@/lib/strings"
 import { useAuth } from "@/features/auth/hooks/use-auth"
 
+import { LanguageSwitcher } from "@/components/common/language-switcher"
+import { useI18n } from "@/lib/i18n"
+
 export function DashboardHeader() {
   const router = useRouter()
   const { profile, signOut } = useAuth()
+  const { t } = useI18n()
 
   if (!profile) {
     return null
@@ -33,7 +37,8 @@ export function DashboardHeader() {
           </Badge>
         </div>
 
-        <div className="flex items-center gap-2 lg:gap-4 ml-auto">
+        <div className="flex items-center gap-2 lg:gap-3 ml-auto">
+          <LanguageSwitcher />
           <ThemeSwitcher />
 
           <Button
@@ -41,7 +46,7 @@ export function DashboardHeader() {
             onClick={handleLogout}
             className="hover:bg-destructive/10 hover:text-destructive transition-all duration-200 text-foreground/70"
           >
-            <span className="hidden sm:inline">{strings.logout}</span>
+            <span className="hidden sm:inline">{t('logout')}</span>
             <LogOut className="w-5 h-5 ml-2 shrink-0" />
           </Button>
         </div>

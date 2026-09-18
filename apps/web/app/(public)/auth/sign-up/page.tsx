@@ -28,8 +28,9 @@ import {
 } from "lucide-react"
 import type { UserRole } from "@/lib/db-types"
 import { ApiError } from "@/features/auth/services/auth-service"
-import { strings } from "@/lib/strings"
 import { useAuth } from "@/features/auth/hooks/use-auth"
+import { useI18n } from "@/lib/i18n"
+import { LanguageSwitcher } from "@/components/common/language-switcher"
 import {
   validateEmail,
   validatePassword,
@@ -48,6 +49,7 @@ function SignUpForm() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const searchRef = searchParams.get('ref') || searchParams.get('joinStore') || undefined
+  const { t, isRtl } = useI18n()
 
   const [referralStoreId, setReferralStoreId] = useState<string | undefined>(searchRef)
   const [storeInfo, setStoreInfo] = useState<{ name: string; logoUrl?: string | null; welcomePoints?: number } | null>(null)
@@ -196,7 +198,7 @@ function SignUpForm() {
       if (err instanceof ApiError) {
         setError(err.message)
       } else {
-        setError(strings.auth_generic_error)
+        setError(t('auth_generic_error'))
       }
     } finally {
       setIsLoading(false)
@@ -213,7 +215,7 @@ function SignUpForm() {
       if (err instanceof ApiError) {
         setError(err.message)
       } else {
-        setError(strings.auth_generic_error)
+        setError(t('auth_generic_error'))
       }
       setIsGoogleLoading(false)
     }
@@ -231,16 +233,19 @@ function SignUpForm() {
                 <Sparkles className="h-5 w-5" />
               </div>
               <span className="font-extrabold text-xl tracking-tight text-foreground">
-                {strings.app_name}
+                {t('app_name')}
               </span>
             </Link>
 
-            <Link
-              href={referralStoreId ? `/auth/login?ref=${encodeURIComponent(referralStoreId)}` : "/auth/login"}
-              className="text-xs font-semibold text-muted-foreground hover:text-foreground transition-colors"
-            >
-              Have an account? <span className="text-primary font-bold">Sign In</span>
-            </Link>
+            <div className="flex items-center gap-3">
+              <LanguageSwitcher />
+              <Link
+                href={referralStoreId ? `/auth/login?ref=${encodeURIComponent(referralStoreId)}` : "/auth/login"}
+                className="text-xs font-semibold text-muted-foreground hover:text-foreground transition-colors"
+              >
+                {t('auth_signup_login_prompt')} <span className="text-primary font-bold">{t('auth_signup_login_link')}</span>
+              </Link>
+            </div>
           </div>
 
           {/* PAGE 1: ROLE SELECTION */}
@@ -250,13 +255,13 @@ function SignUpForm() {
                 {/* Header */}
                 <div className="space-y-2 text-center">
                   <Badge variant="outline" className="bg-primary/10 text-primary border-primary/20 text-xs font-bold uppercase tracking-wider px-3 py-1">
-                    Step 1 of 2
+                    {t('auth_signup_step1_badge')}
                   </Badge>
                   <h1 className="text-2xl sm:text-3xl font-black tracking-tight text-foreground">
-                    How will you be using Fidely?
+                    {t('auth_signup_step1_title')}
                   </h1>
                   <p className="text-xs sm:text-sm text-muted-foreground max-w-md mx-auto">
-                    Select your account type to personalize your experience. You can manage multiple stores or join loyalty programs.
+                    {t('auth_signup_step1_desc')}
                   </p>
                 </div>
 
@@ -286,32 +291,32 @@ function SignUpForm() {
 
                     <div className="space-y-1">
                       <h3 className="text-base font-bold text-foreground flex items-center gap-1.5">
-                        <span>Customer / Member</span>
+                        <span>{t('auth_signup_role_customer')}</span>
                       </h3>
                       <p className="text-xs text-muted-foreground leading-relaxed">
-                        Earn rewards and digital passes from your favorite local businesses.
+                        {t('auth_signup_role_customer_desc')}
                       </p>
                     </div>
 
                     <ul className="space-y-2 text-[11px] text-muted-foreground border-t border-border/40 pt-3">
                       <li className="flex items-center gap-2 font-medium">
                         <Sparkles className="w-3.5 h-3.5 text-primary shrink-0" />
-                        <span>Instant Apple Wallet pass</span>
+                        <span>{t('auth_signup_perk_wallet')}</span>
                       </li>
                       <li className="flex items-center gap-2 font-medium">
                         <Gift className="w-3.5 h-3.5 text-primary shrink-0" />
-                        <span>Collect points on every purchase</span>
+                        <span>{t('auth_signup_perk_points')}</span>
                       </li>
                       <li className="flex items-center gap-2 font-medium">
                         <Zap className="w-3.5 h-3.5 text-primary shrink-0" />
-                        <span>100% free, zero app download</span>
+                        <span>{t('auth_signup_perk_free')}</span>
                       </li>
                     </ul>
 
                     <Badge variant="outline" className={`text-[10px] font-bold self-start mt-1 ${
                       role === "CUSTOMER" ? "bg-primary/10 text-primary border-primary/20" : "text-muted-foreground"
                     }`}>
-                      For Shoppers & Regulars
+                      {t('auth_signup_role_customer_tagline')}
                     </Badge>
                   </div>
 
@@ -339,32 +344,32 @@ function SignUpForm() {
 
                     <div className="space-y-1">
                       <h3 className="text-base font-bold text-foreground flex items-center gap-1.5">
-                        <span>Store / Merchant</span>
+                        <span>{t('auth_signup_role_merchant')}</span>
                       </h3>
                       <p className="text-xs text-muted-foreground leading-relaxed">
-                        Grow customer retention with custom loyalty points & cashier POS.
+                        {t('auth_signup_role_merchant_desc')}
                       </p>
                     </div>
 
                     <ul className="space-y-2 text-[11px] text-muted-foreground border-t border-border/40 pt-3">
                       <li className="flex items-center gap-2 font-medium">
                         <Printer className="w-3.5 h-3.5 text-primary shrink-0" />
-                        <span>Ready-to-print acrylic QR stand</span>
+                        <span>{t('auth_signup_perk_stand')}</span>
                       </li>
                       <li className="flex items-center gap-2 font-medium">
                         <TrendingUp className="w-3.5 h-3.5 text-primary shrink-0" />
-                        <span>Live cashier scanning POS</span>
+                        <span>{t('auth_signup_perk_pos')}</span>
                       </li>
                       <li className="flex items-center gap-2 font-medium">
                         <ShieldCheck className="w-3.5 h-3.5 text-primary shrink-0" />
-                        <span>Real-time retention analytics</span>
+                        <span>{t('auth_signup_perk_analytics')}</span>
                       </li>
                     </ul>
 
                     <Badge variant="outline" className={`text-[10px] font-bold self-start mt-1 ${
                       role === "MERCHANT" ? "bg-primary/10 text-primary border-primary/20" : "text-muted-foreground"
                     }`}>
-                      For Businesses & Retailers
+                      {t('auth_signup_role_merchant_tagline')}
                     </Badge>
                   </div>
                 </div>
@@ -376,17 +381,17 @@ function SignUpForm() {
                     onClick={() => setStep(2)}
                     className="w-full h-13 rounded-2xl text-sm font-bold bg-primary hover:bg-primary/90 text-primary-foreground shadow-lg shadow-primary/25 gap-2"
                   >
-                    <span>Continue as {role === 'CUSTOMER' ? 'Customer' : 'Merchant'}</span>
+                    <span>{role === 'CUSTOMER' ? t('auth_signup_continue_customer') : t('auth_signup_continue_merchant')}</span>
                     <ArrowRight className="w-4 h-4" />
                   </Button>
 
                   <div className="text-center text-xs text-muted-foreground">
-                    {strings.auth_signup_login_prompt}{" "}
+                    {t('auth_signup_login_prompt')}{" "}
                     <Link
                       href="/auth/login"
                       className="text-primary hover:underline font-bold"
                     >
-                      {strings.auth_signup_login_link}
+                      {t('auth_signup_login_link')}
                     </Link>
                   </div>
                 </div>
@@ -407,25 +412,25 @@ function SignUpForm() {
                       className="inline-flex items-center gap-1.5 text-xs font-semibold text-muted-foreground hover:text-foreground transition-colors p-1 -ml-1 rounded-lg"
                     >
                       <ArrowLeft className="w-3.5 h-3.5" />
-                      <span>Change role</span>
+                      <span>{t('auth_signup_step2_change_role')}</span>
                     </button>
                   ) : <div />}
 
                   <Badge variant="outline" className="bg-primary/10 text-primary border-primary/20 text-xs font-bold gap-1.5 px-2.5 py-1">
                     {role === 'CUSTOMER' ? <User className="w-3.5 h-3.5" /> : <Store className="w-3.5 h-3.5" />}
-                    <span>{role === 'CUSTOMER' ? 'Customer Account' : 'Merchant Account'}</span>
+                    <span>{role === 'CUSTOMER' ? t('auth_signup_step2_customer_badge') : t('auth_signup_step2_merchant_badge')}</span>
                   </Badge>
                 </div>
 
                 {/* Title */}
                 <div className="space-y-1 text-center sm:text-left">
                   <h1 className="text-2xl sm:text-3xl font-black tracking-tight text-foreground">
-                    Complete your profile
+                    {t('auth_signup_step2_title')}
                   </h1>
                   <p className="text-xs text-muted-foreground">
                     {role === 'CUSTOMER'
-                      ? 'Enter your name and email to receive your universal digital pass.'
-                      : 'Create your merchant profile to set up your first store.'}
+                      ? t('auth_signup_step2_customer_desc')
+                      : t('auth_signup_step2_merchant_desc')}
                   </p>
                 </div>
 
@@ -441,17 +446,17 @@ function SignUpForm() {
                     </div>
                     <div className="flex-1 min-w-0">
                       <p className="text-xs font-bold text-foreground truncate">
-                        Joining {storeInfo.name}&apos;s Loyalty Program
+                        {t('auth_signup_referral_joining', { storeName: storeInfo.name })}
                       </p>
                       <p className="text-[11px] text-muted-foreground mt-0.5">
                         {storeInfo.welcomePoints && storeInfo.welcomePoints > 0
-                          ? `Receive +${storeInfo.welcomePoints} free bonus points instantly upon registration!`
-                          : 'Your digital membership card will be ready immediately!'}
+                          ? t('auth_signup_referral_bonus', { points: storeInfo.welcomePoints })
+                          : t('auth_signup_referral_no_bonus')}
                       </p>
                     </div>
                     {storeInfo.welcomePoints && storeInfo.welcomePoints > 0 && (
                       <Badge className="bg-primary text-primary-foreground font-mono font-bold text-xs shrink-0">
-                        +{storeInfo.welcomePoints} pts
+                        +{storeInfo.welcomePoints} {t('pts_short')}
                       </Badge>
                     )}
                   </div>
@@ -462,12 +467,12 @@ function SignUpForm() {
                   {/* Full Name */}
                   <div className="space-y-1.5">
                     <Label htmlFor="fullName" className="text-xs font-semibold text-foreground">
-                      {strings.auth_full_name_label}
+                      {t('auth_full_name_label')}
                     </Label>
                     <Input
                       id="fullName"
                       type="text"
-                      placeholder="e.g. Alex Johnson"
+                      placeholder={t('auth_full_name_placeholder')}
                       required
                       value={fullName}
                       onChange={handleFullNameChange}
@@ -488,12 +493,12 @@ function SignUpForm() {
                   {/* Email */}
                   <div className="space-y-1.5">
                     <Label htmlFor="email" className="text-xs font-semibold text-foreground">
-                      {strings.auth_email_label}
+                      {t('auth_email_label')}
                     </Label>
                     <Input
                       id="email"
                       type="email"
-                      placeholder="alex@example.com"
+                      placeholder={t('auth_email_placeholder')}
                       required
                       value={email}
                       onChange={handleEmailChange}
@@ -515,7 +520,7 @@ function SignUpForm() {
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     <div className="space-y-1.5">
                       <Label htmlFor="password" className="text-xs font-semibold text-foreground">
-                        {strings.auth_password_label}
+                        {t('auth_password_label')}
                       </Label>
                       <div className="relative">
                         <Input
@@ -550,7 +555,7 @@ function SignUpForm() {
 
                     <div className="space-y-1.5">
                       <Label htmlFor="repeat-password" className="text-xs font-semibold text-foreground">
-                        {strings.auth_password_confirm_label}
+                        {t('auth_password_confirm_label')}
                       </Label>
                       <div className="relative">
                         <Input
@@ -599,11 +604,11 @@ function SignUpForm() {
                     {isLoading ? (
                       <>
                         <Loader2 className="h-4 w-4 animate-spin" />
-                        {strings.auth_signup_loading}
+                        {t('auth_signup_loading')}
                       </>
                     ) : (
                       <>
-                        <span>{role === 'CUSTOMER' ? 'Create Customer Account' : 'Create Merchant Account'}</span>
+                        <span>{role === 'CUSTOMER' ? t('auth_signup_button_customer') : t('auth_signup_button_merchant')}</span>
                         <ArrowRight className="w-4 h-4" />
                       </>
                     )}
@@ -616,7 +621,7 @@ function SignUpForm() {
                     </div>
                     <div className="relative flex justify-center text-xs uppercase">
                       <span className="bg-background px-3 text-muted-foreground font-semibold">
-                        Or continue with
+                        {t('auth_signup_or_divider')}
                       </span>
                     </div>
                   </div>
@@ -631,7 +636,7 @@ function SignUpForm() {
                     {isGoogleLoading ? (
                       <>
                         <Loader2 className="h-4 w-4 animate-spin text-primary" />
-                        {strings.auth_google_loading}
+                        {t('auth_google_loading')}
                       </>
                     ) : (
                       <>
@@ -653,7 +658,7 @@ function SignUpForm() {
                             d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
                           />
                         </svg>
-                        <span>{strings.auth_google_continue}</span>
+                        <span>{t('auth_google_continue')}</span>
                       </>
                     )}
                   </Button>
@@ -661,23 +666,23 @@ function SignUpForm() {
                   {/* Terms & Sign in link */}
                   <div className="pt-2 text-center text-xs text-muted-foreground space-y-1">
                     <p>
-                      By signing up, you agree to Fidely&apos;s{" "}
+                      {t('auth_signup_terms_agree')}{" "}
                       <Link href="/terms" className="underline hover:text-foreground">
-                        Terms of Service
+                        {t('auth_signup_terms_link')}
                       </Link>{" "}
                       and{" "}
                       <Link href="/privacy" className="underline hover:text-foreground">
-                        Privacy Policy
+                        {t('auth_signup_privacy_link')}
                       </Link>
                       .
                     </p>
                     <p className="pt-1">
-                      {strings.auth_signup_login_prompt}{" "}
+                      {t('auth_signup_login_prompt')}{" "}
                       <Link
                         href={referralStoreId ? `/auth/login?ref=${encodeURIComponent(referralStoreId)}` : "/auth/login"}
                         className="text-primary hover:underline font-bold"
                       >
-                        {strings.auth_signup_login_link}
+                        {t('auth_signup_login_link')}
                       </Link>
                     </p>
                   </div>

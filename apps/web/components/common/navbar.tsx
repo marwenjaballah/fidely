@@ -20,6 +20,9 @@ import { SectionNavLink } from "@/components/common/section-nav-link"
 import { ThemeToggleButton } from "@/components/common/theme-toggle-button"
 import { cn } from "@/lib/utils"
 
+import { LanguageSwitcher } from "@/components/common/language-switcher"
+import { useI18n } from "@/lib/i18n"
+
 const sectionNavClass =
   "text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
 
@@ -27,6 +30,7 @@ export function Navbar() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const [isMounted, setIsMounted] = useState(false)
   const { isAuthenticated, profile, signOut } = useAuth()
+  const { t } = useI18n()
   const router = useRouter()
 
   useEffect(() => {
@@ -48,9 +52,9 @@ export function Navbar() {
   const closeMobile = () => setMobileMenuOpen(false)
 
   const landingSections = [
-    { id: "features" as const, label: strings.nav_features },
-    { id: "use-cases" as const, label: strings.nav_use_cases },
-    { id: "reviews" as const, label: strings.footer_reviews },
+    { id: "features" as const, label: t('nav_features') },
+    { id: "use-cases" as const, label: t('nav_use_cases') },
+    { id: "reviews" as const, label: t('footer_reviews') },
   ]
 
   return (
@@ -61,19 +65,19 @@ export function Navbar() {
             <Link
               href="/"
               className="group flex shrink-0 items-center gap-2.5 rounded-lg outline-none ring-offset-background focus-visible:ring-2 focus-visible:ring-ring"
-              aria-label={strings.app_name}
+              aria-label={t('app_name')}
             >
               <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary/15 text-primary ring-1 ring-primary/20 transition-colors group-hover:bg-primary/20">
                 <Sparkles className="h-5 w-5" />
               </span>
               <span className="hidden font-bold tracking-tight text-foreground sm:inline truncate max-w-[10rem] md:max-w-none text-lg">
-                {strings.app_name}
+                {t('app_name')}
               </span>
             </Link>
 
             <nav
               className="hidden lg:flex items-center gap-1"
-              aria-label={strings.footer_explore_title}
+              aria-label={t('footer_explore_title')}
             >
               {landingSections.map(({ id, label }) => (
                 <SectionNavLink
@@ -93,7 +97,7 @@ export function Navbar() {
                 )}
               >
                 <BookOpen className="h-3.5 w-3.5 opacity-70" />
-                {strings.nav_docs}
+                {t('nav_docs')}
               </Link>
             </nav>
           </div>
@@ -101,6 +105,7 @@ export function Navbar() {
           <div className="flex items-center gap-2 sm:gap-3">
             {isMounted && (
               <>
+                <LanguageSwitcher />
                 <ThemeToggleButton />
 
                 <div className="hidden md:flex items-center gap-2">

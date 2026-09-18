@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react'
 import { useAuth } from '@/features/auth/hooks/use-auth'
 import { useMerchantStore } from '@/store/merchant-store'
-import { strings } from '@/lib/strings'
+import { useI18n } from '@/lib/i18n'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card'
 import { Users, Zap, TrendingUp, Award, Plus, Store, ExternalLink, Check, Loader2, ArrowRight, Sparkles } from 'lucide-react'
 import { Button } from '@/components/ui/button'
@@ -17,6 +17,7 @@ export default function OverviewPage() {
   const { profile } = useAuth()
   const { fetchStores, activeStore, stores, createStore, setActiveStore, fetchAnalytics, analytics, loading, error } = useMerchantStore()
   const { toast } = useToast()
+  const { t } = useI18n()
   
   const [isCreating, setIsCreating] = useState(false)
   const [storeName, setStoreName] = useState('')
@@ -69,7 +70,7 @@ export default function OverviewPage() {
       {/* Header */}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">{strings.dashboard_overview}</h1>
+          <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">{t('dashboard_overview')}</h1>
           <p className="text-xs sm:text-sm text-muted-foreground mt-1 flex flex-wrap items-center gap-1.5">
             {activeStore ? (
               <>

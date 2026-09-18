@@ -22,6 +22,7 @@ import {
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { useI18n } from '@/lib/i18n';
 
 interface QRScannerProps {
   onScanSuccess: (decodedText: string) => void;
@@ -34,6 +35,7 @@ export function QRScanner({
   onScanError,
   containerId: customContainerId,
 }: QRScannerProps) {
+  const { t } = useI18n();
   const reactId = useId().replace(/[:]/g, '_');
   const containerId = customContainerId || `qr-reader-${reactId}`;
 
@@ -401,8 +403,8 @@ export function QRScanner({
           {!isInitializing && hasPermission && (
             <div className="absolute top-3 left-3 right-3 flex items-center justify-between pointer-events-auto z-10">
               <div className="bg-black/60 backdrop-blur-md px-3 py-1.5 rounded-full border border-white/10 text-[11px] font-medium text-white/90 flex items-center gap-1.5">
-                <Camera className="w-3.5 h-3.5 text-indigo-400" />
-                <span>Align QR inside frame</span>
+                <Camera className="w-3.5 h-3.5 text-primary" />
+                <span>{t('scanner_instruction')}</span>
               </div>
 
               <div className="flex items-center gap-1.5">
@@ -413,7 +415,7 @@ export function QRScanner({
                     variant="ghost"
                     onClick={toggleTorch}
                     className="w-8 h-8 rounded-full bg-black/60 backdrop-blur-md text-white border border-white/10 hover:bg-black/80"
-                    title="Toggle Flashlight"
+                    title={t('scanner_torch_toggle')}
                   >
                     {isTorchOn ? <Zap className="w-4 h-4 text-amber-400" /> : <ZapOff className="w-4 h-4 text-white/70" />}
                   </Button>
@@ -426,7 +428,7 @@ export function QRScanner({
                     variant="ghost"
                     onClick={handleSwitchCamera}
                     className="w-8 h-8 rounded-full bg-black/60 backdrop-blur-md text-white border border-white/10 hover:bg-black/80"
-                    title="Switch Camera"
+                    title={t('scanner_switch_camera')}
                   >
                     <SwitchCamera className="w-4 h-4 text-white" />
                   </Button>
@@ -438,10 +440,10 @@ export function QRScanner({
           {/* Initializing Spinner Overlay */}
           {isInitializing && (
             <div className="absolute inset-0 bg-black/80 backdrop-blur-sm flex flex-col items-center justify-center text-white space-y-2.5 z-20">
-              <RefreshCw className="w-8 h-8 animate-spin text-indigo-400" />
+              <RefreshCw className="w-8 h-8 animate-spin text-primary" />
               <div className="text-center space-y-0.5">
-                <p className="text-xs font-bold text-white">Starting camera...</p>
-                <p className="text-[11px] text-white/60">Allow camera access if prompted</p>
+                <p className="text-xs font-bold text-white">{t('loading')}</p>
+                <p className="text-[11px] text-white/60">{t('scanner_camera_permission')}</p>
               </div>
             </div>
           )}
@@ -453,9 +455,9 @@ export function QRScanner({
                 <AlertCircle className="w-6 h-6" />
               </div>
               <div className="space-y-1">
-                <h4 className="text-sm font-bold text-foreground">Camera Access Required</h4>
+                <h4 className="text-sm font-bold text-foreground">{t('scanner_camera_error')}</h4>
                 <p className="text-xs text-muted-foreground max-w-xs leading-relaxed">
-                  {permissionError || 'Please allow camera permissions in your browser to scan QR codes.'}
+                  {permissionError || t('scanner_camera_permission')}
                 </p>
               </div>
               <div className="flex flex-wrap items-center justify-center gap-2 pt-1">
@@ -466,7 +468,7 @@ export function QRScanner({
                   className="text-xs font-semibold rounded-xl gap-1.5"
                 >
                   <RefreshCw className="w-3.5 h-3.5" />
-                  Retry Camera
+                  {t('refresh')}
                 </Button>
                 <Button
                   type="button"
@@ -476,7 +478,7 @@ export function QRScanner({
                   className="text-xs font-semibold rounded-xl gap-1.5"
                 >
                   <FileImage className="w-3.5 h-3.5" />
-                  Upload QR Image
+                  Upload Image
                 </Button>
               </div>
             </div>

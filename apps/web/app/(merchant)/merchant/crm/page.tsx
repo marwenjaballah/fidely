@@ -16,10 +16,12 @@ import {
   TableRow,
 } from '@/components/ui/table'
 import { format } from 'date-fns'
-import { Users, Search, RefreshCw, Coffee, Mail, Calendar, Coins, Loader2 } from 'lucide-react'
+import { Users, Search, RefreshCw, Store, Mail, Calendar, Coins, Loader2 } from 'lucide-react'
+import { useI18n } from '@/lib/i18n'
 
 export default function CrmPage() {
   const { activeStore, fetchCustomers, customers, loading } = useMerchantStore()
+  const { t } = useI18n()
   const [searchQuery, setSearchQuery] = useState('')
 
   useEffect(() => {
@@ -46,8 +48,8 @@ export default function CrmPage() {
     return (
       <div className="flex flex-1 items-center justify-center p-6 text-center">
         <div className="space-y-2">
-          <Coffee className="h-8 w-8 text-muted-foreground mx-auto" />
-          <p className="text-sm text-muted-foreground">Please select or create a coffee shop.</p>
+          <Store className="h-8 w-8 text-muted-foreground mx-auto" />
+          <p className="text-sm text-muted-foreground">{t('dashboard_no_stores')}</p>
         </div>
       </div>
     )

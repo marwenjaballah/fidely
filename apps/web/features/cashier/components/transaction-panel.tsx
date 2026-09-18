@@ -25,6 +25,7 @@ import { posAudio } from '../lib/pos-audio';
 import { posHaptics } from '@/lib/haptics';
 import { createCookieAuthApiClient, refreshAuthSession } from '@/lib/api-client';
 import { AUTH_ROUTES } from '@/features/auth/services/auth-service';
+import { useI18n } from '@/lib/i18n';
 
 interface StoreReward {
   id: string;
@@ -78,6 +79,7 @@ export function TransactionPanel({
   pointsPerTnd = 10,
   onProcess,
 }: TransactionPanelProps) {
+  const { t } = useI18n();
   const [activeTab, setActiveTab] = useState<'issue' | 'redeem'>('issue');
   const [spendAmount, setSpendAmount] = useState('');
   const [showNumpad, setShowNumpad] = useState(false);

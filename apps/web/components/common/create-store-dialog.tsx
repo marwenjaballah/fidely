@@ -15,6 +15,8 @@ import { Label } from '@/components/ui/label'
 import { useMerchantStore } from '@/store/merchant-store'
 import { Store, Loader2, Sparkles } from 'lucide-react'
 
+import { useI18n } from '@/lib/i18n'
+
 interface CreateStoreDialogProps {
   open: boolean
   onOpenChange: (open: boolean) => void
@@ -22,6 +24,7 @@ interface CreateStoreDialogProps {
 
 export function CreateStoreDialog({ open, onOpenChange }: CreateStoreDialogProps) {
   const { createStore, loading, error } = useMerchantStore()
+  const { t } = useI18n()
   const [name, setName] = useState('')
   const [slug, setSlug] = useState('')
   const [localError, setLocalError] = useState<string | null>(null)
@@ -31,7 +34,7 @@ export function CreateStoreDialog({ open, onOpenChange }: CreateStoreDialogProps
     setLocalError(null)
 
     if (!name.trim()) {
-      setLocalError('Store name is required.')
+      setLocalError(t('validation_fullname_required'))
       return
     }
 
@@ -43,7 +46,7 @@ export function CreateStoreDialog({ open, onOpenChange }: CreateStoreDialogProps
       setSlug('')
       onOpenChange(false)
     } catch (err: any) {
-      setLocalError(err?.message || 'Failed to create store.')
+      setLocalError(err?.message || t('auth_generic_error'))
     }
   }
 
@@ -69,21 +72,21 @@ export function CreateStoreDialog({ open, onOpenChange }: CreateStoreDialogProps
               <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary/10 text-primary">
                 <Store className="h-5 w-5" />
               </div>
-              <DialogTitle className="text-xl">Create Store</DialogTitle>
+              <DialogTitle className="text-xl">{t('create_store_title')}</DialogTitle>
             </div>
             <DialogDescription>
-              Add a new business or store branch to manage loyalty points, staff, and analytics.
+              {t('create_store_desc')}
             </DialogDescription>
           </DialogHeader>
 
           <div className="grid gap-4 py-4">
             <div className="space-y-2">
               <Label htmlFor="create-store-name" className="text-sm font-medium">
-                Store Name
+                {t('create_store_name_label')}
               </Label>
               <Input
                 id="create-store-name"
-                placeholder="e.g. Fidely Flagship Store"
+                placeholder={t('create_store_name_placeholder')}
                 value={name}
                 onChange={(e) => handleNameChange(e.target.value)}
                 autoFocus
@@ -93,7 +96,7 @@ export function CreateStoreDialog({ open, onOpenChange }: CreateStoreDialogProps
 
             <div className="space-y-2">
               <Label htmlFor="create-store-slug" className="text-sm font-medium">
-                Store URL Identifier (Slug)
+                {t('create_store_slug_label')}
               </Label>
               <div className="flex items-center rounded-md border bg-muted/40 px-3 py-1 text-xs text-muted-foreground">
                 <span className="font-mono text-muted-foreground/80 select-none">fidely.app/store/</span>
@@ -101,15 +104,12 @@ export function CreateStoreDialog({ open, onOpenChange }: CreateStoreDialogProps
                   id="create-store-slug"
                   type="text"
                   className="w-full bg-transparent p-1 text-foreground font-mono font-medium outline-none"
-                  placeholder="fidely-store"
+                  placeholder={t('create_store_slug_placeholder')}
                   value={slug}
                   onChange={(e) => setSlug(e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, ''))}
                   required
                 />
               </div>
-              <p className="text-[11px] text-muted-foreground">
-                Unique public link for customer check-ins and passes. Duplicates automatically resolve safely.
-              </p>
             </div>
 
             {(localError || error) && (
@@ -126,18 +126,18 @@ export function CreateStoreDialog({ open, onOpenChange }: CreateStoreDialogProps
               onClick={() => onOpenChange(false)}
               disabled={loading}
             >
-              Cancel
+              {t('cancel')}
             </Button>
             <Button type="submit" disabled={loading} className="gap-2">
               {loading ? (
                 <>
                   <Loader2 className="h-4 w-4 animate-spin" />
-                  Creating...
+                  {t('saving')}
                 </>
               ) : (
                 <>
                   <Sparkles className="h-4 w-4" />
-                  Create Store
+                  {t('create_store_submit')}
                 </>
               )}
             </Button>

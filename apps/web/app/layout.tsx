@@ -69,6 +69,8 @@ export const metadata: Metadata = {
   },
 }
 
+import { I18nProvider } from "@/lib/i18n"
+
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -79,10 +81,12 @@ export default function RootLayout({
       <body
         className={`${fontSans.variable} ${fontSerif.variable} ${fontMono.variable} font-sans antialiased`}
       >
-        <ThemeProvider>
-          {children}
-          <Toaster />
-        </ThemeProvider>
+        <I18nProvider>
+          <ThemeProvider>
+            {children}
+            <Toaster />
+          </ThemeProvider>
+        </I18nProvider>
         <Analytics />
       </body>
     </html>

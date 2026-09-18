@@ -9,7 +9,6 @@ import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Card, CardContent } from '@/components/ui/card'
 import {
-  Coffee,
   Sparkles,
   Gift,
   ArrowRight,
@@ -20,6 +19,7 @@ import {
 } from 'lucide-react'
 import { useAuth } from '@/features/auth/hooks/use-auth'
 import { useCustomerStore } from '@/store/customer-store'
+import { useI18n } from '@/lib/i18n'
 
 interface StoreReward {
   id: string
@@ -49,6 +49,7 @@ export default function CustomerStorePage({ params }: { params: Promise<{ slug: 
   const referralStoreId = searchParams.get('ref')
   const { isAuthenticated, hasHydrated } = useAuth()
   const { joinStore } = useCustomerStore()
+  const { t } = useI18n()
 
   const [store, setStore] = useState<StorePublicData | null>(null)
   const [loading, setLoading] = useState(true)

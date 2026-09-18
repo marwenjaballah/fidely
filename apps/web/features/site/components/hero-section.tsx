@@ -21,14 +21,17 @@ import { Badge } from "@/components/ui/badge"
 import { useAuth } from "@/features/auth/hooks/use-auth"
 import { posAudio } from "@/features/cashier/lib/pos-audio"
 
+import { useI18n } from "@/lib/i18n"
+
 const QUICK_MENU = [
-  { id: "1", name: "Oat Flat White", price: "4.20", pts: 42, icon: "☕" },
-  { id: "2", name: "Iced Caramel Latte", price: "4.80", pts: 48, icon: "🧊" },
-  { id: "3", name: "Almond Croissant", price: "3.50", pts: 35, icon: "🥐" },
+  { id: "1", name: "Store Order #1", price: "14.00", pts: 42, icon: "🛍️" },
+  { id: "2", name: "Premium Combo", price: "24.50", pts: 75, icon: "✨" },
+  { id: "3", name: "Special Offer", price: "10.00", pts: 30, icon: "🎁" },
 ]
 
 export function HeroSection() {
   const { isAuthenticated, profile } = useAuth()
+  const { t } = useI18n()
   const [selectedItem, setSelectedItem] = useState(QUICK_MENU[0])
   const [customerPoints, setCustomerPoints] = useState(240)
   const [justScanned, setJustScanned] = useState(false)
@@ -56,23 +59,23 @@ export function HeroSection() {
           {/* Left Column: Bold Headline & Story */}
           <div className="lg:col-span-7 space-y-6 text-left">
             {/* Live Ticker Tag */}
-            <div className="inline-flex items-center gap-2.5 px-4 py-1.5 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-600 dark:text-emerald-400 text-xs font-bold shadow-xs">
-              <span className="flex h-2 w-2 rounded-full bg-emerald-500 animate-ping" />
-              <span>Turn Every Coffee Run into a Regular</span>
-              <span className="text-muted-foreground hidden sm:inline">• 0 Apps to Install</span>
+            <div className="inline-flex items-center gap-2.5 px-4 py-1.5 rounded-full bg-primary/10 border border-primary/20 text-primary text-xs font-bold shadow-xs">
+              <span className="flex h-2 w-2 rounded-full bg-primary animate-ping" />
+              <span>{t('landing_badge')}</span>
+              <span className="text-muted-foreground hidden sm:inline">• {t('landing_feature_auth_title')}</span>
             </div>
 
             {/* High-Impact Punchy Title */}
             <h1 className="text-4xl sm:text-6xl xl:text-7xl font-black tracking-tight leading-[1.05] text-foreground">
-              The Fidely Wallet Loyalty & POS for{" "}
-              <span className="text-emerald-600 dark:text-emerald-400">
-                Specialty Cafes.
+              {t('landing_title_main')}{" "}
+              <span className="text-primary">
+                {t('landing_title_highlight')}.
               </span>
             </h1>
 
             {/* Crisp Subtitle */}
             <p className="text-base sm:text-xl text-muted-foreground max-w-xl leading-relaxed font-normal">
-              No paper cards to lose. No slow App Store downloads. Customers tap their phone on your acrylic stand, get their Fidely Wallet card, and your baristas scan & reward in &lt;1 second.
+              {t('landing_description')}
             </p>
 
             {/* CTAs */}
@@ -83,7 +86,7 @@ export function HeroSection() {
                 className="h-14 px-8 text-base font-bold rounded-2xl bg-foreground hover:bg-foreground/90 text-background shadow-xl hover:shadow-2xl transition-all duration-200 active:scale-[0.98] gap-2"
               >
                 <Link href={startHref}>
-                  <span>{isAuthenticated ? "Go to Dashboard" : "Launch Your Store Free"}</span>
+                  <span>{isAuthenticated ? t('nav_dashboard') : t('landing_cta_primary')}</span>
                   <ArrowRight className="h-5 w-5" />
                 </Link>
               </Button>
@@ -96,7 +99,7 @@ export function HeroSection() {
               >
                 <a href="#interactive-playground">
                   <Play className="h-4 w-4 mr-2 text-primary" />
-                  Try Live POS Simulator
+                  {t('landing_cta_secondary')}
                 </a>
               </Button>
             </div>
@@ -104,16 +107,16 @@ export function HeroSection() {
             {/* Trust Signals */}
             <div className="grid grid-cols-3 gap-4 pt-4 border-t border-border/50 max-w-lg">
               <div>
-                <div className="text-2xl sm:text-3xl font-black text-foreground">0.8s</div>
-                <div className="text-[11px] sm:text-xs text-muted-foreground">Checkout Scan Speed</div>
+                <div className="text-2xl sm:text-3xl font-black text-foreground">{t('landing_hero_stat_speed')}</div>
+                <div className="text-[11px] sm:text-xs text-muted-foreground">Scan POS</div>
               </div>
               <div>
-                <div className="text-2xl sm:text-3xl font-black text-emerald-500">100%</div>
-                <div className="text-[11px] sm:text-xs text-muted-foreground">Browser & Wallet Native</div>
+                <div className="text-2xl sm:text-3xl font-black text-primary">{t('landing_hero_stat_businesses')}</div>
+                <div className="text-[11px] sm:text-xs text-muted-foreground">{t('landing_badge')}</div>
               </div>
               <div>
-                <div className="text-2xl sm:text-3xl font-black text-amber-500">+32%</div>
-                <div className="text-[11px] sm:text-xs text-muted-foreground">Repeat Customer Rate</div>
+                <div className="text-2xl sm:text-3xl font-black text-amber-500">{t('landing_hero_stat_retention')}</div>
+                <div className="text-[11px] sm:text-xs text-muted-foreground">{t('landing_roi_repeat_rate')}</div>
               </div>
             </div>
           </div>

@@ -2,7 +2,7 @@
 
 import Link from "next/link"
 import { Sparkles } from "lucide-react"
-import { strings } from "@/lib/strings"
+import { useI18n } from "@/lib/i18n"
 import { SectionNavLink } from "@/components/common/section-nav-link"
 
 const footerLinkClass =
@@ -10,11 +10,12 @@ const footerLinkClass =
 
 export function Footer() {
   const year = new Date().getFullYear()
+  const { t } = useI18n()
 
   const sections = [
-    { id: "features" as const, label: strings.nav_features },
-    { id: "use-cases" as const, label: strings.nav_use_cases },
-    { id: "reviews" as const, label: strings.footer_reviews },
+    { id: "features" as const, label: t('nav_features') },
+    { id: "use-cases" as const, label: t('nav_use_cases') },
+    { id: "reviews" as const, label: t('footer_reviews') },
   ]
 
   return (
@@ -29,17 +30,17 @@ export function Footer() {
               <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/15 text-primary ring-1 ring-primary/20">
                 <Sparkles className="h-5 w-5" />
               </span>
-              {strings.app_name}
+              {t('app_name')}
             </Link>
             <p className="max-w-sm text-sm leading-relaxed text-muted-foreground">
-              {strings.footer_tagline}
+              {t('footer_tagline')}
             </p>
           </div>
 
           <div className="grid gap-10 sm:grid-cols-2 lg:col-span-5 lg:grid-cols-2">
             <div className="space-y-4">
               <h2 className="text-xs font-semibold uppercase tracking-wider text-foreground/80">
-                {strings.footer_explore_title}
+                {t('footer_explore_title')}
               </h2>
               <ul className="space-y-2.5">
                 {sections.map(({ id, label }) => (
@@ -54,22 +55,22 @@ export function Footer() {
 
             <div className="space-y-4">
               <h2 className="text-xs font-semibold uppercase tracking-wider text-foreground/80">
-                {strings.footer_legal_title}
+                {t('footer_legal_title')}
               </h2>
               <ul className="space-y-2.5">
                 <li>
                   <Link href="/docs" className={footerLinkClass}>
-                    {strings.nav_docs}
+                    {t('nav_docs')}
                   </Link>
                 </li>
                 <li>
                   <Link href="/terms" className={footerLinkClass}>
-                    {strings.footer_terms}
+                    {t('footer_terms')}
                   </Link>
                 </li>
                 <li>
                   <Link href="/privacy" className={footerLinkClass}>
-                    {strings.footer_privacy_policy}
+                    {t('footer_privacy_policy')}
                   </Link>
                 </li>
               </ul>
@@ -79,14 +80,14 @@ export function Footer() {
           <div className="flex flex-col justify-between gap-8 border-t border-border/60 pt-10 md:border-0 md:pt-0 lg:col-span-3 lg:border-l lg:border-border/60 lg:pl-10">
             <div className="space-y-3">
               <h2 className="text-xs font-semibold uppercase tracking-wider text-foreground/80">
-                {strings.footer_resources_title}
+                {t('footer_resources_title')}
               </h2>
               <p className="text-sm leading-relaxed text-muted-foreground">
-                {strings.footer_resources_blurb}
+                {t('footer_resources_blurb')}
               </p>
             </div>
             <p className="text-xs text-muted-foreground/90">
-              © {year} {strings.app_name}. {strings.footer_rights_reserved}
+              © {year} {t('app_name')}. {t('footer_rights_reserved')}
             </p>
           </div>
         </div>
