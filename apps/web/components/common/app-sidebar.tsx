@@ -2,10 +2,10 @@
 
 import type * as React from "react"
 import Link from "next/link"
-import { usePathname } from "next/navigation"
-import { ChevronDown, LayoutGrid } from "lucide-react"
+import { usePathname, useRouter } from "next/navigation"
+import { ChevronDown, LogOut, ChevronsUpDown } from "lucide-react"
 import { useAuth } from "@/features/auth/hooks/use-auth"
-import { strings } from "@/lib/strings"
+import { useI18n } from "@/lib/i18n"
 import {
   Sidebar,
   SidebarContent,
@@ -35,26 +35,16 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
 import { Badge } from "@/components/ui/badge"
-import { LogOut, ChevronsUpDown } from "lucide-react"
-import { useRouter } from "next/navigation"
 import { navItems, userNavItems, type NavItem } from "@/config/nav-config"
-
 import { StoreSwitcher } from "@/components/common/store-switcher"
 
 /**
- * Enhanced AppSidebar Component with sidebar-8 pattern
- *
- * Improvements:
- * - Better visual hierarchy with enhanced spacing and typography
- * - Improved hover states and transitions
- * - Enhanced user profile section with status indicator
- * - Optimized active state indicators
- * - Better contrast and readability
- * - Smooth animations and interactions
+ * Enhanced AppSidebar Component with reactive i18n & full RTL support
  */
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const pathname = usePathname()
   const { profile, signOut } = useAuth()
+  const { t, isRtl } = useI18n()
   const router = useRouter()
   const { state: sidebarState } = useSidebar()
 
@@ -69,8 +59,8 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   }
 
   return (
-    <Sidebar collapsible="icon" side="left" variant="floating" {...props}>
-      {/* Sidebar Header with Store/Coffee Switcher */}
+    <Sidebar collapsible="icon" side={isRtl ? "right" : "left"} variant="floating" {...props}>
+      {/* Sidebar Header with Store Switcher */}
       <SidebarHeader
         className={`border-b border-sidebar-border/50 bg-sidebar-accent/30 px-2 py-2 ${
           sidebarState === "collapsed" ? "flex justify-center px-0" : ""
@@ -79,33 +69,33 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         <StoreSwitcher variant="sidebar" />
       </SidebarHeader>
 
-      {/* Main Navigation Content - Enhanced */}
+      {/* Main Navigation Content */}
       <SidebarContent className="px-0">
         <SidebarGroup>
-          <SidebarGroupLabel className="px-4 text-xs font-semibold text-sidebar-foreground/70 uppercase tracking-wider">
-            {strings.dashboard_navigation}
+          <SidebarGroupLabel className="px-4 text-xs font-semibold text-sidebar-foreground/70 uppercase tracking-wider text-start">
+            {t('dashboard_navigation')}
           </SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
               {navItems.map((item) => (
-                <NavItemComponent key={item.href} item={item} pathname={pathname} />
+                <NavItemComponent key={item.href} item={item} pathname={pathname} isRtl={isRtl} />
               ))}
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
 
-        {/* User Settings Section - Enhanced */}
+        {/* User Settings Section */}
         {userNavItems.length > 0 && (
           <>
             <SidebarSeparator className="my-3 bg-sidebar-border/30" />
             <SidebarGroup>
-              <SidebarGroupLabel className="px-4 text-xs font-semibold text-sidebar-foreground/70 uppercase tracking-wider">
-                {strings.dashboard_settings}
+              <SidebarGroupLabel className="px-4 text-xs font-semibold text-sidebar-foreground/70 uppercase tracking-wider text-start">
+                {t('dashboard_settings')}
               </SidebarGroupLabel>
               <SidebarGroupContent>
                 <SidebarMenu>
                   {userNavItems.map((item) => (
-                    <NavItemComponent key={item.href} item={item} pathname={pathname} />
+                    <NavItemComponent key={item.href} item={item} pathname={pathname} isRtl={isRtl} />
                   ))}
                 </SidebarMenu>
               </SidebarGroupContent>
@@ -114,10 +104,10 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         )}
       </SidebarContent>
 
-      {/* User Profile Footer - Enhanced */}
+      {/* User Profile Footer */}
       <SidebarFooter
-        className={`border-t border-sidebar-border/50 bg-sidebar-accent/20 px-0 ${
-          sidebarState === "collapsed" ? "flex justify-center" : ""
+        className={`border-t border-sidebar-border/50 bg-sidebar-accent/20 px-2 py-2 flex flex-col gap-2 ${
+          sidebarState === "collapsed" ? "items-center px-0" : ""
         }`}
       >
         <SidebarMenu>
@@ -130,7 +120,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                       <SidebarMenuButton
                         size="lg"
                         className={`data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground w-full hover:bg-sidebar-accent/40 transition-colors duration-200 ${
-                          sidebarState === "collapsed" ? "justify-center px-2" : "px-4"
+                          sidebarState === "collapsed" ? "justify-center px-2" : "px-3"
                         }`}
                         tooltip={sidebarState === "collapsed" ? profile?.email?.split("@")[0] || "User" : undefined}
                       >
@@ -140,13 +130,11 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                               {getUserInitials()}
                             </AvatarFallback>
                           </Avatar>
-                          <span className="absolute -bottom-0.5 -right-0.5 size-2.5 bg-green-500 rounded-full border border-sidebar shadow-sm"></span>
+                          <span className="absolute -bottom-0.5 -right-0.5 rtl:-left-0.5 rtl:right-auto size-2.5 bg-emerald-500 rounded-full border border-sidebar shadow-xs"></span>
                         </div>
                         {sidebarState !== "collapsed" && (
                           <>
-                            <div
-                              className="grid flex-1 text-left text-sm leading-tight min-w-0"
-                            >
+                            <div className="grid flex-1 text-start text-sm leading-tight min-w-0">
                               <span className="truncate font-semibold text-sidebar-foreground">
                                 {profile?.email?.split("@")[0] || "User"}
                               </span>
@@ -154,16 +142,14 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                                 {profile?.email || ""}
                               </span>
                             </div>
-                            <ChevronsUpDown
-                              className="ml-auto size-4 shrink-0 text-sidebar-foreground/60"
-                            />
+                            <ChevronsUpDown className="ms-auto size-4 shrink-0 text-sidebar-foreground/60" />
                           </>
                         )}
                       </SidebarMenuButton>
                     </DropdownMenuTrigger>
                   </TooltipTrigger>
                   {sidebarState === "collapsed" && (
-                    <TooltipContent side="right" className="flex items-center gap-2">
+                    <TooltipContent side={isRtl ? "left" : "right"} className="flex items-center gap-2">
                       <div className="text-sm">
                         <div className="font-semibold">{profile?.email?.split("@")[0] || "User"}</div>
                         <div className="text-xs text-muted-foreground">{profile?.email || ""}</div>
@@ -173,21 +159,19 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                 </Tooltip>
               </TooltipProvider>
               <DropdownMenuContent
-                className="w-(--radix-dropdown-menu-trigger-width) min-w-56 rounded-lg border border-sidebar-border/30 bg-sidebar-accent shadow-lg"
-                side="right"
-                align="end"
+                className="w-(--radix-dropdown-menu-trigger-width) min-w-56 rounded-xl border border-sidebar-border/40 bg-popover shadow-xl p-1"
+                side={isRtl ? "left" : "right"}
+                align={isRtl ? "start" : "end"}
                 sideOffset={4}
               >
                 <DropdownMenuLabel className="p-0 font-normal">
-                  <div className="flex items-center gap-2 px-2 py-2 text-left">
+                  <div className="flex items-center gap-2 px-3 py-2 text-start">
                     <Avatar className="h-8 w-8 rounded-lg shrink-0 border border-sidebar-accent">
                       <AvatarFallback className="rounded-lg from-primary/20 to-primary/10 text-primary font-semibold">
                         {getUserInitials()}
                       </AvatarFallback>
                     </Avatar>
-                    <div
-                      className="grid flex-1 text-left text-sm leading-tight min-w-0"
-                    >
+                    <div className="grid flex-1 text-start text-sm leading-tight min-w-0">
                       <span className="truncate font-semibold text-sidebar-foreground">
                         {profile?.email?.split("@")[0] || "User"}
                       </span>
@@ -198,10 +182,10 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                 <DropdownMenuSeparator className="bg-sidebar-border/30" />
                 <DropdownMenuItem
                   onClick={handleLogout}
-                  className="cursor-pointer hover:bg-sidebar-accent/60 transition-colors"
+                  className="cursor-pointer text-destructive focus:text-destructive hover:bg-destructive/10 rounded-lg gap-2"
                 >
-                  <LogOut className="mr-2 h-4 w-4" />
-                  {strings.dashboard_log_out}
+                  <LogOut className="h-4 w-4 shrink-0" />
+                  <span>{t('dashboard_log_out')}</span>
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
@@ -213,28 +197,43 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
 }
 
 /**
- * Enhanced Navigation Item Component
- * Handles both simple links and collapsible sub-menus with improved styling
+ * Enhanced Navigation Item Component with reactive i18n and RTL support
  */
 function NavItemComponent({
   item,
   pathname,
+  isRtl,
 }: {
   item: NavItem
   pathname: string
+  isRtl: boolean
 }) {
   const { state: sidebarState } = useSidebar()
+  const { t } = useI18n()
   const isCollapsed = sidebarState === "collapsed"
-  const isActive = pathname === item.href || pathname.startsWith(item.href + "/")
+  const isActive = pathname === item.href || (item.href !== '/merchant/overview' && pathname.startsWith(item.href + "/"))
   const hasSubItems = item.items && item.items.length > 0
 
-  const getNavTitle = (key: string): string => {
-    const translations: Record<string, string> = {
-      Overview: strings.dashboard_overview,
-      Settings: strings.dashboard_settings,
-      Account: strings.nav_account_settings,
+  const getNavTitle = (title: string): string => {
+    switch (title) {
+      case 'Overview':
+        return t('nav_overview')
+      case 'Customizer & Rewards':
+        return t('nav_customizer')
+      case 'CRM':
+        return t('nav_crm')
+      case 'Staff':
+        return t('nav_staff')
+      case 'Analytics':
+        return t('nav_analytics')
+      case 'Settings':
+        return t('nav_merchant_settings')
+      case 'Account':
+      case 'Account Settings':
+        return t('nav_account_settings')
+      default:
+        return title
     }
-    return translations[key] || key
   }
 
   const title = getNavTitle(item.title)
@@ -254,26 +253,26 @@ function NavItemComponent({
                   <SidebarMenuButton
                     tooltip={isCollapsed ? title : undefined}
                     isActive={isActive || isSubItemActive}
-                    className={`w-full transition-all duration-200 ${isActive || isSubItemActive ? "bg-sidebar-accent text-sidebar-accent-foreground" : "hover:bg-sidebar-accent/50"}`}
+                    className={`w-full transition-all duration-200 ${isActive || isSubItemActive ? "bg-sidebar-accent text-sidebar-accent-foreground font-semibold" : "hover:bg-sidebar-accent/50"}`}
                   >
                     {item.icon && <item.icon className="shrink-0" />}
-                    <span className="truncate">{title}</span>
+                    <span className="truncate text-start">{title}</span>
                     {item.badge && !isCollapsed && (
                       <Badge
                         variant="secondary"
-                        className="ml-auto shrink-0 bg-primary/20 text-primary"
+                        className="ms-auto shrink-0 bg-primary/20 text-primary"
                       >
                         {item.badge}
                       </Badge>
                     )}
                     <ChevronDown
-                      className="ml-auto shrink-0 transition-transform duration-300 group-data-[state=open]/collapsible:rotate-180"
+                      className="ms-auto shrink-0 transition-transform duration-300 group-data-[state=open]/collapsible:rotate-180"
                     />
                   </SidebarMenuButton>
                 </CollapsibleTrigger>
               </TooltipTrigger>
               {isCollapsed && (
-                <TooltipContent side="right" className="flex items-center gap-2">
+                <TooltipContent side={isRtl ? "left" : "right"} className="flex items-center gap-2">
                   {title}
                 </TooltipContent>
               )}
@@ -292,14 +291,14 @@ function NavItemComponent({
                           <SidebarMenuSubButton
                             asChild
                             isActive={isSubActive}
-                            className={`transition-all duration-200 ${isSubActive ? "bg-sidebar-accent/60" : "hover:bg-sidebar-accent/30"}`}
+                            className={`transition-all duration-200 ${isSubActive ? "bg-sidebar-accent/60 font-semibold" : "hover:bg-sidebar-accent/30"}`}
                           >
                             <Link href={subItem.href} className="flex items-center gap-2">
-                              <span className="truncate">{subTitle}</span>
+                              <span className="truncate text-start">{subTitle}</span>
                               {subItem.badge && !isCollapsed && (
                                 <Badge
                                   variant="secondary"
-                                  className="ml-auto shrink-0 bg-primary/20 text-primary text-xs"
+                                  className="ms-auto shrink-0 bg-primary/20 text-primary text-xs"
                                 >
                                   {subItem.badge}
                                 </Badge>
@@ -308,7 +307,7 @@ function NavItemComponent({
                           </SidebarMenuSubButton>
                         </TooltipTrigger>
                         {isCollapsed && (
-                          <TooltipContent side="right">{subTitle}</TooltipContent>
+                          <TooltipContent side={isRtl ? "left" : "right"}>{subTitle}</TooltipContent>
                         )}
                       </Tooltip>
                     </TooltipProvider>
@@ -331,15 +330,15 @@ function NavItemComponent({
               asChild
               tooltip={isCollapsed ? title : undefined}
               isActive={isActive}
-              className={`transition-all duration-200 ${isActive ? "bg-sidebar-accent text-sidebar-accent-foreground" : "hover:bg-sidebar-accent/50"}`}
+              className={`transition-all duration-200 ${isActive ? "bg-sidebar-accent text-sidebar-accent-foreground font-semibold" : "hover:bg-sidebar-accent/50"}`}
             >
               <Link href={item.href} className="flex items-center gap-2">
                 {item.icon && <item.icon className="shrink-0" />}
-                <span className="truncate">{title}</span>
+                <span className="truncate text-start">{title}</span>
                 {item.badge && !isCollapsed && (
                   <Badge
                     variant="secondary"
-                    className="ml-auto shrink-0 bg-primary/20 text-primary"
+                    className="ms-auto shrink-0 bg-primary/20 text-primary"
                   >
                     {item.badge}
                   </Badge>
@@ -347,7 +346,7 @@ function NavItemComponent({
               </Link>
             </SidebarMenuButton>
           </TooltipTrigger>
-          {isCollapsed && <TooltipContent side="right">{title}</TooltipContent>}
+          {isCollapsed && <TooltipContent side={isRtl ? "left" : "right"}>{title}</TooltipContent>}
         </Tooltip>
       </TooltipProvider>
     </SidebarMenuItem>

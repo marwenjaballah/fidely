@@ -23,8 +23,6 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
       } else {
         root.classList.toggle('dark', theme === 'dark')
       }
-      root.setAttribute('dir', 'ltr')
-      root.setAttribute('lang', 'en')
     }
 
     apply()

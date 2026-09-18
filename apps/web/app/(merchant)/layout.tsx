@@ -15,7 +15,7 @@ import {
   SidebarInset,
   SidebarTrigger,
 } from '@/components/ui/sidebar'
-import { strings } from '@/lib/strings'
+import { useI18n } from '@/lib/i18n'
 import { useAuth } from '@/features/auth/hooks/use-auth'
 import { useRouter, usePathname } from 'next/navigation'
 import { useEffect, useState, useMemo } from 'react'
@@ -43,6 +43,7 @@ export default function DashboardLayout({
 }) {
     const { isAuthenticated, hasHydrated, profile } = useAuth()
     const { fetchStores } = useMerchantStore()
+    const { t } = useI18n()
     const router = useRouter()
     const pathname = usePathname()
     const [isMounted, setIsMounted] = useState(false)
@@ -68,7 +69,7 @@ export default function DashboardLayout({
     const breadcrumbs = useMemo(() => {
         const items: Array<{ title: string; href: string; isLast: boolean }> = [
             {
-                title: 'Merchant',
+                title: t('nav_merchant'),
                 href: '/merchant/overview',
                 isLast: pathname === '/merchant' || pathname === '/merchant/overview',
             },
@@ -76,7 +77,7 @@ export default function DashboardLayout({
 
         if (pathname === '/merchant' || pathname === '/merchant/overview') {
             items.push({
-                title: strings.dashboard_overview,
+                title: t('dashboard_overview'),
                 href: '/merchant/overview',
                 isLast: true,
             })
@@ -85,31 +86,31 @@ export default function DashboardLayout({
 
         if (pathname.startsWith('/merchant/customizer') || pathname.startsWith('/merchant/rewards')) {
             items.push({
-                title: 'Customizer & Rewards',
+                title: t('nav_customizer'),
                 href: '/merchant/customizer',
                 isLast: true,
             })
         } else if (pathname.startsWith('/merchant/crm')) {
             items.push({
-                title: 'CRM',
+                title: t('nav_crm'),
                 href: '/merchant/crm',
                 isLast: true,
             })
         } else if (pathname.startsWith('/merchant/staff')) {
             items.push({
-                title: 'Staff',
+                title: t('nav_staff'),
                 href: '/merchant/staff',
                 isLast: true,
             })
         } else if (pathname.startsWith('/merchant/analytics')) {
             items.push({
-                title: 'Analytics',
+                title: t('nav_analytics'),
                 href: '/merchant/analytics',
                 isLast: true,
             })
         } else if (pathname.startsWith('/merchant/settings')) {
             items.push({
-                title: strings.nav_account_settings,
+                title: t('nav_merchant_settings'),
                 href: '/merchant/settings/account',
                 isLast: true,
             })
@@ -129,14 +130,14 @@ export default function DashboardLayout({
         }
 
         return items
-    }, [pathname])
+    }, [pathname, t])
 
     // Show loading state while checking authentication and hydrating
     if (!isMounted || !hasHydrated) {
         return (
             <div className="min-h-svh flex items-center justify-center">
                 <div className="text-muted-foreground">
-                    {strings.loading}
+                    {t('loading')}
                 </div>
             </div>
         )
@@ -147,7 +148,7 @@ export default function DashboardLayout({
         return (
             <div className="min-h-svh flex items-center justify-center">
                 <div className="text-muted-foreground">
-                    {strings.dashboard_redirect_login}
+                    {t('dashboard_redirect_login')}
                 </div>
             </div>
         )
@@ -160,10 +161,10 @@ export default function DashboardLayout({
                 <SidebarInset>
                     <header className="sticky top-0 z-40 flex h-16 shrink-0 items-center gap-2 px-4 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 border-b">
                         <div className="flex flex-1 items-center gap-2">
-                            <SidebarTrigger className="-ml-1" />
+                            <SidebarTrigger className="-ms-1" />
                             <Separator
                                 orientation="vertical"
-                                className="mr-2 data-[orientation=vertical]:h-4"
+                                className="me-2 data-[orientation=vertical]:h-4"
                             />
                             <Breadcrumb>
                                 <BreadcrumbList>
@@ -186,11 +187,11 @@ export default function DashboardLayout({
                                 </BreadcrumbList>
                             </Breadcrumb>
                         </div>
-                        <div className="ml-auto flex items-center gap-2">
+                        <div className="ms-auto flex items-center gap-2">
                             <StoreSwitcher variant="header" />
                             <LanguageSwitcher />
                             <ThemeToggleButton />
-                            <Button variant="outline" size="icon" asChild aria-label={strings.nav_account_settings}>
+                            <Button variant="outline" size="icon" asChild aria-label={t('nav_merchant_settings')}>
                                 <Link href="/merchant/settings/account">
                                     <Settings className="h-4 w-4" />
                                 </Link>
