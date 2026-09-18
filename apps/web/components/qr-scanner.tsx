@@ -352,7 +352,7 @@ export function QRScanner({
           {/* Scanner HTML5 Container */}
           <div
             id={containerId}
-            className="w-full h-full aspect-square bg-black [&_video]:w-full [&_video]:h-full [&_video]:object-cover"
+            className="w-full h-full aspect-square bg-black [&_video]:w-full [&_video]:h-full [&_video]:object-cover [&_#qr-shaded-region]:!hidden [&_#qr-shaded-region_*]:!hidden [&_canvas]:!hidden [&_div]:!border-none"
           />
 
           {/* Reticle Overlay (Active when camera is running) */}

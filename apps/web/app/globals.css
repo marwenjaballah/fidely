@@ -206,3 +206,15 @@
     @apply my-10 border-border;
   }
 }
+
+/* Suppress html5-qrcode built-in white box / shaded region so only custom emerald green reticle shows */
+#qr-shaded-region,
+[id^='qr-reader'] #qr-shaded-region,
+[id*='qr-reader'] #qr-shaded-region,
+[id^='qr-reader'] > div:not([data-slot]) > div,
+[id*='qr-reader'] canvas:not([data-custom]) {
+  display: none !important;
+  border: none !important;
+  box-shadow: none !important;
+  background: transparent !important;
+}
