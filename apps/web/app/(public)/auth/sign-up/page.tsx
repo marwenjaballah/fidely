@@ -1,13 +1,27 @@
 "use client"
 
 import type React from "react"
-
+import { useState, useEffect, Suspense } from "react"
+import Link from "next/link"
+import { useRouter, useSearchParams } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import Link from "next/link"
-import { useRouter, useSearchParams } from "next/navigation"
-import { useState, useEffect, Suspense } from "react"
+import { Badge } from "@/components/ui/badge"
+import { Separator } from "@/components/ui/separator"
+import {
+  User,
+  Store,
+  Sparkles,
+  CheckCircle2,
+  Loader2,
+  Eye,
+  EyeOff,
+  ArrowRight,
+  ShieldCheck,
+  Smartphone,
+  TrendingUp,
+} from "lucide-react"
 import type { UserRole } from "@/lib/db-types"
 import { ApiError } from "@/features/auth/services/auth-service"
 import { strings } from "@/lib/strings"
@@ -17,38 +31,51 @@ import {
   validatePassword,
   validatePasswordConfirmation,
   validateFullName,
-  validatePhone,
-  validateStreetAddress,
-  validateCity,
-  validateState,
-  validatePostalCode,
-  validateCountry,
 } from "@/features/auth/utils/auth-validation"
-import { ChevronRight, ChevronLeft, Loader2, LayoutGrid, Coffee } from "lucide-react"
-import { Separator } from "@/components/ui/separator"
-
-const DEFAULT_SIGNUP_ROLE: UserRole = "MERCHANT"
 
 interface FieldErrors {
+  fullName: string | null
   email: string | null
   password: string | null
   confirmPassword: string | null
-  fullName: string | null
 }
 
 function SignUpForm() {
+  const router = useRouter()
   const searchParams = useSearchParams()
   const searchRef = searchParams.get('ref') || searchParams.get('joinStore') || undefined
+
   const [referralStoreId, setReferralStoreId] = useState<string | undefined>(searchRef)
-  const [storeInfo, setStoreInfo] = useState<{ name: string; logoUrl?: string | null } | null>(null)
-  const [step, setStep] = useState(1)
+  const [storeInfo, setStoreInfo] = useState<{ name: string; logoUrl?: string | null; welcomePoints?: number } | null>(null)
+  const [role, setRole] = useState<UserRole>(() => (searchRef ? 'CUSTOMER' : 'CUSTOMER'))
+
+  const [fullName, setFullName] = useState("")
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
   const [repeatPassword, setRepeatPassword] = useState("")
-  const [fullName, setFullName] = useState("")
-  const [role, setRole] = useState<UserRole>(() => (searchRef ? 'CUSTOMER' : DEFAULT_SIGNUP_ROLE))
+
+  const [showPassword, setShowPassword] = useState(false)
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false)
+
+  const [touched, setTouched] = useState({
+    fullName: false,
+    email: false,
+    password: false,
+    confirmPassword: false,
+  })
+
+  const [fieldErrors, setFieldErrors] = useState<FieldErrors>({
+    fullName: null,
+    email: null,
+    password: null,
+    confirmPassword: null,
+  })
+
   const [error, setError] = useState<string | null>(null)
   const [isLoading, setIsLoading] = useState(false)
+  const [isGoogleLoading, setIsGoogleLoading] = useState(false)
+
+  const { signUp, signInWithGoogle } = useAuth()
 
   // Sync and fetch store referral details if available
   useEffect(() => {
@@ -69,115 +96,79 @@ function SignUpForm() {
         .then((res) => (res.ok ? res.json() : null))
         .then((data) => {
           if (data) {
-            setStoreInfo({ name: data.name, logoUrl: data.logoUrl })
+            setStoreInfo({
+              name: data.name,
+              logoUrl: data.logoUrl,
+              welcomePoints: data.welcomePoints,
+            })
           }
         })
         .catch(() => {})
     }
   }, [searchRef])
-  const [touched, setTouched] = useState({
-    email: false,
-    password: false,
-    confirmPassword: false,
-    fullName: false,
-  })
-  const [fieldErrors, setFieldErrors] = useState<FieldErrors>({
-    email: null,
-    password: null,
-    confirmPassword: null,
-    fullName: null,
-  })
-  const router = useRouter()
-  const { signUp, signInWithGoogle } = useAuth()
-  const [isGoogleLoading, setIsGoogleLoading] = useState(false)
 
-  const updateFieldError = (field: keyof FieldErrors, error: string | null) => {
-    setFieldErrors((prev) => ({ ...prev, [field]: error }))
+  const updateFieldError = (field: keyof FieldErrors, err: string | null) => {
+    setFieldErrors((prev) => ({ ...prev, [field]: err }))
   }
 
-  const setFieldTouched = (field: keyof typeof touched) => {
-    setTouched((prev) => ({ ...prev, [field]: true }))
+  const handleFullNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const val = e.target.value
+    setFullName(val)
+    if (touched.fullName) {
+      updateFieldError("fullName", validateFullName(val))
+    }
   }
 
   const handleEmailChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.value
-    setEmail(value)
+    const val = e.target.value
+    setEmail(val)
     if (touched.email) {
-      updateFieldError("email", validateEmail(value))
+      updateFieldError("email", validateEmail(val))
     }
   }
 
   const handlePasswordChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.value
-    setPassword(value)
+    const val = e.target.value
+    setPassword(val)
     if (touched.password) {
-      updateFieldError("password", validatePassword(value))
+      updateFieldError("password", validatePassword(val))
     }
     if (touched.confirmPassword && repeatPassword) {
-      updateFieldError("confirmPassword", validatePasswordConfirmation(value, repeatPassword))
+      updateFieldError("confirmPassword", validatePasswordConfirmation(val, repeatPassword))
     }
   }
 
   const handleConfirmPasswordChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.value
-    setRepeatPassword(value)
+    const val = e.target.value
+    setRepeatPassword(val)
     if (touched.confirmPassword) {
-      updateFieldError("confirmPassword", validatePasswordConfirmation(password, value))
+      updateFieldError("confirmPassword", validatePasswordConfirmation(password, val))
     }
   }
 
-  const handleFullNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.value
-    setFullName(value)
-    if (touched.fullName) {
-      updateFieldError("fullName", validateFullName(value))
-    }
-  }
-
-
-
-  const validateStep1 = () => {
-    const errors: Partial<FieldErrors> = {
+  const validateForm = () => {
+    const errors: FieldErrors = {
       fullName: validateFullName(fullName),
       email: validateEmail(email),
-    }
-
-    setFieldErrors((prev) => ({ ...prev, ...errors }))
-    setTouched((prev) => ({ ...prev, fullName: true, email: true }))
-
-    return !errors.fullName && !errors.email && !!fullName && !!email
-  }
-
-  const validateStep2 = () => {
-    const errors: Partial<FieldErrors> = {
       password: validatePassword(password),
       confirmPassword: validatePasswordConfirmation(password, repeatPassword),
     }
 
-    setFieldErrors((prev) => ({ ...prev, ...errors }))
-    setTouched((prev) => ({
-      ...prev,
+    setFieldErrors(errors)
+    setTouched({
+      fullName: true,
+      email: true,
       password: true,
       confirmPassword: true,
-    }))
+    })
 
-    return !errors.password && !errors.confirmPassword && !!password && !!repeatPassword
-  }
-
-  const handleNext = () => {
-    if (validateStep1()) {
-      setStep(2)
-    }
-  }
-
-  const handleBack = () => {
-    setStep(1)
+    return !errors.fullName && !errors.email && !errors.password && !errors.confirmPassword
   }
 
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault()
 
-    if (!validateStep2()) {
+    if (!validateForm()) {
       return
     }
 
@@ -193,331 +184,474 @@ function SignUpForm() {
         referredByStoreId: referralStoreId,
       })
       router.push("/auth/sign-up-success")
-    } catch (error: unknown) {
-      if (error instanceof ApiError) {
-        setError(error.message)
-        return
+    } catch (err: unknown) {
+      if (err instanceof ApiError) {
+        setError(err.message)
+      } else {
+        setError(strings.auth_generic_error)
       }
-      setError(strings.auth_generic_error)
     } finally {
       setIsLoading(false)
     }
   }
 
-  const hasValidationErrors = Object.values(fieldErrors).some((error) => error !== null)
-  const requiredFieldsFilled = email && password && repeatPassword && fullName
-  const isFormValid = requiredFieldsFilled && !hasValidationErrors
+  const handleGoogleSignIn = async () => {
+    setIsGoogleLoading(true)
+    setError(null)
+    try {
+      const callbackUrl = `${window.location.origin}/auth/callback`
+      await signInWithGoogle(callbackUrl)
+    } catch (err: unknown) {
+      if (err instanceof ApiError) {
+        setError(err.message)
+      } else {
+        setError(strings.auth_generic_error)
+      }
+      setIsGoogleLoading(false)
+    }
+  }
 
   return (
-    <div className="min-h-screen flex flex-col">
+    <div className="min-h-screen flex flex-col bg-background">
       <div className="flex-1 flex">
-        {/* Left Side - Form */}
-        <div className="flex-1 flex flex-col bg-background p-4 sm:p-6 lg:p-8 xl:p-12 overflow-y-auto">
-        {/* Logo */}
-        <div className="flex items-center gap-2 mb-6 lg:mb-8">
-          <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary">
-          <Link href="/">
-            <LayoutGrid className="h-8 w-8" />
-          </Link>          </div>
-        </div>
+        {/* Left Side: Form Container */}
+        <div className="flex-1 flex flex-col p-4 sm:p-6 lg:p-10 xl:p-12 overflow-y-auto">
+          {/* Top Logo */}
+          <div className="flex items-center justify-between mb-6 lg:mb-8">
+            <Link href="/" className="flex items-center gap-2.5 group">
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary text-primary-foreground shadow-md shadow-primary/20 transition-transform group-hover:scale-105">
+                <Sparkles className="h-5 w-5" />
+              </div>
+              <span className="font-extrabold text-xl tracking-tight text-foreground">
+                {strings.app_name}
+              </span>
+            </Link>
 
-        {/* Form Container - Centered */}
-        <div className="flex-1 flex items-start justify-center py-4 lg:py-8">
-          <div className="w-full max-w-md space-y-6">
-            <div className="space-y-2 text-center">
-              <h1 className="text-2xl sm:text-3xl font-bold text-foreground">{strings.auth_signup_title}</h1>
-              <p className="text-sm sm:text-base text-muted-foreground">{strings.auth_signup_description}</p>
-            </div>
+            <Link
+              href={referralStoreId ? `/auth/login?ref=${encodeURIComponent(referralStoreId)}` : "/auth/login"}
+              className="text-xs font-semibold text-muted-foreground hover:text-foreground transition-colors"
+            >
+              Have an account? <span className="text-primary font-bold">Sign In</span>
+            </Link>
+          </div>
 
-            {/* Store Referral Banner */}
-            {storeInfo && (
-              <div className="bg-primary/10 border border-primary/20 rounded-2xl p-3.5 flex items-center gap-3 text-left shadow-2xs">
-                <div className="h-10 w-10 rounded-xl bg-primary text-primary-foreground flex items-center justify-center font-bold overflow-hidden shrink-0 shadow-xs">
-                  {storeInfo.logoUrl ? (
-                    <img src={storeInfo.logoUrl} alt={storeInfo.name} className="h-full w-full object-cover" />
-                  ) : (
-                    <Coffee className="h-5 w-5" />
+          {/* Centered Form Body */}
+          <div className="flex-1 flex items-center justify-center py-4">
+            <div className="w-full max-w-lg space-y-6">
+              {/* Header Title */}
+              <div className="space-y-1.5 text-center sm:text-left">
+                <h1 className="text-2xl sm:text-3xl font-black tracking-tight text-foreground">
+                  Create your account
+                </h1>
+                <p className="text-xs sm:text-sm text-muted-foreground">
+                  Get started in seconds with your digital loyalty pass or merchant dashboard.
+                </p>
+              </div>
+
+              {/* Store Referral Banner */}
+              {storeInfo && (
+                <div className="bg-gradient-to-r from-primary/15 via-primary/10 to-indigo-500/15 border border-primary/30 rounded-2xl p-4 flex items-center gap-3.5 shadow-xs animate-in zoom-in-95">
+                  <div className="h-11 w-11 rounded-xl bg-primary text-primary-foreground flex items-center justify-center font-bold overflow-hidden shrink-0 shadow-xs">
+                    {storeInfo.logoUrl ? (
+                      <img src={storeInfo.logoUrl} alt={storeInfo.name} className="h-full w-full object-cover" />
+                    ) : (
+                      <Store className="h-5 w-5" />
+                    )}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-xs font-bold text-foreground truncate">
+                      Joining {storeInfo.name}&apos;s Loyalty Program
+                    </p>
+                    <p className="text-[11px] text-muted-foreground mt-0.5">
+                      {storeInfo.welcomePoints && storeInfo.welcomePoints > 0
+                        ? `Receive +${storeInfo.welcomePoints} free bonus points instantly upon registration!`
+                        : 'Your digital membership card will be ready immediately!'}
+                    </p>
+                  </div>
+                  {storeInfo.welcomePoints && storeInfo.welcomePoints > 0 && (
+                    <Badge className="bg-primary text-primary-foreground font-mono font-bold text-xs shrink-0">
+                      +{storeInfo.welcomePoints} pts
+                    </Badge>
                   )}
                 </div>
-                <div>
-                  <p className="text-xs font-bold text-foreground leading-tight">
-                    Joining {storeInfo.name}&apos;s Loyalty Program
-                  </p>
-                  <p className="text-[11px] text-muted-foreground mt-0.5">
-                    Your coffee loyalty pass will be automatically added to your wallet!
-                  </p>
-                </div>
-              </div>
-            )}
+              )}
 
-            {/* Step Indicator */}
-            <div className="flex items-center justify-center gap-2 mb-6">
-              <div className={`flex items-center gap-2 ${step >= 1 ? 'text-primary' : 'text-muted-foreground'}`}>
-                <div className={`w-8 h-8 rounded-full flex items-center justify-center border-2 ${
-                  step >= 1 ? 'bg-primary border-primary text-primary-foreground' : 'border-muted-foreground'
-                }`}>
-                  1
-                </div>
-                <span className="text-sm font-medium hidden sm:inline">Basic Info</span>
-              </div>
-              <div className={`h-px w-12 ${step >= 2 ? 'bg-primary' : 'bg-muted-foreground'}`} />
-              <div className={`flex items-center gap-2 ${step >= 2 ? 'text-primary' : 'text-muted-foreground'}`}>
-                <div className={`w-8 h-8 rounded-full flex items-center justify-center border-2 ${
-                  step >= 2 ? 'bg-primary border-primary text-primary-foreground' : 'border-muted-foreground'
-                }`}>
-                  2
-                </div>
-                <span className="text-sm font-medium hidden sm:inline">
-                  Password
-                </span>
-              </div>
-            </div>
-
-            {/* Role Selector (Only shown if not referred by a specific store) */}
-            {step === 1 && !referralStoreId && (
-              <div className="flex justify-center mb-6">
-                <div className="inline-flex bg-muted p-1 rounded-lg">
-                  <button
-                    type="button"
-                    onClick={() => setRole("MERCHANT")}
-                    className={`px-4 py-2 text-sm font-medium rounded-md transition-colors ${
-                      role === "MERCHANT" 
-                        ? "bg-background text-foreground shadow-sm" 
-                        : "text-muted-foreground hover:text-foreground"
-                    }`}
-                  >
-                    Merchant
-                  </button>
+              {/* 1. Account Role Card Selection */}
+              <div className="space-y-2">
+                <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
+                  Choose Account Type
+                </Label>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  {/* Customer Card */}
                   <button
                     type="button"
                     onClick={() => setRole("CUSTOMER")}
-                    className={`px-4 py-2 text-sm font-medium rounded-md transition-colors ${
-                      role === "CUSTOMER" 
-                        ? "bg-background text-foreground shadow-sm" 
-                        : "text-muted-foreground hover:text-foreground"
+                    className={`relative p-4 rounded-2xl border-2 text-left transition-all flex flex-col justify-between space-y-3 cursor-pointer group ${
+                      role === "CUSTOMER"
+                        ? "border-primary bg-primary/5 ring-4 ring-primary/10 shadow-sm"
+                        : "border-border/70 hover:border-primary/40 bg-card hover:bg-muted/30"
                     }`}
                   >
-                    Customer
+                    <div className="flex items-start justify-between">
+                      <div className={`w-10 h-10 rounded-xl flex items-center justify-center transition-colors ${
+                        role === "CUSTOMER" ? "bg-primary text-primary-foreground shadow-xs" : "bg-muted text-muted-foreground group-hover:text-foreground"
+                      }`}>
+                        <User className="w-5 h-5" />
+                      </div>
+                      <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center transition-all ${
+                        role === "CUSTOMER" ? "border-primary bg-primary text-primary-foreground" : "border-muted-foreground/40"
+                      }`}>
+                        {role === "CUSTOMER" && <CheckCircle2 className="w-4 h-4" />}
+                      </div>
+                    </div>
+
+                    <div className="space-y-0.5">
+                      <h3 className="text-sm font-bold text-foreground flex items-center gap-1.5">
+                        <span>Customer / Member</span>
+                      </h3>
+                      <p className="text-[11px] text-muted-foreground leading-relaxed">
+                        Earn loyalty points, claim store perks & view your digital passes.
+                      </p>
+                    </div>
+
+                    <Badge variant="outline" className={`text-[10px] font-bold self-start ${
+                      role === "CUSTOMER" ? "bg-primary/10 text-primary border-primary/20" : "text-muted-foreground"
+                    }`}>
+                      Instant Digital Pass
+                    </Badge>
+                  </button>
+
+                  {/* Merchant Card */}
+                  <button
+                    type="button"
+                    onClick={() => setRole("MERCHANT")}
+                    disabled={!!referralStoreId}
+                    className={`relative p-4 rounded-2xl border-2 text-left transition-all flex flex-col justify-between space-y-3 cursor-pointer group ${
+                      referralStoreId ? "opacity-60 cursor-not-allowed" : ""
+                    } ${
+                      role === "MERCHANT"
+                        ? "border-primary bg-primary/5 ring-4 ring-primary/10 shadow-sm"
+                        : "border-border/70 hover:border-primary/40 bg-card hover:bg-muted/30"
+                    }`}
+                  >
+                    <div className="flex items-start justify-between">
+                      <div className={`w-10 h-10 rounded-xl flex items-center justify-center transition-colors ${
+                        role === "MERCHANT" ? "bg-primary text-primary-foreground shadow-xs" : "bg-muted text-muted-foreground group-hover:text-foreground"
+                      }`}>
+                        <Store className="w-5 h-5" />
+                      </div>
+                      <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center transition-all ${
+                        role === "MERCHANT" ? "border-primary bg-primary text-primary-foreground" : "border-muted-foreground/40"
+                      }`}>
+                        {role === "MERCHANT" && <CheckCircle2 className="w-4 h-4" />}
+                      </div>
+                    </div>
+
+                    <div className="space-y-0.5">
+                      <h3 className="text-sm font-bold text-foreground flex items-center gap-1.5">
+                        <span>Store / Merchant</span>
+                      </h3>
+                      <p className="text-[11px] text-muted-foreground leading-relaxed">
+                        Create rewards programs, print QR stands, and manage cashier staff.
+                      </p>
+                    </div>
+
+                    <Badge variant="outline" className={`text-[10px] font-bold self-start ${
+                      role === "MERCHANT" ? "bg-primary/10 text-primary border-primary/20" : "text-muted-foreground"
+                    }`}>
+                      Full POS & Analytics
+                    </Badge>
                   </button>
                 </div>
               </div>
-            )}
 
-            <form onSubmit={step === 2 ? handleSignUp : (e) => { e.preventDefault(); handleNext(); }} className="space-y-4">
-              {step === 1 ? (
-                /* Step 1: Basic Information */
-                <div className="space-y-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="fullName" className="text-foreground">{strings.auth_full_name_label}</Label>
-                    <Input
-                      id="fullName"
-                      type="text"
-                      placeholder={strings.auth_full_name_placeholder}
-                      required
-                      value={fullName}
-                      onChange={handleFullNameChange}
-                      onBlur={() => {
-                        setFieldTouched("fullName")
-                        updateFieldError("fullName", validateFullName(fullName))
-                      }}
-                      className={`bg-muted/50 ${fieldErrors.fullName && touched.fullName ? "border-destructive" : ""}`}
-                      maxLength={120}
-                    />
-                    {fieldErrors.fullName && touched.fullName && (
-                      <p className="text-sm text-destructive">{fieldErrors.fullName}</p>
-                    )}
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="email" className="text-foreground">{strings.auth_email_label}</Label>
-                    <Input
-                      id="email"
-                      type="email"
-                      placeholder="m@example.com"
-                      required
-                      value={email}
-                      onChange={handleEmailChange}
-                      onBlur={() => {
-                        setFieldTouched("email")
-                        updateFieldError("email", validateEmail(email))
-                      }}
-                      dir="ltr"
-                      className={`bg-muted/50 text-left ${fieldErrors.email && touched.email ? "border-destructive" : ""}`}
-                    />
-                    {fieldErrors.email && touched.email && (
-                      <p className="text-sm text-destructive">{fieldErrors.email}</p>
-                    )}
-                  </div>
-
-
-
-                  <Button
-                    type="submit"
-                    className="w-full bg-foreground text-background hover:bg-foreground/90"
-                    size="lg"
-                  >
-                    Continue
-                    <ChevronRight className="ml-2 h-4 w-4" />
-                  </Button>
-                </div>
-              ) : (
-                /* Step 2: Address & Password */
-                <div className="space-y-4">
-
-
-                  <div className="space-y-2">
-                    <Label htmlFor="password" className="text-foreground">{strings.auth_password_label}</Label>
-                    <Input
-                      id="password"
-                      type="password"
-                      required
-                      value={password}
-                      onChange={handlePasswordChange}
-                      onBlur={() => {
-                        setFieldTouched("password")
-                        updateFieldError("password", validatePassword(password))
-                      }}
-                      placeholder={strings.auth_password_placeholder}
-                      className={`bg-muted/50 ${fieldErrors.password && touched.password ? "border-destructive" : ""}`}
-                      maxLength={72}
-                    />
-                    {fieldErrors.password && touched.password && (
-                      <p className="text-sm text-destructive">{fieldErrors.password}</p>
-                    )}
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="repeat-password" className="text-foreground">{strings.auth_password_confirm_label}</Label>
-                    <Input
-                      id="repeat-password"
-                      type="password"
-                      required
-                      value={repeatPassword}
-                      onChange={handleConfirmPasswordChange}
-                      onBlur={() => {
-                        setFieldTouched("confirmPassword")
-                        updateFieldError("confirmPassword", validatePasswordConfirmation(password, repeatPassword))
-                      }}
-                      className={`bg-muted/50 ${fieldErrors.confirmPassword && touched.confirmPassword ? "border-destructive" : ""}`}
-                      maxLength={72}
-                    />
-                    {fieldErrors.confirmPassword && touched.confirmPassword && (
-                      <p className="text-sm text-destructive">{fieldErrors.confirmPassword}</p>
-                    )}
-                  </div>
-
-                  {error && (
-                    <div className="bg-destructive/10 text-destructive px-4 py-3 rounded-lg text-sm">{error}</div>
-                  )}
-
-                  <div className="flex gap-3">
-                    <Button
-                      type="button"
-                      variant="outline"
-                      className="flex-1 bg-muted/50"
-                      size="lg"
-                      onClick={handleBack}
-                      disabled={isLoading}
-                    >
-                      <ChevronLeft className="mr-2 h-4 w-4" />
-                      Back
-                    </Button>
-                    <Button
-                      type="submit"
-                      className="flex-1 bg-foreground text-background hover:bg-foreground/90"
-                      size="lg"
-                      disabled={isLoading || !isFormValid}
-                    >
-                      {isLoading ? strings.auth_signup_loading : strings.auth_signup_button}
-                    </Button>
-                  </div>
-                </div>
-              )}
-
-              {step === 1 && (
-                <>
-                  <div className="relative">
-                    <div className="absolute inset-0 flex items-center">
-                      <Separator />
-                    </div>
-                    <div className="relative flex justify-center text-xs uppercase">
-                      <span className="bg-background px-2 text-muted-foreground">Or continue with</span>
-                    </div>
-                  </div>
-
-                  <Button
-                    type="button"
-                    variant="outline"
-                    className="w-full bg-muted/50"
-                    size="lg"
-                    // disabled={isGoogleLoading || isLoading}
-                    disabled={true}
-                    style={{ cursor: 'not-allowed' }}
-                    onClick={async () => {
-                      setIsGoogleLoading(true)
-                      try {
-                        const callbackUrl = `${window.location.origin}/auth/callback`
-                        await signInWithGoogle(callbackUrl)
-                      } catch (error) {
-                        if (error instanceof ApiError) {
-                          setError(error.message)
-                        } else {
-                          setError(strings.auth_generic_error)
-                        }
-                        setIsGoogleLoading(false)
-                      }
+              {/* 2. Main Registration Form */}
+              <form onSubmit={handleSignUp} className="space-y-4 pt-1">
+                {/* Full Name Field */}
+                <div className="space-y-1.5">
+                  <Label htmlFor="fullName" className="text-xs font-semibold text-foreground">
+                    {strings.auth_full_name_label}
+                  </Label>
+                  <Input
+                    id="fullName"
+                    type="text"
+                    placeholder="e.g. Alex Johnson"
+                    required
+                    value={fullName}
+                    onChange={handleFullNameChange}
+                    onBlur={() => {
+                      setTouched((prev) => ({ ...prev, fullName: true }))
+                      updateFieldError("fullName", validateFullName(fullName))
                     }}
-                  >
-                    {isGoogleLoading ? (
-                      <>
-                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                        {strings.auth_google_loading}
-                      </>
-                    ) : (
-                      <>
-                        <svg className="mr-2 h-4 w-4" viewBox="0 0 24 24">
-                          <path
-                            fill="currentColor"
-                            d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
-                          />
-                          <path
-                            fill="currentColor"
-                            d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
-                          />
-                          <path
-                            fill="currentColor"
-                            d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"
-                          />
-                          <path
-                            fill="currentColor"
-                            d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
-                          />
-                        </svg>
-                        {strings.auth_google_continue}
-                      </>
-                    )}
-                  </Button>
-                </>
-              )}
+                    className={`h-11 rounded-xl bg-muted/30 border-border/70 text-sm ${
+                      fieldErrors.fullName && touched.fullName ? "border-destructive focus-visible:ring-destructive" : ""
+                    }`}
+                    maxLength={120}
+                  />
+                  {fieldErrors.fullName && touched.fullName && (
+                    <p className="text-xs text-destructive font-medium">{fieldErrors.fullName}</p>
+                  )}
+                </div>
 
-              <div className="text-center text-sm text-muted-foreground">
-                {strings.auth_signup_login_prompt}{" "}
-                <Link
-                  href={referralStoreId ? `/auth/login?ref=${encodeURIComponent(referralStoreId)}` : "/auth/login"}
-                  className="text-primary hover:underline font-medium"
+                {/* Email Field */}
+                <div className="space-y-1.5">
+                  <Label htmlFor="email" className="text-xs font-semibold text-foreground">
+                    {strings.auth_email_label}
+                  </Label>
+                  <Input
+                    id="email"
+                    type="email"
+                    placeholder="alex@example.com"
+                    required
+                    value={email}
+                    onChange={handleEmailChange}
+                    onBlur={() => {
+                      setTouched((prev) => ({ ...prev, email: true }))
+                      updateFieldError("email", validateEmail(email))
+                    }}
+                    dir="ltr"
+                    className={`h-11 rounded-xl bg-muted/30 border-border/70 text-sm text-left ${
+                      fieldErrors.email && touched.email ? "border-destructive focus-visible:ring-destructive" : ""
+                    }`}
+                  />
+                  {fieldErrors.email && touched.email && (
+                    <p className="text-xs text-destructive font-medium">{fieldErrors.email}</p>
+                  )}
+                </div>
+
+                {/* Password Fields in 2 Columns */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div className="space-y-1.5">
+                    <Label htmlFor="password" className="text-xs font-semibold text-foreground">
+                      {strings.auth_password_label}
+                    </Label>
+                    <div className="relative">
+                      <Input
+                        id="password"
+                        type={showPassword ? "text" : "password"}
+                        required
+                        value={password}
+                        onChange={handlePasswordChange}
+                        onBlur={() => {
+                          setTouched((prev) => ({ ...prev, password: true }))
+                          updateFieldError("password", validatePassword(password))
+                        }}
+                        placeholder="••••••••"
+                        className={`h-11 rounded-xl bg-muted/30 border-border/70 pr-10 text-sm ${
+                          fieldErrors.password && touched.password ? "border-destructive focus-visible:ring-destructive" : ""
+                        }`}
+                        maxLength={72}
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowPassword(!showPassword)}
+                        className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground p-1"
+                        tabIndex={-1}
+                      >
+                        {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                      </button>
+                    </div>
+                    {fieldErrors.password && touched.password && (
+                      <p className="text-[11px] text-destructive font-medium">{fieldErrors.password}</p>
+                    )}
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <Label htmlFor="repeat-password" className="text-xs font-semibold text-foreground">
+                      {strings.auth_password_confirm_label}
+                    </Label>
+                    <div className="relative">
+                      <Input
+                        id="repeat-password"
+                        type={showConfirmPassword ? "text" : "password"}
+                        required
+                        value={repeatPassword}
+                        onChange={handleConfirmPasswordChange}
+                        onBlur={() => {
+                          setTouched((prev) => ({ ...prev, confirmPassword: true }))
+                          updateFieldError("confirmPassword", validatePasswordConfirmation(password, repeatPassword))
+                        }}
+                        placeholder="••••••••"
+                        className={`h-11 rounded-xl bg-muted/30 border-border/70 pr-10 text-sm ${
+                          fieldErrors.confirmPassword && touched.confirmPassword ? "border-destructive focus-visible:ring-destructive" : ""
+                        }`}
+                        maxLength={72}
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                        className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground p-1"
+                        tabIndex={-1}
+                      >
+                        {showConfirmPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                      </button>
+                    </div>
+                    {fieldErrors.confirmPassword && touched.confirmPassword && (
+                      <p className="text-[11px] text-destructive font-medium">{fieldErrors.confirmPassword}</p>
+                    )}
+                  </div>
+                </div>
+
+                {error && (
+                  <div className="bg-destructive/10 text-destructive border border-destructive/20 px-4 py-3 rounded-xl text-xs font-medium animate-in fade-in">
+                    {error}
+                  </div>
+                )}
+
+                {/* Submit Button */}
+                <Button
+                  type="submit"
+                  className="w-full h-12 rounded-xl text-sm font-bold bg-primary hover:bg-primary/90 text-primary-foreground shadow-md shadow-primary/20 gap-2"
+                  disabled={isLoading}
                 >
-                  {strings.auth_signup_login_link}
-                </Link>
-              </div>
-            </form>
+                  {isLoading ? (
+                    <>
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                      {strings.auth_signup_loading}
+                    </>
+                  ) : (
+                    <>
+                      <span>{role === 'CUSTOMER' ? 'Create Customer Account' : 'Create Merchant Account'}</span>
+                      <ArrowRight className="w-4 h-4" />
+                    </>
+                  )}
+                </Button>
+
+                {/* 3. Google OAuth Section */}
+                <div className="relative py-2">
+                  <div className="absolute inset-0 flex items-center">
+                    <Separator />
+                  </div>
+                  <div className="relative flex justify-center text-xs uppercase">
+                    <span className="bg-background px-3 text-muted-foreground font-semibold">
+                      Or continue with
+                    </span>
+                  </div>
+                </div>
+
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="w-full h-12 rounded-xl text-xs sm:text-sm font-bold bg-card hover:bg-muted/50 border-border/80 gap-2.5 transition-all shadow-2xs"
+                  disabled={isGoogleLoading || isLoading}
+                  onClick={handleGoogleSignIn}
+                >
+                  {isGoogleLoading ? (
+                    <>
+                      <Loader2 className="h-4 w-4 animate-spin text-primary" />
+                      {strings.auth_google_loading}
+                    </>
+                  ) : (
+                    <>
+                      <svg className="h-4 w-4" viewBox="0 0 24 24">
+                        <path
+                          fill="#4285F4"
+                          d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
+                        />
+                        <path
+                          fill="#34A853"
+                          d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
+                        />
+                        <path
+                          fill="#FBBC05"
+                          d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"
+                        />
+                        <path
+                          fill="#EA4335"
+                          d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
+                        />
+                      </svg>
+                      <span>{strings.auth_google_continue}</span>
+                    </>
+                  )}
+                </Button>
+
+                {/* Bottom Terms & Sign In Note */}
+                <div className="pt-2 text-center text-xs text-muted-foreground space-y-1">
+                  <p>
+                    By signing up, you agree to Fidely&apos;s{" "}
+                    <Link href="/terms" className="underline hover:text-foreground">
+                      Terms of Service
+                    </Link>{" "}
+                    and{" "}
+                    <Link href="/privacy" className="underline hover:text-foreground">
+                      Privacy Policy
+                    </Link>
+                    .
+                  </p>
+                  <p className="pt-1">
+                    {strings.auth_signup_login_prompt}{" "}
+                    <Link
+                      href={referralStoreId ? `/auth/login?ref=${encodeURIComponent(referralStoreId)}` : "/auth/login"}
+                      className="text-primary hover:underline font-bold"
+                    >
+                      {strings.auth_signup_login_link}
+                    </Link>
+                  </p>
+                </div>
+              </form>
+            </div>
           </div>
         </div>
-        </div>
 
-        {/* Right Side - Decorative */}
-        <div className="hidden xl:flex flex-1 bg-muted/50 items-center justify-center p-12">
-          <div className="flex h-48 w-48 items-center justify-center rounded-2xl bg-primary/10 text-primary">
-            <LayoutGrid className="h-24 w-24" />
+        {/* Right Side: Feature Highlights Showcase */}
+        <div className="hidden lg:flex flex-1 bg-muted/30 border-l border-border/60 flex-col justify-between p-12">
+          <div className="space-y-6 max-w-md">
+            <Badge variant="outline" className="bg-primary/10 text-primary border-primary/20 text-xs font-bold">
+              Universal Digital Loyalty
+            </Badge>
+
+            <div className="space-y-2">
+              <h2 className="text-3xl font-black tracking-tight text-foreground">
+                Join thousands of businesses & smart shoppers.
+              </h2>
+              <p className="text-sm text-muted-foreground leading-relaxed">
+                Fidely turns everyday shopping into rewarding habits with frictionless Apple Wallet passes, live counter QR scanning, and instant points.
+              </p>
+            </div>
+
+            <div className="space-y-4 pt-4">
+              <div className="flex items-start gap-3.5">
+                <div className="w-10 h-10 rounded-xl bg-primary/10 text-primary flex items-center justify-center shrink-0">
+                  <Smartphone className="w-5 h-5" />
+                </div>
+                <div>
+                  <h4 className="text-sm font-bold text-foreground">Zero App Downloads</h4>
+                  <p className="text-xs text-muted-foreground">
+                    Customers scan counter QR stands to instantly add their pass to Apple Wallet or mobile browser.
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex items-start gap-3.5">
+                <div className="w-10 h-10 rounded-xl bg-primary/10 text-primary flex items-center justify-center shrink-0">
+                  <TrendingUp className="w-5 h-5" />
+                </div>
+                <div>
+                  <h4 className="text-sm font-bold text-foreground">Instant Cashier POS</h4>
+                  <p className="text-xs text-muted-foreground">
+                    Cashiers issue points and validate voucher perks in under a second on any phone or tablet.
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex items-start gap-3.5">
+                <div className="w-10 h-10 rounded-xl bg-primary/10 text-primary flex items-center justify-center shrink-0">
+                  <ShieldCheck className="w-5 h-5" />
+                </div>
+                <div>
+                  <h4 className="text-sm font-bold text-foreground">Secure & Fraud Proof</h4>
+                  <p className="text-xs text-muted-foreground">
+                    Cryptographically signed tokens and single-use redemption voucher receipts.
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div className="pt-8 border-t border-border/40 text-xs text-muted-foreground flex items-center justify-between">
+            <span>© {new Date().getFullYear()} Fidely Platform</span>
+            <span>All rights reserved</span>
           </div>
         </div>
       </div>
@@ -527,8 +661,13 @@ function SignUpForm() {
 
 export default function SignUpPage() {
   return (
-    <Suspense fallback={<div className="min-h-screen flex items-center justify-center">Loading...</div>}>
+    <Suspense fallback={
+      <div className="min-h-screen flex items-center justify-center">
+        <Loader2 className="w-8 h-8 text-primary animate-spin" />
+      </div>
+    }>
       <SignUpForm />
     </Suspense>
   )
 }
+
