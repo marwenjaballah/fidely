@@ -41,8 +41,6 @@ import {
   X,
   Loader2,
   Globe,
-  Link as LinkIcon,
-  RefreshCw,
 } from 'lucide-react'
 import { useI18n } from '@/lib/i18n'
 
@@ -175,8 +173,8 @@ export default function CustomizerAndRewardsPage() {
       const optimized = await optimizeIcon(file, 128)
       setLogoUrl(optimized)
       toast({
-        title: 'Icon Optimized & Ready',
-        description: 'Icon cropped & compressed (< 20KB). Don\'t forget to save changes!',
+        title: t('customizer_icon_active'),
+        description: t('customizer_card_icon_desc'),
       })
     } catch (err: any) {
       toast({
@@ -195,8 +193,8 @@ export default function CustomizerAndRewardsPage() {
   const handleRemoveIcon = () => {
     setLogoUrl(null)
     toast({
-      title: 'Custom Icon Removed',
-      description: 'Reverted to default icon. Click Save to apply.',
+      title: t('customizer_remove_icon'),
+      description: 'Icon removed. Save to apply.',
     })
   }
 
@@ -220,13 +218,13 @@ export default function CustomizerAndRewardsPage() {
 
       if (finalSlug !== oldSlug) {
         toast({
-          title: 'Store & Public Link Updated',
-          description: `Your new public store link is /store/${finalSlug}. Historical links and store ID passes remain active.`,
+          title: t('customizer_save_button'),
+          description: `/store/${finalSlug}`,
         })
       } else {
         toast({
-          title: 'Store Settings Saved',
-          description: 'Branding, card configuration, and loyalty perks saved successfully.',
+          title: t('customizer_save_button'),
+          description: t('customizer_saved_no_changes'),
         })
       }
     } catch (err: any) {
@@ -247,8 +245,8 @@ export default function CustomizerAndRewardsPage() {
     setCopiedLink(true)
     setTimeout(() => setCopiedLink(false), 2000)
     toast({
-      title: 'Store Link Copied',
-      description: 'Customers can visit this link to join your loyalty program.',
+      title: t('customizer_copied_link'),
+      description: t('customizer_public_link_desc'),
     })
   }
 
@@ -279,14 +277,14 @@ export default function CustomizerAndRewardsPage() {
           description: rewardDescription.trim() || undefined,
           pointsCost: Number(rewardPoints),
         })
-        toast({ title: 'Reward Updated', description: `Successfully updated '${rewardName}'.` })
+        toast({ title: t('customizer_modal_edit_submit'), description: rewardName })
       } else {
         await createReward(activeStore.id, {
           name: rewardName.trim(),
           description: rewardDescription.trim() || undefined,
           pointsCost: Number(rewardPoints),
         })
-        toast({ title: 'Reward Created', description: `Added '${rewardName}' to rewards catalog.` })
+        toast({ title: t('customizer_modal_create_submit'), description: rewardName })
       }
       setIsRewardModalOpen(false)
     } catch (err: any) {
@@ -320,8 +318,8 @@ export default function CustomizerAndRewardsPage() {
     try {
       await updateReward(activeStore.id, reward.id, { active: !reward.active })
       toast({
-        title: reward.active ? 'Reward Deactivated' : 'Reward Activated',
-        description: `'${reward.name}' is now ${!reward.active ? 'available' : 'hidden'} for customers.`,
+        title: reward.active ? t('customizer_reward_hidden') : t('customizer_reward_active'),
+        description: reward.name,
       })
     } catch (err: any) {
       toast({ title: 'Error', description: 'Could not toggle reward state.', variant: 'destructive' })
@@ -333,7 +331,7 @@ export default function CustomizerAndRewardsPage() {
     if (!confirm(`Are you sure you want to remove '${reward.name}'?`)) return
     try {
       await deleteReward(activeStore.id, reward.id)
-      toast({ title: 'Reward Removed', description: `'${reward.name}' was deleted.` })
+      toast({ title: t('delete'), description: reward.name })
     } catch (err: any) {
       toast({ title: 'Error', description: 'Failed to delete reward.', variant: 'destructive' })
     }
@@ -344,8 +342,8 @@ export default function CustomizerAndRewardsPage() {
       <div className="flex flex-1 items-center justify-center p-8">
         <Card className="max-w-md text-center p-6 border-border/60">
           <Store className="h-10 w-10 text-muted-foreground mx-auto mb-3" />
-          <h2 className="text-lg font-bold">No Active Store</h2>
-          <p className="text-xs text-muted-foreground mt-1">Please select or create a store from the overview page.</p>
+          <h2 className="text-lg font-bold">{t('customizer_no_active_store')}</h2>
+          <p className="text-xs text-muted-foreground mt-1">{t('customizer_no_active_store_desc')}</p>
         </Card>
       </div>
     )
@@ -356,20 +354,20 @@ export default function CustomizerAndRewardsPage() {
       {/* Top Header */}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Customizer & Rewards</h1>
+          <h1 className="text-3xl font-bold tracking-tight">{t('customizer_title')}</h1>
           <p className="text-muted-foreground text-sm mt-1">
-            Personalize your store&apos;s digital loyalty card, brand colors, point multipliers, and perks catalog.
+            {t('customizer_subtitle')}
           </p>
         </div>
 
         <div className="flex items-center gap-2">
           <Button variant="outline" size="sm" onClick={handleCopyPublicLink} className="gap-1.5 text-xs">
             {copiedLink ? <Check className="h-3.5 w-3.5 text-emerald-500" /> : <Copy className="h-3.5 w-3.5" />}
-            {copiedLink ? 'Copied Link' : 'Copy Public Link'}
+            {copiedLink ? t('customizer_copied_link') : t('customizer_copy_link')}
           </Button>
           <Button size="sm" asChild variant="secondary" className="gap-1.5 text-xs">
             <a href={`/store/${activeStore.slug}`} target="_blank" rel="noopener noreferrer">
-              Preview Store <ExternalLink className="h-3.5 w-3.5" />
+              {t('customizer_preview_store')} <ExternalLink className="h-3.5 w-3.5" />
             </a>
           </Button>
         </div>
@@ -384,21 +382,21 @@ export default function CustomizerAndRewardsPage() {
               <CardHeader>
                 <CardTitle className="text-base font-semibold flex items-center gap-2">
                   <Palette className="h-4 w-4 text-primary" />
-                  Store Identity & Branding
+                  {t('customizer_identity_title')}
                 </CardTitle>
                 <CardDescription>
-                  Configure your business name and color theme for digital loyalty cards.
+                  {t('customizer_identity_desc')}
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-6">
                 {/* Store Name */}
                 <div className="space-y-2">
-                  <Label htmlFor="storeName">Store / Business Name</Label>
+                  <Label htmlFor="storeName">{t('customizer_store_name_label')}</Label>
                   <Input
                     id="storeName"
                     value={name}
                     onChange={(e) => handleNameChange(e.target.value)}
-                    placeholder="e.g. Artisan Cafe & Bakery"
+                    placeholder={t('customizer_store_name_placeholder')}
                     required
                   />
                 </div>
@@ -409,11 +407,11 @@ export default function CustomizerAndRewardsPage() {
                     <div className="flex items-center gap-2">
                       <Globe className="h-4 w-4 text-primary" />
                       <Label htmlFor="storeSlug" className="text-xs font-semibold uppercase tracking-wider text-foreground">
-                        Public Store Link
+                        {t('customizer_public_link_label')}
                       </Label>
                     </div>
                     <div className="flex items-center gap-2">
-                      <span className="text-[11px] text-muted-foreground">Auto-sync with name</span>
+                      <span className="text-[11px] text-muted-foreground">{t('customizer_auto_sync')}</span>
                       <Switch
                         id="autoSyncSlug"
                         checked={isAutoSyncSlug}
@@ -443,7 +441,7 @@ export default function CustomizerAndRewardsPage() {
 
                   <div className="flex flex-wrap items-center justify-between gap-2 pt-0.5">
                     <p className="text-[11px] text-muted-foreground leading-relaxed">
-                      Unique URL for QR stand cards and customer mobile passes.
+                      {t('customizer_public_link_desc')}
                     </p>
                     <div className="flex items-center gap-1.5">
                       <Button
@@ -454,7 +452,7 @@ export default function CustomizerAndRewardsPage() {
                         className="h-7 text-xs px-2.5 gap-1 text-muted-foreground hover:text-foreground"
                       >
                         {copiedLink ? <Check className="h-3 w-3 text-emerald-500" /> : <Copy className="h-3 w-3" />}
-                        {copiedLink ? 'Copied' : 'Copy'}
+                        {copiedLink ? t('customizer_copied_link') : t('copy')}
                       </Button>
                       <Button
                         type="button"
@@ -464,7 +462,7 @@ export default function CustomizerAndRewardsPage() {
                         className="h-7 text-xs px-2.5 gap-1 text-muted-foreground hover:text-foreground"
                       >
                         <a href={`/store/${slug || activeStore.slug}`} target="_blank" rel="noopener noreferrer">
-                          Preview <ExternalLink className="h-3 w-3" />
+                          {t('customizer_preview_store')} <ExternalLink className="h-3 w-3" />
                         </a>
                       </Button>
                     </div>
@@ -476,16 +474,16 @@ export default function CustomizerAndRewardsPage() {
                   <div className="flex items-center justify-between">
                     <Label className="flex items-center gap-1.5 font-medium">
                       <ImageIcon className="h-4 w-4 text-primary" />
-                      Custom Card & Store Icon
+                      {t('customizer_card_icon_label')}
                     </Label>
                     {logoUrl && (
                       <Badge variant="outline" className="text-[10px] text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 border-emerald-500/20">
-                        Custom Icon Active
+                        {t('customizer_icon_active')}
                       </Badge>
                     )}
                   </div>
                   <p className="text-xs text-muted-foreground">
-                    Upload your shop logo or custom badge. Images are automatically cropped square and compressed client-side before saving to keep loyalty passes ultra-lightweight.
+                    {t('customizer_card_icon_desc')}
                   </p>
 
                   <div className="flex items-center gap-4 pt-1">
@@ -523,7 +521,7 @@ export default function CustomizerAndRewardsPage() {
                         ) : (
                           <Upload className="h-3.5 w-3.5" />
                         )}
-                        {logoUrl ? 'Change Icon' : 'Upload Custom Icon'}
+                        {logoUrl ? t('customizer_change_icon') : t('customizer_upload_icon')}
                       </Button>
                       {logoUrl && (
                         <Button
@@ -534,7 +532,7 @@ export default function CustomizerAndRewardsPage() {
                           className="text-xs text-destructive hover:bg-destructive/10 gap-1.5"
                         >
                           <X className="h-3.5 w-3.5" />
-                          Remove
+                          {t('customizer_remove_icon')}
                         </Button>
                       )}
                     </div>
@@ -546,7 +544,7 @@ export default function CustomizerAndRewardsPage() {
                 {/* Brand Color Picker */}
                 <div className="space-y-3">
                   <div className="flex items-center justify-between">
-                    <Label>Brand Accent Color</Label>
+                    <Label>{t('customizer_accent_color_label')}</Label>
                     <span className="font-mono text-xs text-muted-foreground">{primaryColor}</span>
                   </div>
 
@@ -586,7 +584,7 @@ export default function CustomizerAndRewardsPage() {
                       placeholder="#D97706"
                       className="font-mono text-xs max-w-[140px]"
                     />
-                    <span className="text-xs text-muted-foreground">Select custom HEX color</span>
+                    <span className="text-xs text-muted-foreground">{t('customizer_custom_hex')}</span>
                   </div>
                 </div>
 
@@ -596,10 +594,10 @@ export default function CustomizerAndRewardsPage() {
                 <div className="space-y-3">
                   <Label className="flex items-center gap-1.5">
                     <Coins className="h-4 w-4 text-amber-500" />
-                    Loyalty Multiplier (Points per 1 TND Spent)
+                    {t('customizer_multiplier_label')}
                   </Label>
                   <p className="text-xs text-muted-foreground">
-                    Determines how many points customers earn when cashiers record a sale.
+                    {t('customizer_multiplier_desc')}
                   </p>
 
                   <div className="flex flex-wrap gap-2">
@@ -614,7 +612,7 @@ export default function CustomizerAndRewardsPage() {
                             : 'bg-muted/50 border-border/60 text-muted-foreground hover:bg-muted hover:text-foreground'
                         }`}
                       >
-                        1 TND = {pts} pts
+                        1 TND = {pts} {t('pts')}
                       </button>
                     ))}
                   </div>
@@ -629,9 +627,9 @@ export default function CustomizerAndRewardsPage() {
                       className="max-w-[120px]"
                     />
                     <span className="text-xs text-muted-foreground">
-                       Example: A <span className="font-semibold text-foreground">25 TND</span> bill earns{' '}
+                      {t('customizer_multiplier_example_bill')} <span className="font-semibold text-foreground">25 TND</span> ={' '}
                       <span className="font-bold text-emerald-600 dark:text-emerald-400">
-                        {25 * (Number(pointsPerTnd) || 10)} points
+                        {25 * (Number(pointsPerTnd) || 10)} {t('points')}
                       </span>
                     </span>
                   </div>
@@ -644,20 +642,20 @@ export default function CustomizerAndRewardsPage() {
                   <div className="flex items-center justify-between">
                     <Label className="flex items-center gap-1.5">
                       <Sparkles className="h-4 w-4 text-emerald-500" />
-                      Welcome Bonus Points (Optional)
+                      {t('customizer_welcome_bonus_label')}
                     </Label>
                     {welcomePoints > 0 ? (
                       <Badge className="bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20 text-xs font-bold">
-                        +{welcomePoints} pts on join
+                        {t('customizer_welcome_bonus_active', { pts: welcomePoints })}
                       </Badge>
                     ) : (
                       <Badge variant="outline" className="text-xs text-muted-foreground">
-                        Disabled (0 pts)
+                        {t('customizer_welcome_bonus_disabled')}
                       </Badge>
                     )}
                   </div>
                   <p className="text-xs text-muted-foreground">
-                    Award instant bonus points automatically to new customers when they scan your stand or join your store program. Set to 0 to disable.
+                    {t('customizer_welcome_bonus_desc')}
                   </p>
 
                   <div className="flex flex-wrap gap-2">
@@ -672,7 +670,7 @@ export default function CustomizerAndRewardsPage() {
                             : 'bg-muted/50 border-border/60 text-muted-foreground hover:bg-muted hover:text-foreground'
                         }`}
                       >
-                        {pts === 0 ? 'No Bonus' : `+${pts} pts`}
+                        {pts === 0 ? t('customizer_welcome_bonus_disabled') : `+${pts} ${t('pts')}`}
                       </button>
                     ))}
                   </div>
@@ -688,8 +686,8 @@ export default function CustomizerAndRewardsPage() {
                     />
                     <span className="text-xs text-muted-foreground">
                       {welcomePoints > 0
-                        ? `New members will get a +${welcomePoints} points welcome gift upon signup.`
-                        : 'No welcome gift credited on joining.'}
+                        ? t('customizer_welcome_bonus_note_active', { pts: welcomePoints })
+                        : t('customizer_welcome_bonus_note_disabled')}
                     </span>
                   </div>
                 </div>
@@ -705,7 +703,7 @@ export default function CustomizerAndRewardsPage() {
                   }`}
                 >
                   <Save className="h-4 w-4" />
-                  {isSaving ? 'Saving Changes...' : hasChanges ? 'Save Store Branding' : 'Saved (No Changes)'}
+                  {isSaving ? t('customizer_saving') : hasChanges ? t('customizer_save_button') : t('customizer_saved_no_changes')}
                 </Button>
               </CardFooter>
             </Card>
@@ -717,10 +715,10 @@ export default function CustomizerAndRewardsPage() {
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2 text-xs font-semibold text-muted-foreground uppercase tracking-wider">
               <Smartphone className="h-4 w-4 text-primary" />
-              Fidely Wallet Pass Simulator
+              {t('customizer_simulator_title')}
             </div>
             <Badge variant="outline" className="text-[10px] bg-primary/5 text-primary border-primary/20">
-              Live Preview
+              {t('customizer_live_preview')}
             </Badge>
           </div>
 
@@ -741,7 +739,7 @@ export default function CustomizerAndRewardsPage() {
           />
 
           <p className="text-xs text-center text-muted-foreground px-4">
-            This Fidely Wallet pass updates in real-time on your customer&apos;s device when they collect or redeem points.
+            {t('customizer_simulator_desc')}
           </p>
         </div>
       </div>
@@ -769,14 +767,14 @@ export default function CustomizerAndRewardsPage() {
           <div>
             <h2 className="text-xl font-bold tracking-tight flex items-center gap-2">
               <Gift className="h-5 w-5 text-primary" />
-              Rewards & Perks Catalog
+              {t('customizer_rewards_catalog_title')}
             </h2>
             <p className="text-xs text-muted-foreground mt-0.5">
-              Define the gifts, beverages, and discounts your customers can redeem using their points.
+              {t('customizer_rewards_catalog_desc')}
             </p>
           </div>
           <Button onClick={handleOpenAddReward} className="gap-2 text-xs">
-            <Plus className="h-4 w-4" /> Add New Reward
+            <Plus className="h-4 w-4" /> {t('customizer_add_reward_button')}
           </Button>
         </div>
 
@@ -785,12 +783,12 @@ export default function CustomizerAndRewardsPage() {
           <Card className="border-dashed border-2 border-border/70 p-8 text-center bg-muted/10">
             <div className="max-w-md mx-auto space-y-3">
               <Gift className="h-10 w-10 text-muted-foreground mx-auto" />
-              <h3 className="font-semibold text-base">No Rewards Added Yet</h3>
+              <h3 className="font-semibold text-base">{t('customizer_no_rewards_title')}</h3>
               <p className="text-xs text-muted-foreground">
-                Create your first reward (e.g. &quot;Free Coffee for 80 pts&quot;) so customers have an incentive to keep returning!
+                {t('customizer_no_rewards_desc')}
               </p>
               <Button onClick={handleOpenAddReward} variant="outline" size="sm" className="mt-2 gap-1.5">
-                <Plus className="h-4 w-4" /> Add First Reward
+                <Plus className="h-4 w-4" /> {t('customizer_add_first_reward')}
               </Button>
             </div>
           </Card>
@@ -822,7 +820,7 @@ export default function CustomizerAndRewardsPage() {
                       variant="secondary"
                       className="font-mono font-bold text-xs bg-amber-500/10 text-amber-700 dark:text-amber-400 shrink-0"
                     >
-                      {reward.pointsCost} pts
+                      {reward.pointsCost} {t('pts')}
                     </Badge>
                   </div>
                   {reward.description && (
@@ -839,7 +837,7 @@ export default function CustomizerAndRewardsPage() {
                       onCheckedChange={() => handleToggleRewardActive(reward)}
                     />
                     <span className="text-[11px] text-muted-foreground">
-                      {reward.active ? 'Active' : 'Hidden'}
+                      {reward.active ? t('customizer_reward_active') : t('customizer_reward_hidden')}
                     </span>
                   </div>
 
@@ -872,18 +870,18 @@ export default function CustomizerAndRewardsPage() {
       <Dialog open={isRewardModalOpen} onOpenChange={setIsRewardModalOpen}>
         <DialogContent className="sm:max-w-[440px]">
           <DialogHeader>
-            <DialogTitle>{editingReward ? 'Edit Reward' : 'Create New Reward'}</DialogTitle>
+            <DialogTitle>{editingReward ? t('customizer_modal_edit_title') : t('customizer_modal_create_title')}</DialogTitle>
             <DialogDescription>
-              Set the title, point requirement, and description for this perk.
+              {t('customizer_modal_desc')}
             </DialogDescription>
           </DialogHeader>
 
           <form onSubmit={handleSaveReward} className="space-y-4 py-2">
             <div className="space-y-2">
-              <Label htmlFor="rewardName">Reward Name</Label>
+              <Label htmlFor="rewardName">{t('customizer_reward_name_label')}</Label>
               <Input
                 id="rewardName"
-                placeholder="e.g. Free Drink or 20% Off"
+                placeholder={t('customizer_reward_name_placeholder')}
                 value={rewardName}
                 onChange={(e) => setRewardName(e.target.value)}
                 required
@@ -891,7 +889,7 @@ export default function CustomizerAndRewardsPage() {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="rewardPoints">Points Cost</Label>
+              <Label htmlFor="rewardPoints">{t('customizer_reward_points_label')}</Label>
               <Input
                 id="rewardPoints"
                 type="number"
@@ -902,15 +900,15 @@ export default function CustomizerAndRewardsPage() {
                 required
               />
               <p className="text-[11px] text-muted-foreground">
-                Equivalent to ~{(Number(rewardPoints) / (Number(pointsPerTnd) || 10)).toFixed(1)} TND in spend.
+                {t('customizer_reward_spend_eq', { amount: (Number(rewardPoints) / (Number(pointsPerTnd) || 10)).toFixed(1) })}
               </p>
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="rewardDescription">Description (Optional)</Label>
+              <Label htmlFor="rewardDescription">{t('customizer_reward_desc_label')}</Label>
               <Input
                 id="rewardDescription"
-                placeholder="e.g. Valid on any hot or cold beverage."
+                placeholder={t('customizer_reward_desc_placeholder')}
                 value={rewardDescription}
                 onChange={(e) => setRewardDescription(e.target.value)}
               />
@@ -918,14 +916,14 @@ export default function CustomizerAndRewardsPage() {
 
             <DialogFooter className="pt-3">
               <Button type="button" variant="outline" onClick={() => setIsRewardModalOpen(false)}>
-                Cancel
+                {t('customizer_modal_cancel')}
               </Button>
               <Button
                 type="submit"
                 disabled={isSavingReward || !hasRewardChanges}
                 className={!hasRewardChanges ? 'opacity-50 cursor-not-allowed bg-muted text-muted-foreground hover:bg-muted' : ''}
               >
-                {isSavingReward ? 'Saving...' : editingReward ? 'Update Reward' : 'Create Reward'}
+                {isSavingReward ? t('customizer_modal_saving') : editingReward ? t('customizer_modal_edit_submit') : t('customizer_modal_create_submit')}
               </Button>
             </DialogFooter>
           </form>

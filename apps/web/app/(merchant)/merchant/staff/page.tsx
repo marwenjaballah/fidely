@@ -49,8 +49,9 @@ import {
   ShieldCheck,
   AlertTriangle,
   Loader2,
-  Coffee,
+  Store,
 } from 'lucide-react'
+import { useI18n } from '@/lib/i18n'
 
 export default function StaffPage() {
   const {
@@ -62,9 +63,9 @@ export default function StaffPage() {
     changeStaffPassword,
     deleteStaff,
     loading,
-    error,
   } = useMerchantStore()
   const { toast } = useToast()
+  const { t } = useI18n()
 
   // Search filter
   const [searchQuery, setSearchQuery] = useState('')
@@ -118,15 +119,15 @@ export default function StaffPage() {
     setActionError(null)
 
     try {
-      const newStaff = await createStaff(activeStore.id, {
+      await createStaff(activeStore.id, {
         fullName: addFullName.trim(),
         email: addEmail.trim(),
         password: addPassword || undefined,
         phone: addPhone.trim() || undefined,
       })
       toast({
-        title: 'Cashier Account Created',
-        description: `'${addFullName.trim() || addEmail.trim()}' can now log in at /cashier.`,
+        title: t('staff_toast_created'),
+        description: t('staff_toast_created_desc', { name: addFullName.trim() || addEmail.trim() }),
       })
       setIsAddOpen(false)
       setAddFullName('')
@@ -134,9 +135,9 @@ export default function StaffPage() {
       setAddPassword('')
       setAddPhone('')
     } catch (err: any) {
-      setActionError(err.message || 'Failed to create cashier.')
+      setActionError(err.message || t('auth_generic_error'))
       toast({
-        title: 'Failed to Create Cashier',
+        title: t('auth_generic_error'),
         description: err.message || 'An error occurred.',
         variant: 'destructive',
       })
@@ -165,14 +166,14 @@ export default function StaffPage() {
         phone: editPhone.trim() || undefined,
       })
       toast({
-        title: 'Cashier Profile Updated',
-        description: `Successfully updated '${editFullName.trim()}'.`,
+        title: t('staff_toast_updated'),
+        description: t('staff_toast_updated_desc', { name: editFullName.trim() }),
       })
       setEditTarget(null)
     } catch (err: any) {
-      setActionError(err.message || 'Failed to update cashier.')
+      setActionError(err.message || t('auth_generic_error'))
       toast({
-        title: 'Failed to Update',
+        title: t('auth_generic_error'),
         description: err.message || 'Could not save cashier profile.',
         variant: 'destructive',
       })
@@ -193,7 +194,7 @@ export default function StaffPage() {
     e.preventDefault()
     if (!activeStore || !passwordTarget) return
     if (newPassword.length < 6) {
-      setActionError('Password must be at least 6 characters long.')
+      setActionError(t('auth_password_min_length'))
       return
     }
     setActionLoading(true)
@@ -202,15 +203,15 @@ export default function StaffPage() {
     try {
       await changeStaffPassword(activeStore.id, passwordTarget.id, newPassword)
       toast({
-        title: 'Password Updated',
-        description: `New password configured for '${passwordTarget.fullName || passwordTarget.email}'.`,
+        title: t('staff_toast_pwd_updated'),
+        description: t('staff_toast_pwd_desc', { name: passwordTarget.fullName || passwordTarget.email }),
       })
       setPasswordTarget(null)
       setNewPassword('')
     } catch (err: any) {
-      setActionError(err.message || 'Failed to change password.')
+      setActionError(err.message || t('auth_generic_error'))
       toast({
-        title: 'Password Change Failed',
+        title: t('auth_generic_error'),
         description: err.message || 'Could not update cashier password.',
         variant: 'destructive',
       })
@@ -229,14 +230,14 @@ export default function StaffPage() {
       const removedName = deleteTarget.fullName || deleteTarget.email
       await deleteStaff(activeStore.id, deleteTarget.id)
       toast({
-        title: 'Cashier Removed',
-        description: `'${removedName}' was removed from ${activeStore.name}.`,
+        title: t('staff_toast_removed'),
+        description: t('staff_toast_removed_desc', { name: removedName, storeName: activeStore.name }),
       })
       setDeleteTarget(null)
     } catch (err: any) {
-      setActionError(err.message || 'Failed to remove cashier.')
+      setActionError(err.message || t('auth_generic_error'))
       toast({
-        title: 'Removal Failed',
+        title: t('auth_generic_error'),
         description: err.message || 'Could not remove cashier.',
         variant: 'destructive',
       })
@@ -254,7 +255,7 @@ export default function StaffPage() {
   if (!activeStore) {
     return (
       <div className="flex flex-1 items-center justify-center p-8">
-        <p className="text-muted-foreground">Please select a store or create one.</p>
+        <p className="text-muted-foreground">{t('customizer_no_active_store_desc')}</p>
       </div>
     )
   }
@@ -272,17 +273,17 @@ export default function StaffPage() {
       {/* Header */}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Staff Management</h1>
+          <h1 className="text-3xl font-bold tracking-tight">{t('staff_title')}</h1>
           <p className="text-muted-foreground mt-1 flex items-center gap-2">
-            <span>Cashier permissions for</span>
+            <span>{t('staff_subtitle')}</span>
             <span className="font-semibold text-foreground flex items-center gap-1 bg-primary/10 text-primary px-2 py-0.5 rounded-md text-xs">
-              <Coffee className="h-3 w-3" />
+              <Store className="h-3 w-3" />
               {activeStore.name}
             </span>
           </p>
         </div>
         <Button onClick={() => { setIsAddOpen(true); setActionError(null); }} className="gap-2">
-          <Plus className="h-4 w-4" /> Add New Cashier
+          <Plus className="h-4 w-4" /> {t('staff_add_cashier_btn')}
         </Button>
       </div>
 
@@ -290,19 +291,19 @@ export default function StaffPage() {
       <Card className="border border-border/60 shadow-xs">
         <CardHeader className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between pb-4">
           <div>
-            <CardTitle className="text-lg">Authorized Cashiers</CardTitle>
+            <CardTitle className="text-lg">{t('staff_authorized_title')}</CardTitle>
             <CardDescription>
-              Cashiers can log in at <code className="text-xs bg-muted px-1.5 py-0.5 rounded">/cashier</code> to issue points and redeem customer loyalty rewards.
+              {t('staff_authorized_desc')}
             </CardDescription>
           </div>
           {staff.length > 0 && (
             <div className="relative w-full sm:w-64">
-              <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+              <Search className="absolute start-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
               <Input
-                placeholder="Search cashiers..."
+                placeholder={t('staff_search_cashiers')}
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-9 h-9"
+                className="ps-9 pe-3 h-9"
               />
             </div>
           )}
@@ -310,25 +311,25 @@ export default function StaffPage() {
         <CardContent>
           {loading && staff.length === 0 ? (
             <div className="flex items-center justify-center py-12 text-sm text-muted-foreground gap-2">
-              <Loader2 className="h-4 w-4 animate-spin" />
-              Loading cashier team...
+              <Loader2 className="h-4 w-4 animate-spin text-primary" />
+              {t('staff_loading_team')}
             </div>
           ) : staff.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-12 text-center">
               <div className="flex h-12 w-12 items-center justify-center rounded-full bg-primary/10 text-primary mb-4">
                 <ShieldCheck className="h-6 w-6" />
               </div>
-              <h3 className="font-semibold text-base mb-1">No cashiers added yet</h3>
+              <h3 className="font-semibold text-base mb-1">{t('staff_empty_title')}</h3>
               <p className="text-sm text-muted-foreground max-w-sm mb-4">
-                Add cashier staff accounts so your team can scan customer QR codes and issue points.
+                {t('staff_empty_desc')}
               </p>
               <Button onClick={() => { setIsAddOpen(true); setActionError(null); }} variant="outline" className="gap-2">
-                <Plus className="h-4 w-4" /> Add First Cashier
+                <Plus className="h-4 w-4" /> {t('staff_add_first')}
               </Button>
             </div>
           ) : filteredStaff.length === 0 ? (
             <p className="text-sm text-muted-foreground text-center py-8">
-              No cashiers match your search query.
+              {t('staff_no_results')}
             </p>
           ) : (
             <>
@@ -337,11 +338,11 @@ export default function StaffPage() {
                 <Table>
                   <TableHeader className="bg-muted/40">
                     <TableRow>
-                      <TableHead>Cashier</TableHead>
-                      <TableHead>Email & Contact</TableHead>
-                      <TableHead>Role</TableHead>
-                      <TableHead>Added On</TableHead>
-                      <TableHead className="text-right">Actions</TableHead>
+                      <TableHead>{t('staff_col_cashier')}</TableHead>
+                      <TableHead>{t('staff_col_email_contact')}</TableHead>
+                      <TableHead>{t('staff_col_role')}</TableHead>
+                      <TableHead>{t('staff_col_added_on')}</TableHead>
+                      <TableHead className="text-end">{t('staff_col_actions')}</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -355,7 +356,7 @@ export default function StaffPage() {
                               </AvatarFallback>
                             </Avatar>
                             <div className="font-medium text-foreground">
-                              {cashier.fullName || 'Unnamed Cashier'}
+                              {cashier.fullName || t('staff_unnamed')}
                             </div>
                           </div>
                         </TableCell>
@@ -367,7 +368,7 @@ export default function StaffPage() {
                             <button
                               type="button"
                               onClick={() => handleCopyEmail(cashier.email, cashier.id)}
-                              title="Copy Email"
+                              title={t('staff_copy_email_title')}
                               className="text-muted-foreground hover:text-foreground transition-colors"
                             >
                               {copiedId === cashier.id ? (
@@ -385,35 +386,35 @@ export default function StaffPage() {
                         </TableCell>
                         <TableCell>
                           <Badge variant="outline" className="bg-primary/10 text-primary border-primary/20 text-xs">
-                            Cashier
+                            {t('staff_role_cashier')}
                           </Badge>
                         </TableCell>
                         <TableCell className="text-sm text-muted-foreground">
                           {format(new Date(cashier.createdAt), 'MMM d, yyyy')}
                         </TableCell>
-                        <TableCell className="text-right">
+                        <TableCell className="text-end">
                           <DropdownMenu>
                             <DropdownMenuTrigger asChild>
                               <Button variant="ghost" size="icon" className="h-8 w-8">
                                 <MoreVertical className="h-4 w-4" />
-                                <span className="sr-only">Open menu</span>
+                                <span className="sr-only">{t('staff_menu_title')}</span>
                               </Button>
                             </DropdownMenuTrigger>
                             <DropdownMenuContent align="end" className="w-48">
-                              <DropdownMenuLabel className="text-xs">Cashier Actions</DropdownMenuLabel>
+                              <DropdownMenuLabel className="text-xs">{t('staff_menu_title')}</DropdownMenuLabel>
                               <DropdownMenuItem
                                 onClick={() => handleEditOpen(cashier)}
                                 className="cursor-pointer gap-2"
                               >
                                 <Edit className="h-4 w-4 text-muted-foreground" />
-                                <span>Edit Details</span>
+                                <span>{t('staff_action_edit')}</span>
                               </DropdownMenuItem>
                               <DropdownMenuItem
                                 onClick={() => handlePasswordOpen(cashier)}
                                 className="cursor-pointer gap-2"
                               >
                                 <Key className="h-4 w-4 text-amber-500" />
-                                <span>Change Password</span>
+                                <span>{t('staff_action_change_pwd')}</span>
                               </DropdownMenuItem>
                               <DropdownMenuSeparator />
                               <DropdownMenuItem
@@ -421,7 +422,7 @@ export default function StaffPage() {
                                 className="cursor-pointer gap-2 text-destructive focus:text-destructive"
                               >
                                 <Trash2 className="h-4 w-4" />
-                                <span>Remove Cashier</span>
+                                <span>{t('staff_action_remove')}</span>
                               </DropdownMenuItem>
                             </DropdownMenuContent>
                           </DropdownMenu>
@@ -444,17 +445,17 @@ export default function StaffPage() {
                       </Avatar>
                       <div className="min-w-0 space-y-0.5">
                         <p className="font-semibold text-sm text-foreground truncate">
-                          {cashier.fullName || 'Unnamed Cashier'}
+                          {cashier.fullName || t('staff_unnamed')}
                         </p>
                         <p className="text-xs text-muted-foreground font-mono truncate">
                           {cashier.email}
                         </p>
                         <div className="flex items-center gap-2 pt-0.5">
                           <Badge variant="outline" className="bg-primary/10 text-primary border-primary/20 text-[10px] py-0 px-1.5 h-4">
-                            Cashier
+                            {t('staff_role_cashier')}
                           </Badge>
                           <span className="text-[10px] text-muted-foreground">
-                            Added {format(new Date(cashier.createdAt), 'MMM d, yyyy')}
+                            {format(new Date(cashier.createdAt), 'MMM d, yyyy')}
                           </span>
                         </div>
                       </div>
@@ -464,24 +465,24 @@ export default function StaffPage() {
                       <DropdownMenuTrigger asChild>
                         <Button variant="outline" size="icon" className="h-9 w-9 shrink-0">
                           <MoreVertical className="h-4 w-4" />
-                          <span className="sr-only">Open menu</span>
+                          <span className="sr-only">{t('staff_menu_title')}</span>
                         </Button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end" className="w-48">
-                        <DropdownMenuLabel className="text-xs">Cashier Actions</DropdownMenuLabel>
+                        <DropdownMenuLabel className="text-xs">{t('staff_menu_title')}</DropdownMenuLabel>
                         <DropdownMenuItem
                           onClick={() => handleEditOpen(cashier)}
                           className="cursor-pointer gap-2"
                         >
                           <Edit className="h-4 w-4 text-muted-foreground" />
-                          <span>Edit Details</span>
+                          <span>{t('staff_action_edit')}</span>
                         </DropdownMenuItem>
                         <DropdownMenuItem
                           onClick={() => handlePasswordOpen(cashier)}
                           className="cursor-pointer gap-2"
                         >
                           <Key className="h-4 w-4 text-amber-500" />
-                          <span>Change Password</span>
+                          <span>{t('staff_action_change_pwd')}</span>
                         </DropdownMenuItem>
                         <DropdownMenuSeparator />
                         <DropdownMenuItem
@@ -489,7 +490,7 @@ export default function StaffPage() {
                           className="cursor-pointer gap-2 text-destructive focus:text-destructive"
                         >
                           <Trash2 className="h-4 w-4" />
-                          <span>Remove Cashier</span>
+                          <span>{t('staff_action_remove')}</span>
                         </DropdownMenuItem>
                       </DropdownMenuContent>
                     </DropdownMenu>
@@ -506,18 +507,18 @@ export default function StaffPage() {
         <DialogContent className="sm:max-w-[480px]">
           <form onSubmit={handleAddSubmit}>
             <DialogHeader>
-              <DialogTitle className="text-xl">Add New Cashier</DialogTitle>
+              <DialogTitle className="text-xl">{t('staff_dialog_add_title')}</DialogTitle>
               <DialogDescription>
-                Create a cashier login for <span className="font-semibold">{activeStore.name}</span>.
+                {t('staff_dialog_add_desc', { storeName: activeStore.name })}
               </DialogDescription>
             </DialogHeader>
 
             <div className="grid gap-4 py-4">
               <div className="space-y-2">
-                <Label htmlFor="add-name">Full Name</Label>
+                <Label htmlFor="add-name">{t('staff_dialog_fullname')}</Label>
                 <Input
                   id="add-name"
-                  placeholder="e.g. Sarah Jenkins"
+                  placeholder={t('staff_dialog_fullname_placeholder')}
                   value={addFullName}
                   onChange={(e) => setAddFullName(e.target.value)}
                   required
@@ -525,11 +526,11 @@ export default function StaffPage() {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="add-email">Email Address</Label>
+                <Label htmlFor="add-email">{t('staff_dialog_email')}</Label>
                 <Input
                   id="add-email"
                   type="email"
-                  placeholder="cashier@example.com"
+                  placeholder={t('staff_dialog_email_placeholder')}
                   value={addEmail}
                   onChange={(e) => setAddEmail(e.target.value)}
                   required
@@ -538,42 +539,42 @@ export default function StaffPage() {
 
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
-                  <Label htmlFor="add-password">Login Password</Label>
+                  <Label htmlFor="add-password">{t('staff_dialog_password')}</Label>
                   <button
                     type="button"
                     onClick={() => setAddPassword(generateStrongPassword())}
                     className="text-xs text-primary hover:underline flex items-center gap-1"
                   >
-                    <Sparkles className="h-3 w-3" /> Auto-generate
+                    <Sparkles className="h-3 w-3" /> {t('staff_dialog_auto_generate')}
                   </button>
                 </div>
                 <div className="relative">
                   <Input
                     id="add-password"
                     type={showAddPassword ? 'text' : 'password'}
-                    placeholder="Min 6 characters (default: Cashier@123456)"
+                    placeholder={t('staff_dialog_password_placeholder')}
                     value={addPassword}
                     onChange={(e) => setAddPassword(e.target.value)}
-                    className="pr-10"
+                    className="pe-10"
                   />
                   <button
                     type="button"
                     onClick={() => setShowAddPassword(!showAddPassword)}
-                    className="absolute right-3 top-2.5 text-muted-foreground hover:text-foreground"
+                    className="absolute end-3 top-2.5 text-muted-foreground hover:text-foreground"
                   >
                     {showAddPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                   </button>
                 </div>
                 <p className="text-[11px] text-muted-foreground">
-                  The cashier will use this password to log in to the Cashier Terminal.
+                  {t('staff_dialog_password_hint')}
                 </p>
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="add-phone">Phone Number (Optional)</Label>
+                <Label htmlFor="add-phone">{t('staff_dialog_phone')}</Label>
                 <Input
                   id="add-phone"
-                  placeholder="+216 55 123 456"
+                  placeholder={t('staff_dialog_phone_placeholder')}
                   value={addPhone}
                   onChange={(e) => setAddPhone(e.target.value)}
                 />
@@ -591,7 +592,7 @@ export default function StaffPage() {
                 onClick={() => setIsAddOpen(false)}
                 disabled={actionLoading}
               >
-                Cancel
+                {t('cancel')}
               </Button>
               <Button
                 type="submit"
@@ -605,12 +606,12 @@ export default function StaffPage() {
                 {actionLoading ? (
                   <>
                     <Loader2 className="h-4 w-4 animate-spin" />
-                    Creating...
+                    {t('saving')}
                   </>
                 ) : (
                   <>
                     <Plus className="h-4 w-4" />
-                    Create Cashier
+                    {t('staff_dialog_create_btn')}
                   </>
                 )}
               </Button>
@@ -624,15 +625,15 @@ export default function StaffPage() {
         <DialogContent className="sm:max-w-[440px]">
           <form onSubmit={handleEditSubmit}>
             <DialogHeader>
-              <DialogTitle className="text-xl">Edit Cashier</DialogTitle>
+              <DialogTitle className="text-xl">{t('staff_dialog_edit_title')}</DialogTitle>
               <DialogDescription>
-                Update profile details for <span className="font-semibold">{editTarget?.email}</span>.
+                {t('staff_dialog_edit_desc', { email: editTarget?.email || '' })}
               </DialogDescription>
             </DialogHeader>
 
             <div className="grid gap-4 py-4">
               <div className="space-y-2">
-                <Label htmlFor="edit-name">Full Name</Label>
+                <Label htmlFor="edit-name">{t('staff_dialog_fullname')}</Label>
                 <Input
                   id="edit-name"
                   value={editFullName}
@@ -642,12 +643,12 @@ export default function StaffPage() {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="edit-phone">Phone Number</Label>
+                <Label htmlFor="edit-phone">{t('staff_dialog_phone')}</Label>
                 <Input
                   id="edit-phone"
                   value={editPhone}
                   onChange={(e) => setEditPhone(e.target.value)}
-                  placeholder="+216 55 123 456"
+                  placeholder={t('staff_dialog_phone_placeholder')}
                 />
               </div>
 
@@ -671,7 +672,7 @@ export default function StaffPage() {
                     onClick={() => setEditTarget(null)}
                     disabled={actionLoading}
                   >
-                    Cancel
+                    {t('cancel')}
                   </Button>
                   <Button
                     type="submit"
@@ -682,7 +683,7 @@ export default function StaffPage() {
                         : ''
                     }`}
                   >
-                    {actionLoading ? 'Saving...' : hasEditChanges ? 'Save Changes' : 'No Changes'}
+                    {actionLoading ? t('saving') : hasEditChanges ? t('staff_dialog_save_btn') : t('staff_dialog_no_changes')}
                   </Button>
                 </DialogFooter>
               )
@@ -700,46 +701,46 @@ export default function StaffPage() {
                 <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-amber-500/10 text-amber-500">
                   <Key className="h-4 w-4" />
                 </div>
-                <DialogTitle className="text-xl">Change Cashier Password</DialogTitle>
+                <DialogTitle className="text-xl">{t('staff_dialog_pwd_title')}</DialogTitle>
               </div>
               <DialogDescription>
-                Set a new password for <span className="font-semibold text-foreground">{passwordTarget?.fullName || passwordTarget?.email}</span>.
+                {t('staff_dialog_pwd_desc', { name: passwordTarget?.fullName || passwordTarget?.email || '' })}
               </DialogDescription>
             </DialogHeader>
 
             <div className="grid gap-4 py-4">
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
-                  <Label htmlFor="change-pass">New Password</Label>
+                  <Label htmlFor="change-pass">{t('staff_dialog_new_pwd')}</Label>
                   <button
                     type="button"
                     onClick={() => setNewPassword(generateStrongPassword())}
                     className="text-xs text-primary hover:underline flex items-center gap-1"
                   >
-                    <Sparkles className="h-3 w-3" /> Auto-generate
+                    <Sparkles className="h-3 w-3" /> {t('staff_dialog_auto_generate')}
                   </button>
                 </div>
                 <div className="relative">
                   <Input
                     id="change-pass"
                     type={showNewPassword ? 'text' : 'password'}
-                    placeholder="Enter new password (min 6 chars)"
+                    placeholder={t('staff_dialog_new_pwd_placeholder')}
                     value={newPassword}
                     onChange={(e) => setNewPassword(e.target.value)}
                     required
                     autoFocus
-                    className="pr-10"
+                    className="pe-10"
                   />
                   <button
                     type="button"
                     onClick={() => setShowNewPassword(!showNewPassword)}
-                    className="absolute right-3 top-2.5 text-muted-foreground hover:text-foreground"
+                    className="absolute end-3 top-2.5 text-muted-foreground hover:text-foreground"
                   >
                     {showNewPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                   </button>
                 </div>
                 <p className="text-[11px] text-muted-foreground">
-                  The cashier will immediately need this new password to access the terminal.
+                  {t('staff_dialog_new_pwd_hint')}
                 </p>
               </div>
 
@@ -755,7 +756,7 @@ export default function StaffPage() {
                 onClick={() => setPasswordTarget(null)}
                 disabled={actionLoading}
               >
-                Cancel
+                {t('cancel')}
               </Button>
               <Button
                 type="submit"
@@ -769,12 +770,12 @@ export default function StaffPage() {
                 {actionLoading ? (
                   <>
                     <Loader2 className="h-4 w-4 animate-spin" />
-                    Updating...
+                    {t('saving')}
                   </>
                 ) : (
                   <>
                     <Key className="h-4 w-4" />
-                    Update Password
+                    {t('staff_dialog_update_pwd_btn')}
                   </>
                 )}
               </Button>
@@ -791,16 +792,19 @@ export default function StaffPage() {
               <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-destructive/10 text-destructive">
                 <AlertTriangle className="h-4 w-4" />
               </div>
-              <DialogTitle className="text-xl">Remove Cashier</DialogTitle>
+              <DialogTitle className="text-xl">{t('staff_dialog_remove_title')}</DialogTitle>
             </div>
             <DialogDescription>
-              Are you sure you want to remove <span className="font-semibold text-foreground">{deleteTarget?.fullName || deleteTarget?.email}</span> from <span className="font-semibold text-foreground">{activeStore.name}</span>?
+              {t('staff_dialog_remove_desc', {
+                name: deleteTarget?.fullName || deleteTarget?.email || '',
+                storeName: activeStore.name,
+              })}
             </DialogDescription>
           </DialogHeader>
 
           <div className="py-2">
             <p className="text-xs text-muted-foreground">
-              They will immediately lose access to scan QR codes and issue loyalty points for this store.
+              {t('staff_dialog_remove_warning')}
             </p>
             {actionError && (
               <p className="text-xs font-medium text-destructive mt-2">{actionError}</p>
@@ -814,7 +818,7 @@ export default function StaffPage() {
               onClick={() => setDeleteTarget(null)}
               disabled={actionLoading}
             >
-              Cancel
+              {t('cancel')}
             </Button>
             <Button
               type="button"
@@ -826,12 +830,12 @@ export default function StaffPage() {
               {actionLoading ? (
                 <>
                   <Loader2 className="h-4 w-4 animate-spin" />
-                  Removing...
+                  {t('deleting')}
                 </>
               ) : (
                 <>
                   <Trash2 className="h-4 w-4" />
-                  Remove Cashier
+                  {t('staff_dialog_confirm_remove')}
                 </>
               )}
             </Button>

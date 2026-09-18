@@ -52,8 +52,8 @@ export function StoreQRStandCard({ store }: StoreQRStandCardProps) {
     navigator.clipboard.writeText(qrUrl);
     setCopied(true);
     toast({
-      title: 'Invite Link Copied!',
-      description: 'Customers scanning this link will be automatically credited to your store.',
+      title: t('stand_toast_copied'),
+      description: t('stand_toast_copied_desc'),
     });
     setTimeout(() => setCopied(false), 2000);
   };
@@ -72,7 +72,7 @@ export function StoreQRStandCard({ store }: StoreQRStandCardProps) {
     const printWindow = window.open('', '_blank', 'width=800,height=1000');
     if (!printWindow) {
       toast({
-        title: 'Popup Blocked',
+        title: t('auth_generic_error'),
         description: 'Please allow popups to open the print preview.',
         variant: 'destructive',
       });
@@ -454,13 +454,13 @@ export function StoreQRStandCard({ store }: StoreQRStandCardProps) {
       downloadLink.click();
 
       toast({
-        title: 'Printable Poster Downloaded!',
-        description: 'Crisp shadow-free vector poster artwork ready for acrylic stands.',
+        title: t('stand_toast_poster_downloaded'),
+        description: t('stand_toast_poster_desc'),
       });
     } catch (e: any) {
       console.error('Failed to generate poster:', e);
       toast({
-        title: 'Download Failed',
+        title: t('auth_generic_error'),
         description: 'Could not generate poster image.',
         variant: 'destructive',
       });
@@ -496,7 +496,7 @@ export function StoreQRStandCard({ store }: StoreQRStandCardProps) {
         a.download = `${store.slug}-qr-code.png`;
         a.click();
         URL.revokeObjectURL(blobURL);
-        toast({ title: 'QR Code Downloaded' });
+        toast({ title: t('copied') });
       }
     };
     img.src = blobURL;
@@ -512,16 +512,16 @@ export function StoreQRStandCard({ store }: StoreQRStandCardProps) {
             </div>
             <div>
               <CardTitle className="text-lg font-black tracking-tight">
-                Store QR Stand & Marketing Flyer
+                {t('stand_title')}
               </CardTitle>
               <CardDescription className="text-xs">
-                Print this table-tent poster for your counter. Customers scan to join your loyalty club instantly.
+                {t('stand_desc')}
               </CardDescription>
             </div>
           </div>
 
           <Badge variant="outline" className="bg-primary/10 text-primary border-primary/20 text-xs font-bold self-start sm:self-auto">
-            Auto-Referral Link
+            {t('stand_badge_auto_referral')}
           </Badge>
         </div>
       </CardHeader>
@@ -553,7 +553,7 @@ export function StoreQRStandCard({ store }: StoreQRStandCardProps) {
                 {welcomePoints > 0 && (
                   <div className="bg-primary/20 border border-primary/40 rounded-xl px-2.5 py-1 text-[10px] font-bold text-white flex items-center justify-center gap-1 animate-in zoom-in-95">
                     <Sparkles className="w-3 h-3 text-amber-300" />
-                    <span>+{welcomePoints} Welcome Points</span>
+                    <span>+{welcomePoints} {t('pts')}</span>
                   </div>
                 )}
               </div>
@@ -577,7 +577,7 @@ export function StoreQRStandCard({ store }: StoreQRStandCardProps) {
                   Scan to Join & Earn Perks
                 </span>
                 <p className="text-[10px] text-slate-400">
-                  1 TND = {pointsPerTnd} points • Fidely Wallet Ready
+                  1 TND = {pointsPerTnd} {t('points')} • Fidely Wallet Ready
                 </p>
               </div>
 
@@ -585,21 +585,21 @@ export function StoreQRStandCard({ store }: StoreQRStandCardProps) {
               <div className="absolute -bottom-4 w-[110%] h-3 bg-slate-700 rounded-full border-t border-slate-500" />
             </div>
             <span className="text-[11px] text-muted-foreground mt-6 font-medium">
-              Counter Stand Live Artwork Preview
+              {t('stand_preview_label')}
             </span>
           </div>
 
           {/* Action Tools & Features */}
           <div className="lg:col-span-7 space-y-6">
             <div className="space-y-3">
-              <h4 className="text-base font-bold text-foreground">How Customer Auto-Referral Works:</h4>
+              <h4 className="text-base font-bold text-foreground">{t('stand_how_works_title')}</h4>
               <ul className="space-y-2.5 text-xs text-muted-foreground">
                 <li className="flex items-start gap-2">
                   <div className="w-5 h-5 rounded-full bg-primary/10 text-primary flex items-center justify-center font-bold text-[10px] shrink-0 mt-0.5">
                     1
                   </div>
                   <span>
-                    <strong>Customer Scans Stand</strong>: Opens your public store loyalty pass on their smartphone camera.
+                    <strong>{t('stand_step_1_title')}</strong>: {t('stand_step_1_desc')}
                   </span>
                 </li>
                 <li className="flex items-start gap-2">
@@ -607,7 +607,7 @@ export function StoreQRStandCard({ store }: StoreQRStandCardProps) {
                     2
                   </div>
                   <span>
-                    <strong>One-Tap Join & Sign Up</strong>: If new, their sign-up form is tagged with your store referral code and automatically creates their membership upon completion{welcomePoints > 0 ? ` (with +${welcomePoints} instant welcome bonus points)` : ''}.
+                    <strong>{t('stand_step_2_title')}</strong>: {t('stand_step_2_desc')}{welcomePoints > 0 ? ` (+${welcomePoints} ${t('pts')})` : ''}.
                   </span>
                 </li>
                 <li className="flex items-start gap-2">
@@ -615,7 +615,7 @@ export function StoreQRStandCard({ store }: StoreQRStandCardProps) {
                     3
                   </div>
                   <span>
-                    <strong>Super Admin Analytics</strong>: Platform admins track that this customer was acquired via your store&apos;s counter stand.
+                    <strong>{t('stand_step_3_title')}</strong>: {t('stand_step_3_desc')}
                   </span>
                 </li>
               </ul>
@@ -624,7 +624,7 @@ export function StoreQRStandCard({ store }: StoreQRStandCardProps) {
             {/* Direct Link Input */}
             <div className="space-y-2">
               <label className="text-xs font-bold text-muted-foreground uppercase tracking-wider">
-                Store Invite & Referral URL
+                {t('stand_referral_url_label')}
               </label>
               <div className="flex items-center gap-2">
                 <input
@@ -639,7 +639,7 @@ export function StoreQRStandCard({ store }: StoreQRStandCardProps) {
                   className="h-11 px-4 rounded-xl text-xs font-bold gap-1.5 shrink-0"
                 >
                   {copied ? <Check className="w-4 h-4 text-primary" /> : <Copy className="w-4 h-4" />}
-                  {copied ? 'Copied' : 'Copy'}
+                  {copied ? t('copied') : t('copy')}
                 </Button>
               </div>
             </div>
@@ -652,7 +652,7 @@ export function StoreQRStandCard({ store }: StoreQRStandCardProps) {
                 className="h-12 rounded-xl text-xs font-bold bg-primary hover:bg-primary/90 text-primary-foreground shadow-lg shadow-primary/20 gap-2"
               >
                 <Printer className="w-4 h-4" />
-                1-Click Print Stand (A5/A6)
+                {t('stand_print_stand_btn')}
               </Button>
 
               <Button
@@ -663,7 +663,7 @@ export function StoreQRStandCard({ store }: StoreQRStandCardProps) {
                 className="h-12 rounded-xl text-xs font-bold gap-2"
               >
                 <FileText className="w-4 h-4" />
-                {isGenerating ? 'Generating...' : 'Download Poster (PNG)'}
+                {isGenerating ? t('loading') : t('stand_download_poster_btn')}
               </Button>
 
               <Button
@@ -673,7 +673,7 @@ export function StoreQRStandCard({ store }: StoreQRStandCardProps) {
                 className="h-12 rounded-xl text-xs font-bold gap-2"
               >
                 <Download className="w-4 h-4" />
-                Raw QR Code
+                {t('stand_download_raw_qr_btn')}
               </Button>
             </div>
           </div>

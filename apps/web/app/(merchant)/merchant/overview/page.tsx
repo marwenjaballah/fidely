@@ -5,7 +5,7 @@ import { useAuth } from '@/features/auth/hooks/use-auth'
 import { useMerchantStore } from '@/store/merchant-store'
 import { useI18n } from '@/lib/i18n'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card'
-import { Users, Zap, TrendingUp, Award, Plus, Store, ExternalLink, Check, Loader2, ArrowRight, Sparkles } from 'lucide-react'
+import { Users, Zap, TrendingUp, Award, Plus, Store, Check, Loader2, ArrowRight, Sparkles } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Input } from '@/components/ui/input'
@@ -39,15 +39,15 @@ export default function OverviewPage() {
     try {
       const created = await createStore(storeName.trim(), storeSlug.trim() || undefined)
       toast({
-        title: 'Store Created Successfully',
-        description: `'${created.name}' is now ready (Link: /store/${created.slug}).`,
+        title: t('create_store_success'),
+        description: `'${created.name}' (${created.slug}).`,
       })
       setIsCreating(false)
       setStoreName('')
       setStoreSlug('')
     } catch (err: any) {
       toast({
-        title: 'Failed to Create Store',
+        title: t('auth_generic_error'),
         description: err.message || 'Could not create store.',
         variant: 'destructive',
       })
@@ -59,8 +59,8 @@ export default function OverviewPage() {
     const target = stores.find((s) => s.id === storeId)
     if (target) {
       toast({
-        title: 'Switched Active Store',
-        description: `Now managing '${target.name}'.`,
+        title: t('overview_managing'),
+        description: target.name,
       })
     }
   }
@@ -74,7 +74,7 @@ export default function OverviewPage() {
           <p className="text-xs sm:text-sm text-muted-foreground mt-1 flex flex-wrap items-center gap-1.5">
             {activeStore ? (
               <>
-                <span>Managing:</span>
+                <span>{t('overview_managing')}</span>
                 <span className="font-semibold text-foreground flex items-center gap-1.5 bg-primary/10 text-primary px-2.5 py-0.5 rounded-md text-xs">
                   <Store className="h-3.5 w-3.5" />
                   {activeStore.name}
@@ -82,14 +82,14 @@ export default function OverviewPage() {
                 <span className="text-xs text-muted-foreground font-mono">({activeStore.slug})</span>
               </>
             ) : (
-              'Welcome to your merchant dashboard'
+              t('overview_welcome_subtitle')
             )}
           </p>
         </div>
         {stores.length > 0 && !isCreating && (
           <div className="flex items-center gap-2 self-start sm:self-auto">
             <Button onClick={() => setIsCreating(true)} variant="default" size="sm" className="gap-2 text-xs sm:text-sm">
-              <Plus className="h-4 w-4" /> Add Store
+              <Plus className="h-4 w-4" /> {t('overview_add_store')}
             </Button>
           </div>
         )}
@@ -100,7 +100,7 @@ export default function OverviewPage() {
         <div className="flex flex-col sm:flex-row sm:items-center gap-2 p-3 rounded-2xl border border-border/70 bg-card/60 backdrop-blur-xs shadow-2xs">
           <span className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider flex items-center gap-1.5 shrink-0">
             <Store className="h-3.5 w-3.5 text-primary" />
-            Active Store:
+            {t('overview_active_store')}
           </span>
           <div className="flex items-center gap-1.5 overflow-x-auto pb-1 sm:pb-0 scrollbar-none">
             {stores.map((store) => {
@@ -129,14 +129,14 @@ export default function OverviewPage() {
       {!loading && stores.length === 0 && !isCreating && (
         <Card className="border border-border/60 max-w-md mx-auto sm:mx-0 mt-2">
           <CardHeader>
-            <CardTitle className="text-lg">Welcome to Fidely!</CardTitle>
+            <CardTitle className="text-lg">{t('overview_welcome_title')}</CardTitle>
             <CardDescription className="text-xs">
-              To get started with your loyalty program, you need to create your first store.
+              {t('overview_welcome_desc')}
             </CardDescription>
           </CardHeader>
           <CardFooter>
             <Button onClick={() => setIsCreating(true)} className="w-full sm:w-auto text-xs font-semibold">
-              Create your first store
+              {t('overview_create_first_store')}
             </Button>
           </CardFooter>
         </Card>
@@ -146,15 +146,17 @@ export default function OverviewPage() {
       {isCreating && (
         <Card className="border border-border/60 max-w-md mx-auto sm:mx-0 mt-2">
           <CardHeader>
-            <CardTitle className="text-lg">{stores.length === 0 ? 'Create First Store' : 'Create New Store'}</CardTitle>
+            <CardTitle className="text-lg">
+              {stores.length === 0 ? t('overview_create_first_store_title') : t('overview_create_new_store_title')}
+            </CardTitle>
             <CardDescription className="text-xs">
-              Set up a new loyalty program for your store.
+              {t('overview_create_store_desc')}
             </CardDescription>
           </CardHeader>
           <CardContent>
             <form onSubmit={handleCreateStore} className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="storeName" className="text-xs font-semibold">Store Name</Label>
+                <Label htmlFor="storeName" className="text-xs font-semibold">{t('overview_store_name')}</Label>
                 <Input
                   id="storeName"
                   value={storeName}
@@ -170,13 +172,13 @@ export default function OverviewPage() {
                       setStoreSlug(normalized)
                     }
                   }}
-                  placeholder="My Awesome Cafe"
+                  placeholder={t('overview_store_name_placeholder')}
                   className="text-xs"
                   required
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="storeSlug" className="text-xs font-semibold">URL Slug</Label>
+                <Label htmlFor="storeSlug" className="text-xs font-semibold">{t('overview_slug')}</Label>
                 <div className="flex items-center rounded-md border bg-muted/40 px-3 py-1 text-xs text-muted-foreground">
                   <span className="font-mono text-muted-foreground/80 select-none">fidely.app/store/</span>
                   <input
@@ -188,7 +190,7 @@ export default function OverviewPage() {
                     placeholder="my-awesome-cafe"
                   />
                 </div>
-                <p className="text-[11px] text-muted-foreground">Used for your public digital loyalty pass. Collisions resolve automatically.</p>
+                <p className="text-[11px] text-muted-foreground">{t('overview_slug_desc')}</p>
               </div>
               {error && <p className="text-xs text-destructive">{error}</p>}
               <div className="flex flex-col sm:flex-row gap-2 pt-2">
@@ -197,11 +199,11 @@ export default function OverviewPage() {
                   disabled={loading || !storeName.trim() || !storeSlug.trim()}
                   className={`w-full sm:w-auto text-xs font-semibold ${!storeName.trim() || !storeSlug.trim() ? 'opacity-50 cursor-not-allowed bg-muted text-muted-foreground hover:bg-muted' : ''}`}
                 >
-                  {loading ? 'Creating...' : 'Create Store'}
+                  {loading ? t('saving') : t('overview_create_store_btn')}
                 </Button>
                 {stores.length > 0 && (
                   <Button type="button" variant="outline" onClick={() => setIsCreating(false)} className="w-full sm:w-auto text-xs">
-                    Cancel
+                    {t('cancel')}
                   </Button>
                 )}
               </div>
@@ -213,7 +215,7 @@ export default function OverviewPage() {
       {loading && !analytics && stores.length > 0 && !isCreating && (
         <div className="flex items-center gap-2 text-xs text-muted-foreground py-4">
           <Loader2 className="h-4 w-4 animate-spin text-primary" />
-          Loading analytics...
+          {t('overview_loading_analytics')}
         </div>
       )}
 
@@ -222,47 +224,47 @@ export default function OverviewPage() {
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
             <Card className="border border-border/60">
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Total Members</CardTitle>
+                <CardTitle className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">{t('overview_kpi_total_members')}</CardTitle>
                 <Users className="h-4 w-4 text-primary" />
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold">{analytics.totalMembers}</div>
-                <CardDescription className="text-[11px]">Customers in program</CardDescription>
+                <CardDescription className="text-[11px]">{t('overview_kpi_members_desc')}</CardDescription>
               </CardContent>
             </Card>
             
             <Card className="border border-border/60">
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Points Issued</CardTitle>
+                <CardTitle className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">{t('overview_kpi_points_issued')}</CardTitle>
                 <TrendingUp className="h-4 w-4 text-emerald-500" />
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold">{analytics.totalPointsIssued.toLocaleString()}</div>
-                <CardDescription className="text-[11px]">Lifetime points given</CardDescription>
+                <CardDescription className="text-[11px]">{t('overview_kpi_issued_desc')}</CardDescription>
               </CardContent>
             </Card>
 
             <Card className="border border-border/60">
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Points Redeemed</CardTitle>
+                <CardTitle className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">{t('overview_kpi_points_redeemed')}</CardTitle>
                 <Award className="h-4 w-4 text-destructive" />
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold">{analytics.totalPointsRedeemed.toLocaleString()}</div>
-                <CardDescription className="text-[11px]">Points spent by customers</CardDescription>
+                <CardDescription className="text-[11px]">{t('overview_kpi_redeemed_desc')}</CardDescription>
               </CardContent>
             </Card>
             
             <Card className="border border-border/60">
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Net Outstanding</CardTitle>
+                <CardTitle className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">{t('overview_kpi_net_outstanding')}</CardTitle>
                 <Zap className="h-4 w-4 text-amber-500" />
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold">
                   {(analytics.totalPointsIssued - analytics.totalPointsRedeemed).toLocaleString()}
                 </div>
-                <CardDescription className="text-[11px]">Points waiting to be used</CardDescription>
+                <CardDescription className="text-[11px]">{t('overview_kpi_outstanding_desc')}</CardDescription>
               </CardContent>
             </Card>
           </div>
@@ -273,7 +275,8 @@ export default function OverviewPage() {
             const redemptionRate = analytics.totalPointsIssued > 0
               ? (analytics.totalPointsRedeemed / analytics.totalPointsIssued) * 100
               : 0;
-            const hasWelcome = Boolean((activeStore as any)?.welcomePoints && (activeStore as any).welcomePoints > 0);
+            const welcomePts = Number((activeStore as any)?.welcomePoints) || 0;
+            const hasWelcome = welcomePts > 0;
 
             return (
               <div className="rounded-3xl border border-border/80 bg-gradient-to-r from-card via-card to-muted/40 p-5 shadow-sm space-y-3">
@@ -283,12 +286,12 @@ export default function OverviewPage() {
                       <Sparkles className="w-4 h-4" />
                     </div>
                     <div>
-                      <h3 className="text-sm font-bold text-foreground">Actionable Smart Insights</h3>
-                      <p className="text-[11px] text-muted-foreground">Automated customer retention and revenue recommendations</p>
+                      <h3 className="text-sm font-bold text-foreground">{t('overview_insights_title')}</h3>
+                      <p className="text-[11px] text-muted-foreground">{t('overview_insights_desc')}</p>
                     </div>
                   </div>
                   <Badge variant="outline" className="text-[10px] font-bold bg-primary/5 text-primary border-primary/20">
-                    Live Diagnostics
+                    {t('overview_live_diagnostics')}
                   </Badge>
                 </div>
 
@@ -298,19 +301,19 @@ export default function OverviewPage() {
                     <div className="space-y-1">
                       <div className="flex items-center gap-1.5 text-xs font-bold text-foreground">
                         <Award className="w-3.5 h-3.5 text-primary" />
-                        <span>Redemption Velocity ({redemptionRate.toFixed(0)}%)</span>
+                        <span>{t('overview_insight_velocity_title')} ({redemptionRate.toFixed(0)}%)</span>
                       </div>
                       <p className="text-[11px] text-muted-foreground leading-relaxed">
                         {redemptionRate < 15 && analytics.totalPointsIssued > 100
-                          ? 'Customers are accumulating points. Consider introducing lower-tier 50-80 pt perks to drive visits.'
-                          : 'Healthy reward cycle! Customers frequently redeem perks, driving higher return visits.'}
+                          ? t('overview_insight_velocity_low')
+                          : t('overview_insight_velocity_good')}
                       </p>
                     </div>
                     <Link
                       href="/merchant/customizer"
                       className="text-[11px] font-semibold text-primary hover:underline flex items-center gap-1 pt-1"
                     >
-                      Manage Perk Catalog <ArrowRight className="w-3 h-3" />
+                      {t('overview_insight_manage_perks')} <ArrowRight className="w-3 h-3 rtl:rotate-180" />
                     </Link>
                   </div>
 
@@ -319,17 +322,17 @@ export default function OverviewPage() {
                     <div className="space-y-1">
                       <div className="flex items-center gap-1.5 text-xs font-bold text-foreground">
                         <Store className="w-3.5 h-3.5 text-primary" />
-                        <span>Counter Stand Setup</span>
+                        <span>{t('overview_insight_stand_title')}</span>
                       </div>
                       <p className="text-[11px] text-muted-foreground leading-relaxed">
-                        Display the shadow-free acrylic QR stand at checkout. 85% of members join via the counter QR code.
+                        {t('overview_insight_stand_desc')}
                       </p>
                     </div>
                     <Link
                       href="/merchant/customizer"
                       className="text-[11px] font-semibold text-primary hover:underline flex items-center gap-1 pt-1"
                     >
-                      Print A5/A6 Acrylic Stand <ArrowRight className="w-3 h-3" />
+                      {t('overview_insight_print_stand')} <ArrowRight className="w-3 h-3 rtl:rotate-180" />
                     </Link>
                   </div>
 
@@ -338,19 +341,19 @@ export default function OverviewPage() {
                     <div className="space-y-1">
                       <div className="flex items-center gap-1.5 text-xs font-bold text-foreground">
                         <Sparkles className="w-3.5 h-3.5 text-amber-500" />
-                        <span>Welcome Bonus Incentive</span>
+                        <span>{t('overview_insight_welcome_title')}</span>
                       </div>
                       <p className="text-[11px] text-muted-foreground leading-relaxed">
                         {hasWelcome
-                          ? `Active: +${(activeStore as any).welcomePoints} bonus points gifted upon new customer joining.`
-                          : 'Offer +20 free welcome points on join to double your counter stand signup conversions.'}
+                          ? t('overview_insight_welcome_active', { pts: welcomePts })
+                          : t('overview_insight_welcome_suggest')}
                       </p>
                     </div>
                     <Link
                       href="/merchant/customizer"
                       className="text-[11px] font-semibold text-amber-600 dark:text-amber-400 hover:underline flex items-center gap-1 pt-1"
                     >
-                      {hasWelcome ? 'Edit Welcome Bonus' : 'Enable Welcome Gift'} <ArrowRight className="w-3 h-3" />
+                      {hasWelcome ? t('overview_insight_edit_welcome') : t('overview_insight_enable_welcome')} <ArrowRight className="w-3 h-3 rtl:rotate-180" />
                     </Link>
                   </div>
                 </div>
@@ -365,10 +368,10 @@ export default function OverviewPage() {
               className="p-4 rounded-2xl border border-border/60 bg-card hover:bg-muted/30 transition-all flex items-center justify-between group"
             >
               <div>
-                <p className="font-semibold text-sm text-foreground">Customizer & Rewards</p>
-                <p className="text-xs text-muted-foreground mt-0.5">Customize passes & perks</p>
+                <p className="font-semibold text-sm text-foreground">{t('overview_quick_customizer_title')}</p>
+                <p className="text-xs text-muted-foreground mt-0.5">{t('overview_quick_customizer_desc')}</p>
               </div>
-              <ArrowRight className="h-4 w-4 text-muted-foreground group-hover:text-primary transition-colors" />
+              <ArrowRight className="h-4 w-4 text-muted-foreground group-hover:text-primary transition-colors rtl:rotate-180" />
             </Link>
 
             <Link
@@ -376,10 +379,10 @@ export default function OverviewPage() {
               className="p-4 rounded-2xl border border-border/60 bg-card hover:bg-muted/30 transition-all flex items-center justify-between group"
             >
               <div>
-                <p className="font-semibold text-sm text-foreground">Customer CRM</p>
-                <p className="text-xs text-muted-foreground mt-0.5">View loyalty members</p>
+                <p className="font-semibold text-sm text-foreground">{t('overview_quick_crm_title')}</p>
+                <p className="text-xs text-muted-foreground mt-0.5">{t('overview_quick_crm_desc')}</p>
               </div>
-              <ArrowRight className="h-4 w-4 text-muted-foreground group-hover:text-primary transition-colors" />
+              <ArrowRight className="h-4 w-4 text-muted-foreground group-hover:text-primary transition-colors rtl:rotate-180" />
             </Link>
 
             <Link
@@ -387,10 +390,10 @@ export default function OverviewPage() {
               className="p-4 rounded-2xl border border-border/60 bg-card hover:bg-muted/30 transition-all flex items-center justify-between group"
             >
               <div>
-                <p className="font-semibold text-sm text-foreground">Staff & Cashiers</p>
-                <p className="text-xs text-muted-foreground mt-0.5">Manage POS terminal access</p>
+                <p className="font-semibold text-sm text-foreground">{t('overview_quick_staff_title')}</p>
+                <p className="text-xs text-muted-foreground mt-0.5">{t('overview_quick_staff_desc')}</p>
               </div>
-              <ArrowRight className="h-4 w-4 text-muted-foreground group-hover:text-primary transition-colors" />
+              <ArrowRight className="h-4 w-4 text-muted-foreground group-hover:text-primary transition-colors rtl:rotate-180" />
             </Link>
           </div>
         </>

@@ -13,10 +13,12 @@ import {
   Legend,
   ResponsiveContainer,
 } from 'recharts'
-import { TrendingUp, Award, Zap, Coffee, Activity, Loader2 } from 'lucide-react'
+import { TrendingUp, Award, Zap, Store, Activity, Loader2 } from 'lucide-react'
+import { useI18n } from '@/lib/i18n'
 
 export default function AnalyticsPage() {
   const { activeStore, fetchAnalytics, analytics, loading } = useMerchantStore()
+  const { t } = useI18n()
 
   useEffect(() => {
     if (activeStore) {
@@ -28,8 +30,8 @@ export default function AnalyticsPage() {
     return (
       <div className="flex flex-1 items-center justify-center p-6 text-center">
         <div className="space-y-2">
-          <Coffee className="h-8 w-8 text-muted-foreground mx-auto" />
-          <p className="text-sm text-muted-foreground">Please select or create a coffee shop.</p>
+          <Store className="h-8 w-8 text-muted-foreground mx-auto" />
+          <p className="text-sm text-muted-foreground">{t('analytics_select_store_prompt')}</p>
         </div>
       </div>
     )
@@ -42,9 +44,9 @@ export default function AnalyticsPage() {
   return (
     <div className="flex flex-1 flex-col gap-6 p-4 md:gap-8 md:p-8 overflow-x-hidden">
       <div>
-        <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">Analytics</h1>
+        <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">{t('analytics_title')}</h1>
         <p className="text-xs sm:text-sm text-muted-foreground mt-1 flex items-center gap-1.5">
-          <span>Performance metrics for</span>
+          <span>{t('analytics_subtitle')}</span>
           <span className="font-semibold text-foreground bg-primary/10 text-primary px-2 py-0.5 rounded text-xs">
             {activeStore.name}
           </span>
@@ -56,39 +58,39 @@ export default function AnalyticsPage() {
         <Card className="border border-border/60">
           <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
             <CardTitle className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-              Total Points Issued
+              {t('analytics_total_issued')}
             </CardTitle>
             <TrendingUp className="h-4 w-4 text-emerald-500" />
           </CardHeader>
           <CardContent>
             <div className="text-xl sm:text-2xl font-bold">{totalIssued.toLocaleString()}</div>
-            <p className="text-[11px] text-muted-foreground mt-0.5">Awarded across all sales</p>
+            <p className="text-[11px] text-muted-foreground mt-0.5">{t('analytics_total_issued_desc')}</p>
           </CardContent>
         </Card>
 
         <Card className="border border-border/60">
           <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
             <CardTitle className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-              Points Redeemed
+              {t('analytics_total_redeemed')}
             </CardTitle>
             <Award className="h-4 w-4 text-destructive" />
           </CardHeader>
           <CardContent>
             <div className="text-xl sm:text-2xl font-bold">{totalRedeemed.toLocaleString()}</div>
-            <p className="text-[11px] text-muted-foreground mt-0.5">Claimed for rewards</p>
+            <p className="text-[11px] text-muted-foreground mt-0.5">{t('analytics_total_redeemed_desc')}</p>
           </CardContent>
         </Card>
 
         <Card className="border border-border/60">
           <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
             <CardTitle className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-              Net Outstanding
+              {t('analytics_net_outstanding')}
             </CardTitle>
             <Zap className="h-4 w-4 text-primary" />
           </CardHeader>
           <CardContent>
             <div className="text-xl sm:text-2xl font-bold">{netOutstanding.toLocaleString()}</div>
-            <p className="text-[11px] text-muted-foreground mt-0.5">Unredeemed in customer wallets</p>
+            <p className="text-[11px] text-muted-foreground mt-0.5">{t('analytics_net_outstanding_desc')}</p>
           </CardContent>
         </Card>
       </div>
@@ -98,7 +100,7 @@ export default function AnalyticsPage() {
         <Card className="border border-border/60">
           <CardContent className="h-64 flex flex-col items-center justify-center gap-2 text-muted-foreground text-sm">
             <Loader2 className="h-6 w-6 animate-spin text-primary" />
-            <p>Loading chart data...</p>
+            <p>{t('analytics_loading_chart')}</p>
           </CardContent>
         </Card>
       ) : analytics && analytics.recentTransactions.length > 0 ? (
@@ -106,10 +108,10 @@ export default function AnalyticsPage() {
           <CardHeader className="pb-2">
             <CardTitle className="text-base font-semibold flex items-center gap-2">
               <Activity className="h-4 w-4 text-primary" />
-              Activity Trend (Issued vs Redeemed)
+              {t('analytics_trend_title')}
             </CardTitle>
             <CardDescription className="text-xs">
-              Points movement over recent customer transactions
+              {t('analytics_trend_desc')}
             </CardDescription>
           </CardHeader>
           <CardContent className="px-2 sm:px-6">
@@ -149,8 +151,8 @@ export default function AnalyticsPage() {
                     labelStyle={{ color: 'hsl(var(--foreground))', fontWeight: 600 }}
                   />
                   <Legend wrapperStyle={{ fontSize: '11px', paddingTop: '8px' }} />
-                  <Bar dataKey="issued" name="Points Issued" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} />
-                  <Bar dataKey="redeemed" name="Points Redeemed" fill="hsl(var(--destructive))" radius={[4, 4, 0, 0]} />
+                  <Bar dataKey="issued" name={t('analytics_issued_legend')} fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} />
+                  <Bar dataKey="redeemed" name={t('analytics_redeemed_legend')} fill="hsl(var(--destructive))" radius={[4, 4, 0, 0]} />
                 </BarChart>
               </ResponsiveContainer>
             </div>
@@ -159,14 +161,14 @@ export default function AnalyticsPage() {
       ) : (
         <Card className="border border-border/60">
           <CardHeader>
-            <CardTitle className="text-base">Recent Activity</CardTitle>
+            <CardTitle className="text-base">{t('analytics_recent_activity_title')}</CardTitle>
             <CardDescription className="text-xs">
-              Points Issued vs Redeemed over recent transactions
+              {t('analytics_recent_activity_desc')}
             </CardDescription>
           </CardHeader>
           <CardContent>
             <div className="flex h-40 items-center justify-center text-xs sm:text-sm text-muted-foreground">
-              No recent transaction activity recorded yet.
+              {t('analytics_no_activity_recorded')}
             </div>
           </CardContent>
         </Card>
