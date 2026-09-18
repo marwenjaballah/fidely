@@ -1,6 +1,11 @@
 import { OpenAPIHono } from '@hono/zod-openapi';
 import type { Env } from '../../../types/index.js';
-import { getCustomerOverviewRoute, joinStoreRoute, getStoreBySlugRoute } from './customer.route.js';
+import {
+  getCustomerOverviewRoute,
+  joinStoreRoute,
+  getStoreBySlugRoute,
+  refreshQrCodeRoute,
+} from './customer.route.js';
 import { CustomerService } from '../../../services/customer.service.js';
 import { requireUser } from '../../../utils/auth.js';
 
@@ -43,6 +48,20 @@ router.openapi(joinStoreRoute, async (c) => {
     return c.json(membership, 200);
   } catch (error: any) {
     return c.json({ error: error.message }, 400) as any;
+  }
+});
+
+router.openapi(refreshQrCodeRoute, async (c) => {
+  const user = requireUser(c);
+  const { membershipId } = c.req.valid('param');
+  const prisma = c.get('prisma');
+  const service = new CustomerService(prisma);
+
+  try {
+    const result = await service.refreshQrToken(user.id, membershipId);
+    return c.json(result, 200);
+  } catch (error: any) {
+    return c.json({ error: error.message }, error.status || 400) as any;
   }
 });
 

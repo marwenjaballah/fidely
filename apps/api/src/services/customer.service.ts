@@ -96,7 +96,7 @@ export class CustomerService {
         pointsPerTnd: m.store.pointsPerTnd,
         logoUrl: m.store.logoUrl,
         pointsBalance: m.pointsBalance,
-        qrCodeToken: `${customerId}:${m.storeId}`,
+        qrCodeToken: m.qrCodeToken || `${customerId}:${m.storeId}`,
         joinedAt: m.joinedAt.toISOString(),
         rewards: m.store.rewards.map((r) => ({
           id: r.id,
@@ -213,4 +213,35 @@ export class CustomerService {
 
     return membership;
   }
+
+  /**
+   * Refreshes the QR code token for a customer's loyalty membership.
+   */
+  async refreshQrToken(customerId: string, membershipId: string) {
+    const membership = await this.prisma.customerMembership.findUnique({
+      where: { id: membershipId },
+    });
+
+    if (!membership || membership.customerId !== customerId) {
+      throw new HTTPException(404, { message: 'Membership not found for this customer.' });
+    }
+
+    // Generate a fresh dynamic nonce
+    const randomNonce = Math.random().toString(36).substring(2, 8) + Date.now().toString(36).slice(-4);
+    const newQrCodeToken = `${customerId}:${membership.storeId}:${randomNonce}`;
+
+    const updated = await this.prisma.customerMembership.update({
+      where: { id: membershipId },
+      data: {
+        qrCodeToken: newQrCodeToken,
+      },
+    });
+
+    return {
+      membershipId: updated.id,
+      qrCodeToken: updated.qrCodeToken || newQrCodeToken,
+      updatedAt: new Date().toISOString(),
+    };
+  }
 }
+

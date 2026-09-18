@@ -14,6 +14,7 @@ import {
   ShieldCheck,
   ArrowRight,
   ExternalLink,
+  RefreshCw,
 } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -41,6 +42,7 @@ export interface AppleWalletPassProps {
   showQr?: boolean
   interactive?: boolean
   className?: string
+  onRefreshQr?: () => Promise<void> | void
 }
 
 export function AppleWalletPass({
@@ -58,10 +60,12 @@ export function AppleWalletPass({
   showQr = true,
   interactive = true,
   className = '',
+  onRefreshQr,
 }: AppleWalletPassProps) {
   const [isFlipped, setIsFlipped] = useState(false)
   const [copiedToken, setCopiedToken] = useState(false)
   const [qrModalOpen, setQrModalOpen] = useState(false)
+  const [isRefreshing, setIsRefreshing] = useState(false)
 
   const handleCopyToken = (e: React.MouseEvent) => {
     e.stopPropagation()
@@ -69,6 +73,17 @@ export function AppleWalletPass({
     navigator.clipboard.writeText(qrCodeToken)
     setCopiedToken(true)
     setTimeout(() => setCopiedToken(false), 2000)
+  }
+
+  const handleRefreshClick = async (e: React.MouseEvent) => {
+    e.stopPropagation()
+    if (!onRefreshQr || isRefreshing) return
+    setIsRefreshing(true)
+    try {
+      await onRefreshQr()
+    } finally {
+      setIsRefreshing(false)
+    }
   }
 
   // Calculate progress to next reward if available
@@ -233,9 +248,22 @@ export function AppleWalletPass({
                 </p>
               </div>
 
-              <p className="text-[11px] text-white/80 font-medium mt-3">
-                Hold near scanner at barista checkout
-              </p>
+              <div className="flex items-center justify-center gap-1.5 mt-3">
+                <p className="text-[11px] text-white/80 font-medium">
+                  Hold near scanner at barista checkout
+                </p>
+                {onRefreshQr && (
+                  <button
+                    type="button"
+                    onClick={handleRefreshClick}
+                    disabled={isRefreshing}
+                    title="Refresh QR Code Security Pass"
+                    className="inline-flex items-center justify-center p-1 rounded-full bg-white/15 hover:bg-white/25 active:scale-90 text-white transition-all disabled:opacity-50"
+                  >
+                    <RefreshCw className={`h-3 w-3 ${isRefreshing ? 'animate-spin' : ''}`} />
+                  </button>
+                )}
+              </div>
 
               {/* Fullscreen QR Modal */}
               <Dialog open={qrModalOpen} onOpenChange={setQrModalOpen}>
@@ -251,6 +279,18 @@ export function AppleWalletPass({
                       <QRCodeSVG value={qrCodeToken} size={220} level="Q" includeMargin={true} />
                     </div>
                     <div className="flex items-center gap-2 mt-4">
+                      {onRefreshQr && (
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={handleRefreshClick}
+                          disabled={isRefreshing}
+                          className="gap-1.5 text-xs"
+                        >
+                          <RefreshCw className={`h-3.5 w-3.5 ${isRefreshing ? 'animate-spin' : ''}`} />
+                          {isRefreshing ? 'Refreshing...' : 'Refresh QR'}
+                        </Button>
+                      )}
                       <Button
                         size="sm"
                         variant="outline"

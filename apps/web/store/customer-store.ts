@@ -66,6 +66,7 @@ export interface CustomerState {
   setActiveMembership: (membershipId: string) => void
   joinStore: (storeId: string) => Promise<void>
   joinStoreBySlug: (slugOrUrl: string) => Promise<any>
+  refreshQrToken: (membershipId: string) => Promise<string>
 }
 
 const baseURL = (process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3000').replace(/\/$/, '')
@@ -196,4 +197,35 @@ export const useCustomerStore = create<CustomerState>((set, get) => ({
       throw new Error(message)
     }
   },
+
+  refreshQrToken: async (membershipId: string): Promise<string> => {
+    try {
+      const client = getCustomerClient()
+      const { data } = await client.post<{
+        membershipId: string
+        qrCodeToken: string
+        updatedAt: string
+      }>(`/api/v1/customer/memberships/${encodeURIComponent(membershipId)}/refresh-qr`)
+
+      const newQrToken = data.qrCodeToken
+      set((state) => {
+        const updatedMemberships = state.memberships.map((m) =>
+          m.id === membershipId ? { ...m, qrCodeToken: newQrToken } : m
+        )
+        const updatedActive =
+          state.activeMembership?.id === membershipId
+            ? { ...state.activeMembership, qrCodeToken: newQrToken }
+            : state.activeMembership
+        return {
+          memberships: updatedMemberships,
+          activeMembership: updatedActive,
+        }
+      })
+      return newQrToken
+    } catch (err: any) {
+      const message = err instanceof ApiError ? err.message : err.message || 'Failed to refresh QR code.'
+      throw new Error(message)
+    }
+  },
 }))
+

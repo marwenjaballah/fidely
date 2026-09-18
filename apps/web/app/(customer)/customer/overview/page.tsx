@@ -63,6 +63,7 @@ export default function CustomerOverviewPage() {
     setActiveMembership,
     joinStore,
     joinStoreBySlug,
+    refreshQrToken,
   } = useCustomerStore()
 
   const [qrModalOpen, setQrModalOpen] = useState(false)
@@ -167,6 +168,22 @@ export default function CustomerOverviewPage() {
     navigator.clipboard.writeText(token)
     setCopiedToken(true)
     setTimeout(() => setCopiedToken(false), 2000)
+  }
+
+  const handleRefreshQr = async (membershipId: string) => {
+    try {
+      await refreshQrToken(membershipId)
+      toast({
+        title: 'QR Pass Refreshed',
+        description: 'New dynamic security pass token generated successfully.',
+      })
+    } catch (err: any) {
+      toast({
+        title: 'Refresh Failed',
+        description: err.message || 'Could not refresh QR code.',
+        variant: 'destructive',
+      })
+    }
   }
 
   // Calculate next reward target for active card
@@ -419,6 +436,7 @@ export default function CustomerOverviewPage() {
                     nextRewardCost={nextReward?.pointsCost}
                     showQr={true}
                     interactive={true}
+                    onRefreshQr={() => handleRefreshQr(activeMembership.id)}
                   />
                   <p className="text-center text-[11px] text-muted-foreground">
                     Tap the pass or barcode to view fullscreen brightness pass or flip for details.
