@@ -1,7 +1,6 @@
 import { create } from 'zustand'
-import { createCookieAuthApiClient, ApiError } from '@/lib/api-client'
+import { createCookieAuthApiClient, refreshAuthSession, ApiError } from '@/lib/api-client'
 import { AUTH_ROUTES } from '@/features/auth/services/auth-service'
-import axios from 'axios'
 
 export interface AdminKpis {
   totalUsers: number
@@ -116,18 +115,11 @@ let adminClient: ReturnType<typeof createCookieAuthApiClient> | null = null
 
 function getAdminClient() {
   if (adminClient) return adminClient
-  const refreshClient = axios.create({
-    baseURL: baseURL.replace(/\/$/, ''),
-    headers: { 'Content-Type': 'application/json' },
-    withCredentials: true,
-  })
   adminClient = createCookieAuthApiClient({
     baseURL,
     useCookies: true,
     refreshUrl: AUTH_ROUTES.refresh,
-    onRefresh: async () => {
-      await refreshClient.post(AUTH_ROUTES.refresh, {})
-    },
+    onRefresh: () => refreshAuthSession(baseURL),
   })
   return adminClient
 }

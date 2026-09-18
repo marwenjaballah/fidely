@@ -19,15 +19,15 @@ import {
   HelpCircle,
 } from 'lucide-react';
 import { posAudio } from '../lib/pos-audio';
-import { createCookieAuthApiClient } from '@/lib/api-client';
+import { createCookieAuthApiClient, refreshAuthSession } from '@/lib/api-client';
 import { AUTH_ROUTES } from '@/features/auth/services/auth-service';
-import axios from 'axios';
 
 interface StoreReward {
   id: string;
   name: string;
   description?: string | null;
   pointsCost: number;
+  active?: boolean;
 }
 
 interface TransactionPanelProps {
@@ -44,18 +44,11 @@ let client: ReturnType<typeof createCookieAuthApiClient> | null = null;
 
 function getApiClient() {
   if (client) return client;
-  const refreshClient = axios.create({
-    baseURL: baseURL.replace(/\/$/, ''),
-    headers: { 'Content-Type': 'application/json' },
-    withCredentials: true,
-  });
   client = createCookieAuthApiClient({
     baseURL,
     useCookies: true,
     refreshUrl: AUTH_ROUTES.refresh,
-    onRefresh: async () => {
-      await refreshClient.post(AUTH_ROUTES.refresh, {});
-    },
+    onRefresh: () => refreshAuthSession(baseURL),
   });
   return client;
 }

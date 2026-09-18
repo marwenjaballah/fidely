@@ -1,7 +1,6 @@
 import { create } from 'zustand'
-import { createCookieAuthApiClient, ApiError } from '@/lib/api-client'
+import { createCookieAuthApiClient, refreshAuthSession, ApiError } from '@/lib/api-client'
 import { AUTH_ROUTES } from '@/features/auth/services/auth-service'
-import axios from 'axios'
 
 export interface Store {
   id: string
@@ -83,18 +82,11 @@ let merchantClient: ReturnType<typeof createCookieAuthApiClient> | null = null
 
 function getMerchantClient() {
   if (merchantClient) return merchantClient
-  const refreshClient = axios.create({
-    baseURL: baseURL.replace(/\/$/, ''),
-    headers: { 'Content-Type': 'application/json' },
-    withCredentials: true,
-  })
   merchantClient = createCookieAuthApiClient({
     baseURL,
     useCookies: true,
     refreshUrl: AUTH_ROUTES.refresh,
-    onRefresh: async () => {
-      await refreshClient.post(AUTH_ROUTES.refresh, {})
-    },
+    onRefresh: () => refreshAuthSession(baseURL),
   })
   return merchantClient
 }

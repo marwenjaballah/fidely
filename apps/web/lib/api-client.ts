@@ -29,8 +29,8 @@ export interface CreateApiClientConfig {
 export interface CreateCookieAuthApiClientConfig {
   baseURL: string
   useCookies: true
-  refreshUrl: string
-  onRefresh: () => Promise<void>
+  refreshUrl?: string
+  onRefresh?: () => Promise<unknown>
 }
 
 function normalizeError(err: unknown): ApiError {
@@ -165,6 +165,26 @@ export function clearStoredTokens() {
   localStorage.removeItem(TOKEN_STORAGE_KEYS.refreshToken)
 }
 
+/** Centralized helper to execute session token refresh and persist new tokens */
+export async function refreshAuthSession(baseURL: string): Promise<string | null> {
+  const refreshClient = axios.create({
+    baseURL: baseURL.replace(/\/$/, ''),
+    headers: { 'Content-Type': 'application/json' },
+    withCredentials: true,
+  })
+  const refreshToken = getStoredRefreshToken()
+  const { data } = await refreshClient.post<{ data: { accessToken: string; refreshToken: string } }>(
+    '/api/v1/authentication/refresh',
+    { refreshToken }
+  )
+  const newAccessToken = data?.data?.accessToken || null
+  const newRefreshToken = data?.data?.refreshToken || null
+  if (newAccessToken) {
+    setStoredTokens(newAccessToken, newRefreshToken)
+  }
+  return newAccessToken
+}
+
 /**
  * Creates an axios instance for cookie-based auth (no tokens in JS):
  * - No Authorization header; browser sends HTTP-only cookies
@@ -188,12 +208,7 @@ export function createCookieAuthApiClient(config: CreateCookieAuthApiClientConfi
   })
 
   let isRefreshing = false
-  let refreshSubscribers: (() => void)[] = []
-
-  function onRefreshed() {
-    refreshSubscribers.forEach((cb) => cb())
-    refreshSubscribers = []
-  }
+  let refreshPromise: Promise<void> | null = null
 
   client.interceptors.response.use(
     (res) => res,
@@ -206,24 +221,39 @@ export function createCookieAuthApiClient(config: CreateCookieAuthApiClientConfi
         !reqConfig._retry &&
         !isAuthEndpoint(reqConfig.url)
       ) {
+        reqConfig._retry = true
+
         if (!isRefreshing) {
           isRefreshing = true
-          reqConfig._retry = true
-          try {
-            await onRefresh()
-            isRefreshing = false
-            onRefreshed()
-            return client(reqConfig)
-          } catch {
-            isRefreshing = false
-            throw normalizeError(err)
-          }
+          refreshPromise = (async () => {
+            try {
+              if (onRefresh) {
+                await onRefresh()
+              } else {
+                await refreshAuthSession(baseURL)
+              }
+            } finally {
+              isRefreshing = false
+              refreshPromise = null
+            }
+          })()
         }
-        return new Promise((resolve, reject) => {
-          refreshSubscribers.push(() => {
-            client(reqConfig).then(resolve).catch(reject)
-          })
-        })
+
+        try {
+          if (refreshPromise) {
+            await refreshPromise
+          }
+          // Critical: update Authorization header with the newly refreshed access token
+          const newToken = getStoredAccessToken()
+          if (newToken) {
+            reqConfig.headers.Authorization = `Bearer ${newToken}`
+          } else {
+            delete reqConfig.headers.Authorization
+          }
+          return client(reqConfig)
+        } catch (refreshErr) {
+          throw normalizeError(refreshErr)
+        }
       }
       throw normalizeError(err)
     },

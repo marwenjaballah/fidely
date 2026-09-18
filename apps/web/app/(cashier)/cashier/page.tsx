@@ -34,9 +34,8 @@ import {
   ChevronRight,
   TrendingUp,
 } from 'lucide-react';
-import { createCookieAuthApiClient, ApiError } from '@/lib/api-client';
+import { createCookieAuthApiClient, refreshAuthSession, ApiError } from '@/lib/api-client';
 import { AUTH_ROUTES } from '@/features/auth/services/auth-service';
-import axios from 'axios';
 
 interface CashierStoreInfo {
   id: string;
@@ -45,6 +44,14 @@ interface CashierStoreInfo {
   primaryColor: string;
   pointsPerTnd: number;
   isOwner: boolean;
+}
+
+interface CashierTransaction {
+  id: string;
+  pointsEarned: number;
+  tndAmount: number;
+  createdAt: string;
+  customerName: string;
 }
 
 interface RecentTx {
@@ -61,18 +68,11 @@ let apiClient: ReturnType<typeof createCookieAuthApiClient> | null = null;
 
 function getCashierApiClient() {
   if (apiClient) return apiClient;
-  const refreshClient = axios.create({
-    baseURL: baseURL.replace(/\/$/, ''),
-    headers: { 'Content-Type': 'application/json' },
-    withCredentials: true,
-  });
   apiClient = createCookieAuthApiClient({
     baseURL,
     useCookies: true,
     refreshUrl: AUTH_ROUTES.refresh,
-    onRefresh: async () => {
-      await refreshClient.post(AUTH_ROUTES.refresh, {});
-    },
+    onRefresh: () => refreshAuthSession(baseURL),
   });
   return apiClient;
 }

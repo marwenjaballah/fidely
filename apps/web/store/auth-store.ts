@@ -4,6 +4,7 @@ import axios from 'axios'
 import type { Profile } from '@/lib/db-types'
 import {
   createCookieAuthApiClient,
+  refreshAuthSession,
   ApiError,
   setStoredTokens,
   clearStoredTokens,
@@ -59,22 +60,11 @@ let authClient: AxiosInstance | null = null
 
 function getAuthClient(): AxiosInstance {
   if (authClient) return authClient
-  const refreshClient = axios.create({
-    baseURL: baseURL.replace(/\/$/, ''),
-    headers: { 'Content-Type': 'application/json' },
-    withCredentials: true,
-  })
   authClient = createCookieAuthApiClient({
     baseURL,
     useCookies: true,
     refreshUrl: AUTH_ROUTES.refresh,
-    onRefresh: async () => {
-      const refreshToken = getStoredRefreshToken()
-      const { data } = await refreshClient.post(AUTH_ROUTES.refresh, { refreshToken })
-      if (data?.data?.accessToken) {
-        setStoredTokens(data.data.accessToken, data.data.refreshToken)
-      }
-    },
+    onRefresh: () => refreshAuthSession(baseURL),
   })
   return authClient
 }
