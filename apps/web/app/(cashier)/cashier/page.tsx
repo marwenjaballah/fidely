@@ -282,28 +282,28 @@ export default function CashierPage() {
   return (
     <div className="min-h-screen bg-background flex flex-col text-foreground">
       {/* CASHIER TOP BAR */}
-      <header className="sticky top-0 z-40 flex h-16 shrink-0 items-center justify-between border-b border-border/60 bg-background/95 px-4 backdrop-blur supports-[backdrop-filter]:bg-background/60 sm:px-8">
-        <div className="flex items-center gap-3">
-          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10 text-primary shadow-sm">
-            <Coffee className="h-5 w-5" />
+      <header className="sticky top-0 z-40 flex h-16 shrink-0 items-center justify-between border-b border-border/60 bg-background/95 px-3 sm:px-8 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+        <div className="flex items-center gap-2 sm:gap-3 shrink-0">
+          <div className="flex h-9 w-9 sm:h-10 sm:w-10 items-center justify-center rounded-xl bg-primary/10 text-primary shadow-sm shrink-0">
+            <Coffee className="h-4 w-4 sm:h-5 sm:w-5" />
           </div>
           <div>
-            <div className="flex items-center gap-2">
-              <span className="font-extrabold text-sm sm:text-base tracking-tight">Fidely POS</span>
-              <Badge variant="outline" className="bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20 text-[10px] font-bold px-2 py-0.5">
-                ● Live Terminal
+            <div className="flex items-center gap-1.5 sm:gap-2">
+              <span className="font-extrabold text-xs sm:text-base tracking-tight">Fidely POS</span>
+              <Badge variant="outline" className="bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20 text-[9px] sm:text-[10px] font-bold px-1.5 sm:px-2 py-0.5">
+                ● Live
               </Badge>
             </div>
           </div>
         </div>
 
         {/* Store Selector & Controls */}
-        <div className="flex items-center gap-2 sm:gap-3">
+        <div className="flex items-center gap-1.5 sm:gap-3">
           {stores.length > 1 ? (
             <div className="flex items-center gap-1.5">
               <Store className="h-4 w-4 text-muted-foreground hidden sm:inline" />
               <Select value={activeStore?.id || ''} onValueChange={handleSelectStore}>
-                <SelectTrigger className="h-9 text-xs font-semibold w-[150px] sm:w-[200px] rounded-xl">
+                <SelectTrigger className="h-8 sm:h-9 text-xs font-semibold w-[120px] sm:w-[200px] rounded-xl">
                   <SelectValue placeholder="Select Store" />
                 </SelectTrigger>
                 <SelectContent>
@@ -316,12 +316,12 @@ export default function CashierPage() {
               </Select>
             </div>
           ) : activeStore ? (
-            <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-muted border border-border/60 text-xs font-bold">
+            <div className="flex items-center gap-1.5 px-2.5 py-1 sm:px-3 sm:py-1.5 rounded-xl bg-muted border border-border/60 text-xs font-bold truncate max-w-[140px] sm:max-w-none">
               <span
-                className="w-2.5 h-2.5 rounded-full"
+                className="w-2.5 h-2.5 rounded-full shrink-0"
                 style={{ backgroundColor: activeStore.primaryColor || '#10b981' }}
               />
-              <span>{activeStore.name}</span>
+              <span className="truncate">{activeStore.name}</span>
             </div>
           ) : null}
 

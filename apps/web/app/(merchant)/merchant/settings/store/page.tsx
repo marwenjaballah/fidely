@@ -650,7 +650,7 @@ export default function StoreSettingsPage() {
         </div>
 
         {/* Right Column: Live Digital Pass Simulator */}
-        <div className="lg:col-span-5 space-y-4 sticky top-6">
+        <div className="lg:col-span-5 space-y-4 lg:sticky lg:top-6">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2 text-xs font-semibold text-muted-foreground uppercase tracking-wider">
               <Smartphone className="h-4 w-4 text-primary" />

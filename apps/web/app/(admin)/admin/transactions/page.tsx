@@ -159,7 +159,8 @@ export default function AdminTransactionsPage() {
       {/* Transactions Table */}
       <Card className="border border-border/60">
         <CardContent className="p-0">
-          <div className="rounded-md overflow-x-auto">
+          {/* Desktop Table View */}
+          <div className="hidden md:block rounded-md overflow-x-auto">
             <Table>
               <TableHeader>
                 <TableRow className="hover:bg-transparent">
@@ -257,6 +258,66 @@ export default function AdminTransactionsPage() {
                 )}
               </TableBody>
             </Table>
+          </div>
+
+          {/* Mobile Card List View */}
+          <div className="md:hidden divide-y divide-border/60">
+            {loading && transactions.length === 0 ? (
+              <div className="p-8 text-center text-xs text-muted-foreground">
+                Loading global audit ledger...
+              </div>
+            ) : filteredTransactions.length === 0 ? (
+              <div className="p-8 text-center text-xs text-muted-foreground">
+                No audit log records found matching your filters.
+              </div>
+            ) : (
+              filteredTransactions.map((tx) => {
+                const isEarn = tx.type?.toLowerCase() === 'earn'
+                return (
+                  <div key={tx.id} className="p-4 space-y-2 hover:bg-muted/20 transition-colors">
+                    <div className="flex items-center justify-between gap-2">
+                      <div className="flex items-center gap-2">
+                        {isEarn ? (
+                          <Badge className="bg-emerald-600 text-white gap-1 text-[10px] py-0.5">
+                            <ArrowUpRight className="h-3 w-3" /> EARN
+                          </Badge>
+                        ) : (
+                          <Badge className="bg-destructive text-white gap-1 text-[10px] py-0.5">
+                            <ArrowDownLeft className="h-3 w-3" /> REDEEM
+                          </Badge>
+                        )}
+                        <span className="font-semibold text-xs text-foreground">
+                          {tx.storeName || 'Store'}
+                        </span>
+                      </div>
+                      <span
+                        className={`font-bold font-mono text-xs ${
+                          tx.pointsAffected >= 0
+                            ? 'text-emerald-600 dark:text-emerald-400'
+                            : 'text-destructive'
+                        }`}
+                      >
+                        {tx.pointsAffected > 0 ? `+${tx.pointsAffected}` : tx.pointsAffected} pts
+                      </span>
+                    </div>
+
+                    <div className="flex items-center justify-between text-xs text-muted-foreground pt-0.5">
+                      <span>{tx.customer?.fullName || tx.customer?.email || 'Anonymous Customer'}</span>
+                      {tx.amountTnd != null && (
+                        <span className="font-bold text-foreground">{tx.amountTnd} TND</span>
+                      )}
+                    </div>
+
+                    <div className="flex items-center justify-between text-[11px] text-muted-foreground/80 border-t border-border/30 pt-1.5 font-mono">
+                      <span>ID: {tx.id.slice(0, 8)}</span>
+                      <span>
+                        {new Date(tx.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} • {new Date(tx.createdAt).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}
+                      </span>
+                    </div>
+                  </div>
+                )
+              })
+            )}
           </div>
         </CardContent>
       </Card>

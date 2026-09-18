@@ -133,7 +133,8 @@ export default function AdminStoresPage() {
       {/* Stores Table */}
       <Card className="border border-border/60">
         <CardContent className="p-0">
-          <div className="rounded-md overflow-x-auto">
+          {/* Desktop Table View */}
+          <div className="hidden md:block rounded-md overflow-x-auto">
             <Table>
               <TableHeader>
                 <TableRow className="hover:bg-transparent">
@@ -223,6 +224,57 @@ export default function AdminStoresPage() {
                 )}
               </TableBody>
             </Table>
+          </div>
+
+          {/* Mobile Card View */}
+          <div className="md:hidden divide-y divide-border/60">
+            {loading && stores.length === 0 ? (
+              <div className="p-8 text-center text-xs text-muted-foreground">
+                Loading stores directory...
+              </div>
+            ) : filteredStores.length === 0 ? (
+              <div className="p-8 text-center text-xs text-muted-foreground">
+                No stores found matching your criteria.
+              </div>
+            ) : (
+              filteredStores.map((store) => (
+                <div key={store.id} className="p-4 space-y-3 hover:bg-muted/20 transition-colors">
+                  <div className="flex items-center justify-between gap-3">
+                    <div className="flex items-center gap-3 min-w-0">
+                      <div
+                        className="h-10 w-10 rounded-xl border flex items-center justify-center font-bold text-white shadow-xs shrink-0"
+                        style={{ backgroundColor: store.primaryColor || '#6366f1' }}
+                      >
+                        {store.name.slice(0, 1).toUpperCase()}
+                      </div>
+                      <div className="min-w-0">
+                        <p className="font-semibold text-sm text-foreground truncate">{store.name}</p>
+                        <p className="text-xs text-muted-foreground font-mono">/{store.slug}</p>
+                      </div>
+                    </div>
+                    <Badge variant="outline" className="text-xs font-mono font-bold shrink-0">
+                      1 TND = {store.pointsPerTnd} pts
+                    </Badge>
+                  </div>
+
+                  <div className="flex flex-wrap items-center justify-between gap-2 pt-1 text-xs">
+                    <div className="text-muted-foreground">
+                      Owner: <span className="font-medium text-foreground">{store.owner?.fullName || store.owner?.email || 'Unassigned'}</span>
+                    </div>
+                    <div className="flex items-center gap-1.5">
+                      <Badge variant="secondary" className="gap-1 text-[11px] py-0.5">
+                        <Users className="h-3 w-3 text-blue-500" />
+                        {store.stats?.membersCount ?? 0}
+                      </Badge>
+                      <Badge variant="secondary" className="gap-1 text-[11px] py-0.5">
+                        <UserCheck className="h-3 w-3 text-emerald-500" />
+                        {store.stats?.cashiersCount ?? 0}
+                      </Badge>
+                    </div>
+                  </div>
+                </div>
+              ))
+            )}
           </div>
         </CardContent>
       </Card>

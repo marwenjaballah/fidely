@@ -102,9 +102,9 @@ export function AppleWalletPass({
           }}
         >
           {/* Top Apple Wallet Card Header */}
-          <div className="p-5 pb-3 flex items-center justify-between border-b border-white/10">
-            <div className="flex items-center gap-3">
-              <div className="h-11 w-11 rounded-2xl bg-white/15 backdrop-blur-md flex items-center justify-center font-bold text-xl overflow-hidden border border-white/25 shrink-0 shadow-xs">
+          <div className="p-4 sm:p-5 pb-3 flex items-center justify-between border-b border-white/10">
+            <div className="flex items-center gap-2.5 sm:gap-3">
+              <div className="h-10 w-10 sm:h-11 sm:w-11 rounded-2xl bg-white/15 backdrop-blur-md flex items-center justify-center font-bold text-xl overflow-hidden border border-white/25 shrink-0 shadow-xs">
                 {logoUrl ? (
                   <img src={logoUrl} alt={storeName} className="h-full w-full object-cover" />
                 ) : (
@@ -112,10 +112,10 @@ export function AppleWalletPass({
                 )}
               </div>
               <div className="min-w-0">
-                <p className="text-[10px] font-bold tracking-widest uppercase text-white/70 leading-none">
+                <p className="text-[9px] sm:text-[10px] font-bold tracking-widest uppercase text-white/70 leading-none">
                   Loyalty Pass
                 </p>
-                <h3 className="text-base font-extrabold tracking-tight truncate leading-tight mt-1 text-white">
+                <h3 className="text-sm sm:text-base font-extrabold tracking-tight truncate leading-tight mt-1 text-white">
                   {storeName || 'Coffee Shop'}
                 </h3>
               </div>
@@ -124,8 +124,8 @@ export function AppleWalletPass({
             {/* Top Right Header Field */}
             <div className="flex items-center gap-1.5">
               <div className="text-right">
-                <p className="text-[9px] font-bold uppercase tracking-wider text-white/70">Rate</p>
-                <p className="text-xs font-bold text-white leading-tight">{pointsPerTnd} pts/TND</p>
+                <p className="text-[8px] sm:text-[9px] font-bold uppercase tracking-wider text-white/70">Rate</p>
+                <p className="text-[11px] sm:text-xs font-bold text-white leading-tight">{pointsPerTnd} pts/TND</p>
               </div>
               {interactive && (
                 <button
@@ -141,22 +141,22 @@ export function AppleWalletPass({
           </div>
 
           {/* Primary Hero Section: Big Points Balance */}
-          <div className="px-6 py-5 flex items-baseline justify-between">
+          <div className="px-4 sm:px-6 py-4 sm:py-5 flex items-baseline justify-between">
             <div>
-              <p className="text-[10px] font-bold uppercase tracking-widest text-white/75">
+              <p className="text-[9px] sm:text-[10px] font-bold uppercase tracking-widest text-white/75">
                 Current Points
               </p>
               <div className="flex items-baseline gap-2 mt-0.5">
-                <span className="text-4xl sm:text-5xl font-black tracking-tight text-white drop-shadow-xs">
+                <span className="text-3xl sm:text-5xl font-black tracking-tight text-white drop-shadow-xs">
                   {pointsBalance.toLocaleString()}
                 </span>
-                <span className="text-sm font-semibold uppercase tracking-wider text-white/80">PTS</span>
+                <span className="text-xs sm:text-sm font-semibold uppercase tracking-wider text-white/80">PTS</span>
               </div>
             </div>
 
             {rewardsCount > 0 && (
               <div className="flex flex-col items-end">
-                <Badge className="bg-emerald-500/90 text-white border-0 text-[10px] font-bold shadow-xs px-2.5 py-0.5 gap-1 backdrop-blur-xs">
+                <Badge className="bg-emerald-500/90 text-white border-0 text-[9px] sm:text-[10px] font-bold shadow-xs px-2 sm:px-2.5 py-0.5 gap-1 backdrop-blur-xs">
                   <Gift className="h-3 w-3" />
                   {rewardsCount} Ready
                 </Badge>
@@ -165,7 +165,7 @@ export function AppleWalletPass({
           </div>
 
           {/* Auxiliary Info Grid (Classic Apple Wallet 3-column metadata) */}
-          <div className="px-6 py-3 grid grid-cols-3 gap-2 bg-black/15 backdrop-blur-xs border-y border-white/10 text-left">
+          <div className="px-4 sm:px-6 py-2.5 sm:py-3 grid grid-cols-3 gap-2 bg-black/15 backdrop-blur-xs border-y border-white/10 text-left">
             <div>
               <p className="text-[9px] font-bold uppercase tracking-wider text-white/60">Member</p>
               <p className="text-xs font-bold text-white truncate mt-0.5">

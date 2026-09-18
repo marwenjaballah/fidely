@@ -176,7 +176,8 @@ export default function AdminUsersPage() {
       {/* Users Table */}
       <Card className="border border-border/60">
         <CardContent className="p-0">
-          <div className="rounded-md overflow-x-auto">
+          {/* Desktop Table View */}
+          <div className="hidden md:block rounded-md overflow-x-auto">
             <Table>
               <TableHeader>
                 <TableRow className="hover:bg-transparent">
@@ -294,6 +295,56 @@ export default function AdminUsersPage() {
                 )}
               </TableBody>
             </Table>
+          </div>
+
+          {/* Mobile Card List View */}
+          <div className="md:hidden divide-y divide-border/60">
+            {loading && users.length === 0 ? (
+              <div className="p-8 text-center text-xs text-muted-foreground">
+                Loading users list...
+              </div>
+            ) : users.length === 0 ? (
+              <div className="p-8 text-center text-xs text-muted-foreground">
+                No users found.
+              </div>
+            ) : (
+              users.map((user) => (
+                <div key={user.id} className="p-4 space-y-3 hover:bg-muted/20 transition-colors">
+                  <div className="flex items-center justify-between gap-2">
+                    <div className="flex items-center gap-3 min-w-0">
+                      <div className="h-10 w-10 rounded-full bg-primary/10 border border-primary/20 flex items-center justify-center font-bold text-primary text-xs shrink-0">
+                        {user.email.slice(0, 2).toUpperCase()}
+                      </div>
+                      <div className="min-w-0">
+                        <p className="font-semibold text-sm text-foreground truncate">
+                          {user.fullName || 'No Name Set'}
+                        </p>
+                        <p className="text-xs text-muted-foreground font-mono truncate">{user.email}</p>
+                      </div>
+                    </div>
+                    {getRoleBadge(user.role)}
+                  </div>
+
+                  <div className="flex flex-wrap items-center justify-between gap-2 pt-1 border-t border-border/40 text-xs">
+                    <div className="flex items-center gap-1 text-[11px] text-muted-foreground">
+                      <Calendar className="h-3 w-3" />
+                      {new Date(user.createdAt).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}
+                    </div>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => {
+                        setEditingUser(user)
+                        setNewRole(user.role)
+                      }}
+                      className="text-xs h-7 px-2.5"
+                    >
+                      Modify Role
+                    </Button>
+                  </div>
+                </div>
+              ))
+            )}
           </div>
         </CardContent>
       </Card>

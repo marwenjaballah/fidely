@@ -72,12 +72,12 @@ export default function AdminOverviewPage() {
   const recentFeed = (transactions || []).slice(0, 6)
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-6 sm:space-y-8 overflow-x-hidden">
       {/* Header */}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-2xl md:text-3xl font-bold tracking-tight">Platform Command Center</h1>
-          <p className="text-muted-foreground text-sm mt-1">
+          <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">Platform Command Center</h1>
+          <p className="text-muted-foreground text-xs sm:text-sm mt-1">
             Real-time ecosystem metrics, health indicators, and cross-store activity.
           </p>
         </div>

@@ -331,104 +331,172 @@ export default function StaffPage() {
               No cashiers match your search query.
             </p>
           ) : (
-            <div className="rounded-md border border-border/60 overflow-hidden">
-              <Table>
-                <TableHeader className="bg-muted/40">
-                  <TableRow>
-                    <TableHead>Cashier</TableHead>
-                    <TableHead>Email & Contact</TableHead>
-                    <TableHead>Role</TableHead>
-                    <TableHead>Added On</TableHead>
-                    <TableHead className="text-right">Actions</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {filteredStaff.map((cashier) => (
-                    <TableRow key={cashier.id} className="hover:bg-muted/30 transition-colors">
-                      <TableCell>
-                        <div className="flex items-center gap-3">
-                          <Avatar className="h-9 w-9 border border-border/70">
-                            <AvatarFallback className="bg-primary/10 text-primary font-semibold text-xs">
-                              {(cashier.fullName || cashier.email).charAt(0).toUpperCase()}
-                            </AvatarFallback>
-                          </Avatar>
-                          <div className="font-medium text-foreground">
-                            {cashier.fullName || 'Unnamed Cashier'}
-                          </div>
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        <div className="flex items-center gap-2">
-                          <span className="text-sm text-muted-foreground font-mono">
-                            {cashier.email}
-                          </span>
-                          <button
-                            type="button"
-                            onClick={() => handleCopyEmail(cashier.email, cashier.id)}
-                            title="Copy Email"
-                            className="text-muted-foreground hover:text-foreground transition-colors"
-                          >
-                            {copiedId === cashier.id ? (
-                              <Check className="h-3.5 w-3.5 text-primary" />
-                            ) : (
-                              <Copy className="h-3.5 w-3.5" />
-                            )}
-                          </button>
-                        </div>
-                        {cashier.phone && (
-                          <div className="text-xs text-muted-foreground/70 mt-0.5">
-                            {cashier.phone}
-                          </div>
-                        )}
-                      </TableCell>
-                      <TableCell>
-                        <Badge variant="outline" className="bg-primary/10 text-primary border-primary/20 text-xs">
-                          Cashier
-                        </Badge>
-                      </TableCell>
-                      <TableCell className="text-sm text-muted-foreground">
-                        {format(new Date(cashier.createdAt), 'MMM d, yyyy')}
-                      </TableCell>
-                      <TableCell className="text-right">
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" size="icon" className="h-8 w-8">
-                              <MoreVertical className="h-4 w-4" />
-                              <span className="sr-only">Open menu</span>
-                            </Button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end" className="w-48">
-                            <DropdownMenuLabel className="text-xs">Cashier Actions</DropdownMenuLabel>
-                            <DropdownMenuItem
-                              onClick={() => handleEditOpen(cashier)}
-                              className="cursor-pointer gap-2"
-                            >
-                              <Edit className="h-4 w-4 text-muted-foreground" />
-                              <span>Edit Details</span>
-                            </DropdownMenuItem>
-                            <DropdownMenuItem
-                              onClick={() => handlePasswordOpen(cashier)}
-                              className="cursor-pointer gap-2"
-                            >
-                              <Key className="h-4 w-4 text-amber-500" />
-                              <span>Change Password</span>
-                            </DropdownMenuItem>
-                            <DropdownMenuSeparator />
-                            <DropdownMenuItem
-                              onClick={() => { setDeleteTarget(cashier); setActionError(null); }}
-                              className="cursor-pointer gap-2 text-destructive focus:text-destructive"
-                            >
-                              <Trash2 className="h-4 w-4" />
-                              <span>Remove Cashier</span>
-                            </DropdownMenuItem>
-                          </DropdownMenuContent>
-                        </DropdownMenu>
-                      </TableCell>
+            <>
+              {/* Desktop / Tablet Table View (hidden on mobile) */}
+              <div className="hidden md:block rounded-md border border-border/60 overflow-hidden">
+                <Table>
+                  <TableHeader className="bg-muted/40">
+                    <TableRow>
+                      <TableHead>Cashier</TableHead>
+                      <TableHead>Email & Contact</TableHead>
+                      <TableHead>Role</TableHead>
+                      <TableHead>Added On</TableHead>
+                      <TableHead className="text-right">Actions</TableHead>
                     </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </div>
+                  </TableHeader>
+                  <TableBody>
+                    {filteredStaff.map((cashier) => (
+                      <TableRow key={cashier.id} className="hover:bg-muted/30 transition-colors">
+                        <TableCell>
+                          <div className="flex items-center gap-3">
+                            <Avatar className="h-9 w-9 border border-border/70">
+                              <AvatarFallback className="bg-primary/10 text-primary font-semibold text-xs">
+                                {(cashier.fullName || cashier.email).charAt(0).toUpperCase()}
+                              </AvatarFallback>
+                            </Avatar>
+                            <div className="font-medium text-foreground">
+                              {cashier.fullName || 'Unnamed Cashier'}
+                            </div>
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          <div className="flex items-center gap-2">
+                            <span className="text-sm text-muted-foreground font-mono">
+                              {cashier.email}
+                            </span>
+                            <button
+                              type="button"
+                              onClick={() => handleCopyEmail(cashier.email, cashier.id)}
+                              title="Copy Email"
+                              className="text-muted-foreground hover:text-foreground transition-colors"
+                            >
+                              {copiedId === cashier.id ? (
+                                <Check className="h-3.5 w-3.5 text-primary" />
+                              ) : (
+                                <Copy className="h-3.5 w-3.5" />
+                              )}
+                            </button>
+                          </div>
+                          {cashier.phone && (
+                            <div className="text-xs text-muted-foreground/70 mt-0.5">
+                              {cashier.phone}
+                            </div>
+                          )}
+                        </TableCell>
+                        <TableCell>
+                          <Badge variant="outline" className="bg-primary/10 text-primary border-primary/20 text-xs">
+                            Cashier
+                          </Badge>
+                        </TableCell>
+                        <TableCell className="text-sm text-muted-foreground">
+                          {format(new Date(cashier.createdAt), 'MMM d, yyyy')}
+                        </TableCell>
+                        <TableCell className="text-right">
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button variant="ghost" size="icon" className="h-8 w-8">
+                                <MoreVertical className="h-4 w-4" />
+                                <span className="sr-only">Open menu</span>
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end" className="w-48">
+                              <DropdownMenuLabel className="text-xs">Cashier Actions</DropdownMenuLabel>
+                              <DropdownMenuItem
+                                onClick={() => handleEditOpen(cashier)}
+                                className="cursor-pointer gap-2"
+                              >
+                                <Edit className="h-4 w-4 text-muted-foreground" />
+                                <span>Edit Details</span>
+                              </DropdownMenuItem>
+                              <DropdownMenuItem
+                                onClick={() => handlePasswordOpen(cashier)}
+                                className="cursor-pointer gap-2"
+                              >
+                                <Key className="h-4 w-4 text-amber-500" />
+                                <span>Change Password</span>
+                              </DropdownMenuItem>
+                              <DropdownMenuSeparator />
+                              <DropdownMenuItem
+                                onClick={() => { setDeleteTarget(cashier); setActionError(null); }}
+                                className="cursor-pointer gap-2 text-destructive focus:text-destructive"
+                              >
+                                <Trash2 className="h-4 w-4" />
+                                <span>Remove Cashier</span>
+                              </DropdownMenuItem>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
+
+              {/* Mobile Card List View (hidden on desktop) */}
+              <div className="md:hidden divide-y divide-border/60">
+                {filteredStaff.map((cashier) => (
+                  <div key={cashier.id} className="p-4 flex items-center justify-between gap-3 hover:bg-muted/20 transition-colors">
+                    <div className="flex items-center gap-3 min-w-0">
+                      <Avatar className="h-10 w-10 border border-border/70 shrink-0">
+                        <AvatarFallback className="bg-primary/10 text-primary font-semibold text-sm">
+                          {(cashier.fullName || cashier.email).charAt(0).toUpperCase()}
+                        </AvatarFallback>
+                      </Avatar>
+                      <div className="min-w-0 space-y-0.5">
+                        <p className="font-semibold text-sm text-foreground truncate">
+                          {cashier.fullName || 'Unnamed Cashier'}
+                        </p>
+                        <p className="text-xs text-muted-foreground font-mono truncate">
+                          {cashier.email}
+                        </p>
+                        <div className="flex items-center gap-2 pt-0.5">
+                          <Badge variant="outline" className="bg-primary/10 text-primary border-primary/20 text-[10px] py-0 px-1.5 h-4">
+                            Cashier
+                          </Badge>
+                          <span className="text-[10px] text-muted-foreground">
+                            Added {format(new Date(cashier.createdAt), 'MMM d, yyyy')}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button variant="outline" size="icon" className="h-9 w-9 shrink-0">
+                          <MoreVertical className="h-4 w-4" />
+                          <span className="sr-only">Open menu</span>
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end" className="w-48">
+                        <DropdownMenuLabel className="text-xs">Cashier Actions</DropdownMenuLabel>
+                        <DropdownMenuItem
+                          onClick={() => handleEditOpen(cashier)}
+                          className="cursor-pointer gap-2"
+                        >
+                          <Edit className="h-4 w-4 text-muted-foreground" />
+                          <span>Edit Details</span>
+                        </DropdownMenuItem>
+                        <DropdownMenuItem
+                          onClick={() => handlePasswordOpen(cashier)}
+                          className="cursor-pointer gap-2"
+                        >
+                          <Key className="h-4 w-4 text-amber-500" />
+                          <span>Change Password</span>
+                        </DropdownMenuItem>
+                        <DropdownMenuSeparator />
+                        <DropdownMenuItem
+                          onClick={() => { setDeleteTarget(cashier); setActionError(null); }}
+                          className="cursor-pointer gap-2 text-destructive focus:text-destructive"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                          <span>Remove Cashier</span>
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  </div>
+                ))}
+              </div>
+            </>
           )}
         </CardContent>
       </Card>
