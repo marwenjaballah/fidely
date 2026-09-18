@@ -6,28 +6,46 @@ export class MerchantService {
   constructor(private prisma: PrismaClient, private supabaseAdmin?: any) {}
 
   async getStores(merchantId: string) {
-    return this.prisma.store.findMany({
+    const stores = await this.prisma.store.findMany({
       where: { ownerId: merchantId },
     });
+    return stores.map((s: any) => ({
+      id: s.id,
+      name: s.name,
+      slug: s.slug,
+      primaryColor: s.primaryColor || '#000000',
+      pointsPerTnd: Number(s.pointsPerTnd) || 10,
+      welcomePoints: Number(s.welcomePoints) || 0,
+      logoUrl: s.logoUrl || null,
+      active: s.active,
+      createdAt: s.createdAt,
+    }));
   }
 
-  async createStore(merchantId: string, data: { name: string; slug?: string; primaryColor?: string; pointsPerTnd?: number; logoUrl?: string | null }) {
+  async createStore(merchantId: string, data: { name: string; slug?: string; primaryColor?: string; pointsPerTnd?: number; welcomePoints?: number; logoUrl?: string | null }) {
     const candidate = data.slug && data.slug.trim() ? data.slug : data.name;
     const uniqueSlug = await generateUniqueSlug(this.prisma, candidate);
 
-    return this.prisma.store.create({
+    const store = await this.prisma.store.create({
       data: {
         ownerId: merchantId,
         name: data.name,
         slug: uniqueSlug,
         primaryColor: data.primaryColor || '#000000',
         pointsPerTnd: data.pointsPerTnd || 10,
+        welcomePoints: data.welcomePoints || 0,
         logoUrl: data.logoUrl ?? null,
       }
     });
+
+    return {
+      ...store,
+      pointsPerTnd: Number(store.pointsPerTnd) || 10,
+      welcomePoints: Number((store as any).welcomePoints) || 0,
+    };
   }
 
-  async updateStore(storeId: string, merchantId: string, data: { name?: string; slug?: string; primaryColor?: string; pointsPerTnd?: number; logoUrl?: string | null }) {
+  async updateStore(storeId: string, merchantId: string, data: { name?: string; slug?: string; primaryColor?: string; pointsPerTnd?: number; welcomePoints?: number; logoUrl?: string | null }) {
     // Verify ownership
     const store = await this.prisma.store.findFirst({
       where: { id: storeId, ownerId: merchantId },
@@ -44,16 +62,23 @@ export class MerchantService {
       nextSlug = await generateUniqueSlug(this.prisma, data.name.trim(), storeId);
     }
 
-    return this.prisma.store.update({
+    const updated = await this.prisma.store.update({
       where: { id: storeId },
       data: {
         ...(data.name !== undefined ? { name: data.name } : {}),
         slug: nextSlug,
         ...(data.primaryColor !== undefined ? { primaryColor: data.primaryColor } : {}),
         ...(data.pointsPerTnd !== undefined ? { pointsPerTnd: data.pointsPerTnd } : {}),
+        ...(data.welcomePoints !== undefined ? { welcomePoints: data.welcomePoints } : {}),
         ...(data.logoUrl !== undefined ? { logoUrl: data.logoUrl } : {}),
       },
     });
+
+    return {
+      ...updated,
+      pointsPerTnd: Number(updated.pointsPerTnd) || 10,
+      welcomePoints: Number((updated as any).welcomePoints) || 0,
+    };
   }
 
   async getStoreCustomers(storeId: string, merchantId: string) {

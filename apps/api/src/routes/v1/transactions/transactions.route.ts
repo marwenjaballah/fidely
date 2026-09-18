@@ -202,3 +202,39 @@ export const getRecentTransactionsRoute = createRoute({
     403: { description: 'Forbidden' },
   },
 });
+
+export const lookupCustomerByPhoneRoute = createRoute({
+  method: 'get',
+  path: '/lookup-by-phone',
+  tags: ['Transactions'],
+  security: [{ bearerAuth: [] }],
+  request: {
+    query: z.object({
+      phone: z.string().min(2).describe('Phone number digits to search'),
+      storeId: z.string().describe('Active store ID to lookup membership and points balance'),
+    }),
+  },
+  responses: {
+    200: {
+      description: 'Matching customers found',
+      content: {
+        'application/json': {
+          schema: z.array(
+            z.object({
+              customerId: z.string(),
+              fullName: z.string().nullable(),
+              phone: z.string().nullable(),
+              email: z.string(),
+              membershipId: z.string(),
+              pointsBalance: z.number(),
+              qrCodeToken: z.string(),
+            })
+          ),
+        },
+      },
+    },
+    400: { description: 'Bad request' },
+    401: { description: 'Unauthorized' },
+    403: { description: 'Forbidden' },
+  },
+});

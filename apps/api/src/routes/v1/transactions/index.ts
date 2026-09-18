@@ -6,11 +6,26 @@ import {
   getRecentTransactionsRoute,
   issuePointsRoute,
   redeemRewardRoute,
+  lookupCustomerByPhoneRoute,
 } from './transactions.route.js';
 import { TransactionsService } from '../../../services/transactions.service.js';
 import { requireUser } from '../../../utils/auth.js';
 
 const router = new OpenAPIHono<Env>();
+
+router.openapi(lookupCustomerByPhoneRoute, async (c) => {
+  try {
+    const user = requireUser(c);
+    const { phone, storeId } = c.req.valid('query');
+    const prisma = c.get('prisma');
+    const service = new TransactionsService(prisma);
+    const results = await service.lookupCustomerByPhone(user.id, user.role, storeId, phone);
+    return c.json(results, 200);
+  } catch (error: any) {
+    const status = error.status || error.statusCode || 400;
+    return c.json({ error: error.message }, status) as any;
+  }
+});
 
 router.openapi(getCashierStoresRoute, async (c) => {
   try {

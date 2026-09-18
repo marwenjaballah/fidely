@@ -378,4 +378,63 @@ export class TransactionsService {
       customerName: t.membership?.customer?.fullName || t.membership?.customer?.email?.split('@')[0] || 'Customer',
     }));
   }
+
+  /**
+   * Looks up a customer and their store membership strictly by phone number digits.
+   */
+  async lookupCustomerByPhone(
+    userId: string,
+    userRole: string | undefined,
+    storeId: string,
+    phoneQuery: string
+  ) {
+    const store = await this.resolveAndValidateCashierStore(userId, userRole, storeId);
+    const cleanedDigits = phoneQuery.replace(/\D/g, '');
+    if (!cleanedDigits || cleanedDigits.length < 2) {
+      return [];
+    }
+
+    const users = await this.prisma.user.findMany({
+      where: {
+        phone: {
+          contains: cleanedDigits,
+          mode: 'insensitive',
+        },
+      },
+      take: 8,
+      include: {
+        memberships: {
+          where: { storeId: store.id },
+        },
+      },
+    });
+
+    const results = [];
+    for (const u of users) {
+      let membership = u.memberships[0];
+      if (!membership) {
+        membership = await this.prisma.customerMembership.create({
+          data: {
+            customerId: u.id,
+            storeId: store.id,
+            pointsBalance: (store as any).welcomePoints > 0 ? (store as any).welcomePoints : 0,
+            qrCodeToken: `${u.id}:${store.id}`,
+            joinSource: 'CASHIER_PHONE_SEARCH',
+          },
+        });
+      }
+
+      results.push({
+        customerId: u.id,
+        fullName: u.fullName,
+        phone: u.phone,
+        email: u.email,
+        membershipId: membership.id,
+        pointsBalance: membership.pointsBalance,
+        qrCodeToken: membership.qrCodeToken,
+      });
+    }
+
+    return results;
+  }
 }

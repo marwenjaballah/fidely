@@ -165,6 +165,7 @@ export class CustomerService {
       slug: store.slug,
       primaryColor: store.primaryColor,
       pointsPerTnd: store.pointsPerTnd,
+      welcomePoints: (store as any).welcomePoints ?? 0,
       logoUrl: store.logoUrl,
       rewards: store.rewards.map((r) => ({
         id: r.id,
@@ -201,13 +202,27 @@ export class CustomerService {
       return existing;
     }
 
+    const welcomeBonus = (store as any).welcomePoints > 0 ? (store as any).welcomePoints : 0;
     const membership = await this.prisma.customerMembership.create({
       data: {
         customerId,
         storeId,
-        pointsBalance: 0,
+        pointsBalance: welcomeBonus,
         qrCodeToken: `${customerId}:${storeId}`,
         joinSource,
+        ...(welcomeBonus > 0
+          ? {
+              transactions: {
+                create: {
+                  storeId,
+                  cashierId: store.ownerId,
+                  type: 'earn',
+                  pointsAffected: welcomeBonus,
+                  amountTnd: 0,
+                },
+              },
+            }
+          : {}),
       },
     });
 

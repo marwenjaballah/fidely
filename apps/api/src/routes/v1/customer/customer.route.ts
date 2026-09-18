@@ -102,6 +102,7 @@ export const getStoreBySlugRoute = createRoute({
             slug: z.string(),
             primaryColor: z.string(),
             pointsPerTnd: z.number(),
+            welcomePoints: z.number().optional().default(0),
             logoUrl: z.string().nullable().optional(),
             rewards: z.array(
               z.object({
