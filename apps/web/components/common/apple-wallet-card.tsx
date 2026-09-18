@@ -265,40 +265,56 @@ export function AppleWalletPass({
                 )}
               </div>
 
-              {/* Fullscreen QR Modal */}
+              {/* Premium Fullscreen Apple Wallet QR Modal */}
               <Dialog open={qrModalOpen} onOpenChange={setQrModalOpen}>
-                <DialogContent className="sm:max-w-xs text-center p-6 bg-white dark:bg-zinc-950">
-                  <DialogHeader>
-                    <DialogTitle className="text-center">{storeName}</DialogTitle>
-                    <DialogDescription className="text-center text-xs">
-                      Maximum brightness pass for scanner
+                <DialogContent className="sm:max-w-sm text-center p-7 rounded-[32px] bg-background/95 backdrop-blur-2xl border border-border/80 shadow-2xl overflow-hidden">
+                  {/* Ambient Store Glow */}
+                  <div
+                    className="absolute -top-24 left-1/2 -translate-x-1/2 w-48 h-48 rounded-full blur-3xl opacity-20 pointer-events-none"
+                    style={{ backgroundColor: primaryColor }}
+                  />
+
+                  <DialogHeader className="space-y-1.5 pt-2">
+                    <div className="mx-auto flex h-11 w-11 items-center justify-center rounded-2xl shadow-sm text-white mb-2" style={{ backgroundColor: primaryColor }}>
+                      <Coffee className="h-6 w-6" />
+                    </div>
+                    <DialogTitle className="text-center text-lg font-bold tracking-tight">{storeName}</DialogTitle>
+                    <DialogDescription className="text-center text-xs text-muted-foreground flex items-center justify-center gap-1.5">
+                      <ShieldCheck className="h-3.5 w-3.5 text-emerald-500" />
+                      Dynamic Security Barcode Pass
                     </DialogDescription>
                   </DialogHeader>
-                  <div className="flex flex-col items-center justify-center py-4">
-                    <div className="p-4 bg-white rounded-2xl shadow-xl border">
-                      <QRCodeSVG value={qrCodeToken} size={220} level="Q" includeMargin={true} />
+
+                  <div className="flex flex-col items-center justify-center py-5">
+                    <div className="relative p-5 bg-white rounded-3xl shadow-xl border border-slate-200/80 dark:border-white/10 group">
+                      <QRCodeSVG value={qrCodeToken} size={230} level="Q" includeMargin={false} />
                     </div>
-                    <div className="flex items-center gap-2 mt-4">
+
+                    <p className="text-[11px] text-muted-foreground font-medium mt-3.5 bg-muted/60 px-3 py-1 rounded-full">
+                      Maximum screen brightness recommended at checkout
+                    </p>
+
+                    <div className="flex items-center gap-2 mt-5 w-full">
                       {onRefreshQr && (
                         <Button
                           size="sm"
                           variant="outline"
                           onClick={handleRefreshClick}
                           disabled={isRefreshing}
-                          className="gap-1.5 text-xs"
+                          className="flex-1 rounded-xl h-10 gap-2 text-xs font-semibold border-border/80 hover:bg-muted/80"
                         >
                           <RefreshCw className={`h-3.5 w-3.5 ${isRefreshing ? 'animate-spin' : ''}`} />
-                          {isRefreshing ? 'Refreshing...' : 'Refresh QR'}
+                          {isRefreshing ? 'Generating...' : 'Refresh Pass'}
                         </Button>
                       )}
                       <Button
                         size="sm"
-                        variant="outline"
+                        variant="secondary"
                         onClick={handleCopyToken}
-                        className="gap-1.5 text-xs"
+                        className="flex-1 rounded-xl h-10 gap-2 text-xs font-semibold"
                       >
                         {copiedToken ? <Check className="h-3.5 w-3.5 text-emerald-500" /> : <Copy className="h-3.5 w-3.5" />}
-                        {copiedToken ? 'Copied ID' : 'Copy Pass ID'}
+                        {copiedToken ? 'Pass ID Copied' : 'Copy Pass ID'}
                       </Button>
                     </div>
                   </div>
