@@ -100,11 +100,12 @@ export class CustomerService {
    */
   async getStoreBySlug(slug: string) {
     const trimmed = slug.trim();
+    const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(trimmed);
     const store = await this.prisma.store.findFirst({
       where: {
         OR: [
           { slug: trimmed.toLowerCase() },
-          { id: trimmed },
+          ...(isUuid ? [{ id: trimmed }] : []),
         ],
       },
       include: {

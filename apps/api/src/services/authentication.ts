@@ -89,6 +89,7 @@ export class AuthenticationService {
         data: {
           role,
           ...profileMetadata,
+          ...(payload.referredByStoreId ? { referredByStoreId: payload.referredByStoreId } : {}),
         },
       },
     });
@@ -257,9 +258,32 @@ export class AuthenticationService {
       ...(user.user_metadata as Record<string, unknown>),
       ...overrides,
     });
-    const referredByStoreId =
+    const rawReferredByStore =
       overrides?.referredByStoreId ??
       (user.user_metadata?.referredByStoreId as string | undefined);
+
+    let resolvedStore: any = null;
+    let resolvedStoreId: string | null = null;
+
+    if (rawReferredByStore && typeof rawReferredByStore === 'string') {
+      const trimmedRef = rawReferredByStore.trim();
+      const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(trimmedRef);
+      try {
+        resolvedStore = await this.prisma.store.findFirst({
+          where: {
+            OR: [
+              { slug: trimmedRef.toLowerCase() },
+              ...(isUuid ? [{ id: trimmedRef }] : []),
+            ],
+          },
+        });
+        if (resolvedStore) {
+          resolvedStoreId = resolvedStore.id;
+        }
+      } catch (e) {
+        console.warn('Error resolving referred store:', e);
+      }
+    }
 
     let dbUser: any;
     try {
@@ -268,21 +292,21 @@ export class AuthenticationService {
         update: {
           email,
           role: prismaRole,
-          ...(referredByStoreId ? { referredByStoreId } : {}),
+          ...(resolvedStoreId ? { referredByStoreId: resolvedStoreId } : {}),
           ...profile,
         },
         create: {
           id: user.id,
           email,
           role: prismaRole,
-          referredByStoreId: referredByStoreId || null,
+          referredByStoreId: resolvedStoreId,
           ...profile,
         },
       });
     } catch (err: any) {
       // Graceful fallback if database schema is missing `referredByStoreId` or other optional columns
       console.warn(
-        '⚠️ Prisma user upsert with referredByStoreId failed. Falling back to core fields. (Please run "prisma db push" or add the column to PostgreSQL):',
+        '⚠️ Prisma user upsert fallback:',
         err.message
       );
       dbUser = await this.prisma.user.upsert({
@@ -302,36 +326,24 @@ export class AuthenticationService {
     }
 
     // If referred by a store (either by store UUID or store slug), automatically create initial CustomerMembership
-    if (referredByStoreId) {
+    if (resolvedStore && resolvedStore.active) {
       try {
-        const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(referredByStoreId);
-        const store = await this.prisma.store.findFirst({
+        await this.prisma.customerMembership.upsert({
           where: {
-            OR: [
-              ...(isUuid ? [{ id: referredByStoreId }] : []),
-              { slug: referredByStoreId },
-            ],
+            customerStoreIdx: {
+              customerId: dbUser.id,
+              storeId: resolvedStore.id,
+            },
+          },
+          update: {},
+          create: {
+            customerId: dbUser.id,
+            storeId: resolvedStore.id,
+            pointsBalance: 0,
+            qrCodeToken: `${dbUser.id}:${resolvedStore.id}`,
+            joinSource: 'STORE_QR',
           },
         });
-
-        if (store && store.active) {
-          await this.prisma.customerMembership.upsert({
-            where: {
-              customerStoreIdx: {
-                customerId: dbUser.id,
-                storeId: store.id,
-              },
-            },
-            update: {},
-            create: {
-              customerId: dbUser.id,
-              storeId: store.id,
-              pointsBalance: 0,
-              qrCodeToken: `${dbUser.id}:${store.id}`,
-              joinSource: 'STORE_QR',
-            },
-          });
-        }
       } catch (e) {
         console.warn('Failed to auto-enroll referred customer:', e);
       }
