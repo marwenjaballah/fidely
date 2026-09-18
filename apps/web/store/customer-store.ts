@@ -149,6 +149,10 @@ export const useCustomerStore = create<CustomerState>((set, get) => ({
     try {
       const client = getCustomerClient()
       let cleanSlug = slugOrUrl.trim()
+      // If it's prefixed with JOIN:, strip it
+      if (cleanSlug.toUpperCase().startsWith('JOIN:')) {
+        cleanSlug = cleanSlug.slice(5).trim()
+      }
       // If it's a URL, extract path
       try {
         if (cleanSlug.startsWith('http://') || cleanSlug.startsWith('https://')) {
