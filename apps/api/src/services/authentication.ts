@@ -243,7 +243,7 @@ export class AuthenticationService {
     // Supabase `user_metadata.role` can be missing/stale at login time, and must not downgrade users.
     const existingUser = await this.prisma.user.findUnique({
       where: { id: user.id },
-      select: { role: true },
+      select: { role: true, referredByStoreId: true },
     });
 
     const role: DbUserRole =
@@ -260,7 +260,8 @@ export class AuthenticationService {
     });
     const rawReferredByStore =
       overrides?.referredByStoreId ??
-      (user.user_metadata?.referredByStoreId as string | undefined);
+      (user.user_metadata?.referredByStoreId as string | undefined) ??
+      existingUser?.referredByStoreId;
 
     let resolvedStore: any = null;
     let resolvedStoreId: string | null = null;

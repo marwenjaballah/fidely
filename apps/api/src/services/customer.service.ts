@@ -8,6 +8,45 @@ export class CustomerService {
    * Retrieves all memberships, points, rewards, active vouchers, and transactions for a customer.
    */
   async getCustomerOverview(customerId: string) {
+    // 1. Ensure user is enrolled in their referral store if they have one
+    try {
+      const user = await this.prisma.user.findUnique({
+        where: { id: customerId },
+        select: { referredByStoreId: true },
+      });
+
+      if (user?.referredByStoreId) {
+        const existingMembership = await this.prisma.customerMembership.findUnique({
+          where: {
+            customerStoreIdx: {
+              customerId,
+              storeId: user.referredByStoreId,
+            },
+          },
+        });
+
+        if (!existingMembership) {
+          const store = await this.prisma.store.findUnique({
+            where: { id: user.referredByStoreId },
+          });
+
+          if (store && store.active) {
+            await this.prisma.customerMembership.create({
+              data: {
+                customerId,
+                storeId: store.id,
+                pointsBalance: 0,
+                qrCodeToken: `${customerId}:${store.id}`,
+                joinSource: 'STORE_QR',
+              },
+            });
+          }
+        }
+      }
+    } catch (e) {
+      console.warn('Auto-enroll in referral store notice:', e);
+    }
+
     const memberships = await this.prisma.customerMembership.findMany({
       where: { customerId },
       include: {
