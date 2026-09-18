@@ -10,6 +10,7 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { ThemeToggleButton } from '@/components/common/theme-toggle-button'
+import { LanguageSwitcher } from '@/components/common/language-switcher'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { useToast } from '@/hooks/use-toast'
@@ -245,6 +246,7 @@ export default function CustomerOverviewPage() {
         </div>
 
         <div className="flex items-center gap-2 sm:gap-3">
+          <LanguageSwitcher />
           <ThemeToggleButton />
 
           <div className="flex items-center gap-2 border-l border-border/60 pl-3">

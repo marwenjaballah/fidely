@@ -1,7 +1,7 @@
 "use client"
 
 import * as React from "react"
-import { Globe, Check } from "lucide-react"
+import { Globe, Check, ChevronDown } from "lucide-react"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -14,42 +14,45 @@ import { cn } from "@/lib/utils"
 
 interface LanguageSwitcherProps {
   className?: string
-  variant?: "outline" | "ghost" | "default"
+  variant?: "outline" | "ghost" | "default" | "secondary"
   size?: "default" | "sm" | "lg" | "icon"
   showText?: boolean
+  showFlagOnly?: boolean
 }
 
 export function LanguageSwitcher({
   className,
   variant = "outline",
   size = "sm",
-  showText = false,
+  showText = true,
+  showFlagOnly = false,
 }: LanguageSwitcherProps) {
   const { locale, setLocale, locales, t } = useI18n()
+  const current = locales[locale] || locales.en
 
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
         <Button
           variant={variant}
-          size={showText ? size : "icon"}
+          size={showFlagOnly ? "icon" : size}
           className={cn(
-            "rounded-xl border-border/70 font-semibold gap-1.5 transition-all text-xs",
-            !showText && "h-9 w-9 p-0",
+            "rounded-xl border-border/70 font-semibold gap-1.5 transition-all text-xs h-9 px-2.5 shadow-xs hover:border-primary/40 hover:bg-muted/60",
+            showFlagOnly && "w-9 px-0 justify-center",
             className
           )}
           aria-label={t('select_language')}
         >
-          <Globe className="h-4 w-4 shrink-0 text-muted-foreground" />
-          {showText && (
-            <span className="truncate flex items-center gap-1.5">
-              <span>{locales[locale]?.flag}</span>
-              <span>{locales[locale]?.nativeName}</span>
+          <span className="text-base leading-none select-none">{current.flag}</span>
+          {!showFlagOnly && showText && (
+            <span className="font-bold text-xs uppercase tracking-wider text-foreground">
+              {current.code}
             </span>
           )}
+          <ChevronDown className="h-3 w-3 opacity-60 shrink-0" />
         </Button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" className="min-w-[150px] rounded-xl p-1 shadow-lg border-border/80">
+      <DropdownMenuContent align="end" className="min-w-[160px] rounded-xl p-1 shadow-lg border-border/80 z-50 bg-popover/95 backdrop-blur-md">
         {(Object.keys(locales) as Locale[]).map((code) => {
           const item = locales[code]
           const isSelected = locale === code
@@ -59,7 +62,7 @@ export function LanguageSwitcher({
               onClick={() => setLocale(code)}
               className={cn(
                 "flex items-center justify-between px-3 py-2 text-xs font-semibold rounded-lg cursor-pointer transition-colors",
-                isSelected ? "bg-primary/10 text-primary font-bold" : "hover:bg-muted"
+                isSelected ? "bg-primary/15 text-primary font-bold" : "hover:bg-muted"
               )}
             >
               <div className="flex items-center gap-2">

@@ -307,7 +307,7 @@ export default function OverviewPage() {
                       </p>
                     </div>
                     <Link
-                      href="/merchant/settings/store"
+                      href="/merchant/customizer"
                       className="text-[11px] font-semibold text-primary hover:underline flex items-center gap-1 pt-1"
                     >
                       Manage Perk Catalog <ArrowRight className="w-3 h-3" />
@@ -326,7 +326,7 @@ export default function OverviewPage() {
                       </p>
                     </div>
                     <Link
-                      href="/merchant/settings/store"
+                      href="/merchant/customizer"
                       className="text-[11px] font-semibold text-primary hover:underline flex items-center gap-1 pt-1"
                     >
                       Print A5/A6 Acrylic Stand <ArrowRight className="w-3 h-3" />
@@ -347,7 +347,7 @@ export default function OverviewPage() {
                       </p>
                     </div>
                     <Link
-                      href="/merchant/settings/store"
+                      href="/merchant/customizer"
                       className="text-[11px] font-semibold text-amber-600 dark:text-amber-400 hover:underline flex items-center gap-1 pt-1"
                     >
                       {hasWelcome ? 'Edit Welcome Bonus' : 'Enable Welcome Gift'} <ArrowRight className="w-3 h-3" />
@@ -361,7 +361,7 @@ export default function OverviewPage() {
           {/* Quick Action Navigation Grid for Merchant on Mobile */}
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-2">
             <Link
-              href="/merchant/settings/store"
+              href="/merchant/customizer"
               className="p-4 rounded-2xl border border-border/60 bg-card hover:bg-muted/30 transition-all flex items-center justify-between group"
             >
               <div>

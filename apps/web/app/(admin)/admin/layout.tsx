@@ -17,6 +17,7 @@ import {
 } from 'lucide-react'
 import { useAuth } from '@/features/auth/hooks/use-auth'
 import { ThemeToggleButton } from '@/components/common/theme-toggle-button'
+import { LanguageSwitcher } from '@/components/common/language-switcher'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Separator } from '@/components/ui/separator'
@@ -120,7 +121,8 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
             <span className="text-[10px] ml-1.5 font-semibold text-primary uppercase bg-primary/10 px-1.5 py-0.5 rounded">Super Admin</span>
           </div>
         </div>
-        <div className="flex items-center gap-1">
+        <div className="flex items-center gap-1.5">
+          <LanguageSwitcher />
           <ThemeToggleButton />
           <Button variant="ghost" size="icon" onClick={() => setMobileOpen(!mobileOpen)}>
             {mobileOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
@@ -228,6 +230,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
               Global Admin Mode
             </Badge>
             <Separator orientation="vertical" className="h-6" />
+            <LanguageSwitcher />
             <ThemeToggleButton />
           </div>
         </header>

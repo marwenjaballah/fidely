@@ -25,6 +25,7 @@ import { Settings } from 'lucide-react'
 import { ThemeToggleButton } from '@/components/common/theme-toggle-button'
 import { StoreSwitcher } from '@/components/common/store-switcher'
 import { useMerchantStore } from '@/store/merchant-store'
+import { LanguageSwitcher } from '@/components/common/language-switcher'
 
 /**
  * Merchant Dashboard Layout
@@ -32,7 +33,7 @@ import { useMerchantStore } from '@/store/merchant-store'
  * Wraps all merchant dashboard pages with:
  * - Authentication & role protection
  * - Sidebar navigation
- * - Header with breadcrumbs and store switcher
+ * - Header with breadcrumbs, language switcher, and store switcher
  * - Responsive structure
  */
 export default function DashboardLayout({
@@ -82,7 +83,13 @@ export default function DashboardLayout({
             return items
         }
 
-        if (pathname.startsWith('/merchant/crm')) {
+        if (pathname.startsWith('/merchant/customizer') || pathname.startsWith('/merchant/rewards')) {
+            items.push({
+                title: 'Customizer & Rewards',
+                href: '/merchant/customizer',
+                isLast: true,
+            })
+        } else if (pathname.startsWith('/merchant/crm')) {
             items.push({
                 title: 'CRM',
                 href: '/merchant/crm',
@@ -101,28 +108,11 @@ export default function DashboardLayout({
                 isLast: true,
             })
         } else if (pathname.startsWith('/merchant/settings')) {
-            const isStore = pathname.includes('/store')
-            const isAccount = pathname.includes('/account')
-
             items.push({
-                title: strings.dashboard_settings,
-                href: '/merchant/settings/store',
-                isLast: !isStore && !isAccount,
+                title: strings.nav_account_settings,
+                href: '/merchant/settings/account',
+                isLast: true,
             })
-
-            if (isStore) {
-                items.push({
-                    title: 'Store & Rewards',
-                    href: '/merchant/settings/store',
-                    isLast: true,
-                })
-            } else if (isAccount) {
-                items.push({
-                    title: strings.nav_account_settings,
-                    href: '/merchant/settings/account',
-                    isLast: true,
-                })
-            }
         } else {
             // Fallback for custom or nested sub-pages
             const subPath = pathname.replace('/merchant/', '')
@@ -198,6 +188,7 @@ export default function DashboardLayout({
                         </div>
                         <div className="ml-auto flex items-center gap-2">
                             <StoreSwitcher variant="header" />
+                            <LanguageSwitcher />
                             <ThemeToggleButton />
                             <Button variant="outline" size="icon" asChild aria-label={strings.nav_account_settings}>
                                 <Link href="/merchant/settings/account">

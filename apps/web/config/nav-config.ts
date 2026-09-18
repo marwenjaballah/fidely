@@ -22,7 +22,7 @@ export const navItems: NavItem[] = [
   },
   {
     title: 'Customizer & Rewards',
-    href: '/merchant/settings/store',
+    href: '/merchant/customizer',
     icon: Palette,
   },
   {
@@ -45,17 +45,7 @@ export const navItems: NavItem[] = [
 export const userNavItems: NavItem[] = [
   {
     title: 'Settings',
-    href: '/merchant/settings',
+    href: '/merchant/settings/account',
     icon: Settings,
-    items: [
-      {
-        title: 'Store & Rewards',
-        href: '/merchant/settings/store',
-      },
-      {
-        title: 'Account',
-        href: '/merchant/settings/account',
-      },
-    ],
   },
 ]

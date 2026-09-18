@@ -18,6 +18,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { ThemeToggleButton } from '@/components/common/theme-toggle-button';
+import { LanguageSwitcher } from '@/components/common/language-switcher';
 import {
   LogOut,
   Coffee,
@@ -367,6 +368,7 @@ export default function CashierPage() {
             </div>
           )}
 
+          <LanguageSwitcher />
           <ThemeToggleButton />
           <Button
             variant="ghost"

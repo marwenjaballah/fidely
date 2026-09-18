@@ -20,6 +20,8 @@ import {
 import { useAuth } from '@/features/auth/hooks/use-auth'
 import { useCustomerStore } from '@/store/customer-store'
 import { useI18n } from '@/lib/i18n'
+import { LanguageSwitcher } from '@/components/common/language-switcher'
+import { ThemeToggleButton } from '@/components/common/theme-toggle-button'
 
 interface StoreReward {
   id: string
@@ -152,7 +154,21 @@ export default function CustomerStorePage({ params }: { params: Promise<{ slug: 
 
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-zinc-950 flex flex-col items-center p-4 sm:p-6 pb-24">
-      <div className="w-full max-w-md mt-4 space-y-5">
+      <div className="w-full max-w-md space-y-5">
+        {/* Top Header Controls */}
+        <div className="flex items-center justify-between pt-2">
+          <Link href="/" className="flex items-center gap-2">
+            <div className="w-8 h-8 rounded-xl bg-primary/15 text-primary flex items-center justify-center font-bold">
+              <Sparkles className="w-4 h-4" />
+            </div>
+            <span className="font-bold text-sm tracking-tight text-foreground">Fidely</span>
+          </Link>
+          <div className="flex items-center gap-2">
+            <LanguageSwitcher />
+            <ThemeToggleButton />
+          </div>
+        </div>
+
         {/* Referral Invitation Banner */}
         <div className="bg-primary/10 border border-primary/20 rounded-2xl p-3.5 flex items-center gap-3">
           <div className="w-9 h-9 rounded-xl bg-primary text-primary-foreground flex items-center justify-center shrink-0">

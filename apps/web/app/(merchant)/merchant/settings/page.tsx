@@ -1,5 +1,5 @@
 import { redirect } from 'next/navigation'
 
 export default function MerchantSettingsPage() {
-  redirect('/merchant/settings/store')
+  redirect('/merchant/settings/account')
 }

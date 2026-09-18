@@ -270,8 +270,16 @@ export function SiteHeader() {
             </Link>
           </nav>
 
+          <div className="flex items-center justify-between pt-2 border-t border-border/40">
+            <span className="text-xs text-muted-foreground font-medium">Language & Theme</span>
+            <div className="flex items-center gap-2">
+              <LanguageSwitcher />
+              <ThemeToggleButton />
+            </div>
+          </div>
+
           {!isAuthenticated && (
-            <div className="flex flex-col gap-2 pt-2 border-t border-border/40">
+            <div className="flex flex-col gap-2 pt-1">
               <Button asChild variant="outline" className="w-full rounded-xl h-10 text-xs font-semibold">
                 <Link href="/auth/login" onClick={closeMobile}>
                   Sign In

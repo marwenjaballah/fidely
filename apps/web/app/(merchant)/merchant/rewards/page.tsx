@@ -1,5 +1,5 @@
 import { redirect } from 'next/navigation'
 
-export default function MerchantStoreSettingsRedirectPage() {
+export default function MerchantRewardsRedirectPage() {
   redirect('/merchant/customizer')
 }
