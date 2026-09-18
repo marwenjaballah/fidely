@@ -13,7 +13,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { useMerchantStore } from '@/store/merchant-store'
-import { Coffee, Loader2, Sparkles } from 'lucide-react'
+import { Store, Loader2, Sparkles } from 'lucide-react'
 
 interface CreateStoreDialogProps {
   open: boolean
@@ -31,7 +31,7 @@ export function CreateStoreDialog({ open, onOpenChange }: CreateStoreDialogProps
     setLocalError(null)
 
     if (!name.trim()) {
-      setLocalError('Coffee shop name is required.')
+      setLocalError('Store name is required.')
       return
     }
 
@@ -43,7 +43,7 @@ export function CreateStoreDialog({ open, onOpenChange }: CreateStoreDialogProps
       setSlug('')
       onOpenChange(false)
     } catch (err: any) {
-      setLocalError(err?.message || 'Failed to create coffee shop.')
+      setLocalError(err?.message || 'Failed to create store.')
     }
   }
 
@@ -67,23 +67,23 @@ export function CreateStoreDialog({ open, onOpenChange }: CreateStoreDialogProps
           <DialogHeader>
             <div className="flex items-center gap-2 mb-1">
               <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary/10 text-primary">
-                <Coffee className="h-5 w-5" />
+                <Store className="h-5 w-5" />
               </div>
-              <DialogTitle className="text-xl">Create Coffee Shop</DialogTitle>
+              <DialogTitle className="text-xl">Create Store</DialogTitle>
             </div>
             <DialogDescription>
-              Add a new coffee shop or branch to manage loyalty points, staff, and analytics.
+              Add a new business or store branch to manage loyalty points, staff, and analytics.
             </DialogDescription>
           </DialogHeader>
 
           <div className="grid gap-4 py-4">
             <div className="space-y-2">
               <Label htmlFor="create-store-name" className="text-sm font-medium">
-                Coffee Shop Name
+                Store Name
               </Label>
               <Input
                 id="create-store-name"
-                placeholder="e.g. Blue Bottle Specialty Coffee"
+                placeholder="e.g. Fidely Flagship Store"
                 value={name}
                 onChange={(e) => handleNameChange(e.target.value)}
                 autoFocus
@@ -101,7 +101,7 @@ export function CreateStoreDialog({ open, onOpenChange }: CreateStoreDialogProps
                   id="create-store-slug"
                   type="text"
                   className="w-full bg-transparent p-1 text-foreground font-mono font-medium outline-none"
-                  placeholder="blue-bottle-coffee"
+                  placeholder="fidely-store"
                   value={slug}
                   onChange={(e) => setSlug(e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, ''))}
                   required
@@ -137,7 +137,7 @@ export function CreateStoreDialog({ open, onOpenChange }: CreateStoreDialogProps
               ) : (
                 <>
                   <Sparkles className="h-4 w-4" />
-                  Create Coffee
+                  Create Store
                 </>
               )}
             </Button>

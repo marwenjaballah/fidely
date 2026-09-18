@@ -14,7 +14,7 @@ import {
   AlertTriangle,
   Sparkles,
   Info,
-  Coffee,
+  Gift,
   QrCode,
   ShieldCheck,
 } from 'lucide-react'
@@ -41,10 +41,10 @@ export function Toaster() {
       )
     }
 
-    if (titleStr.includes('coffee') || titleStr.includes('reward') || titleStr.includes('point')) {
+    if (titleStr.includes('reward') || titleStr.includes('point') || titleStr.includes('bonus')) {
       return (
-        <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-amber-500/20 text-amber-400 ring-1 ring-amber-500/30">
-          <Coffee className="h-4 w-4" />
+        <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-primary/20 text-primary ring-1 ring-primary/30">
+          <Gift className="h-4 w-4" />
         </div>
       )
     }

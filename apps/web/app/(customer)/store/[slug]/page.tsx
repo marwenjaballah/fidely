@@ -167,21 +167,21 @@ export default function CustomerStorePage({ params }: { params: Promise<{ slug: 
 
         {/* Conditional Welcome Bonus Incentive Banner */}
         {hasWelcomeBonus && (
-          <div className="bg-gradient-to-r from-emerald-500/15 via-emerald-500/10 to-teal-500/15 border border-emerald-500/30 rounded-2xl p-4 flex items-center justify-between shadow-xs animate-in zoom-in-95 duration-200">
+          <div className="bg-gradient-to-r from-primary/15 via-primary/10 to-indigo-500/15 border border-primary/30 rounded-2xl p-4 flex items-center justify-between shadow-xs animate-in zoom-in-95 duration-200">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-emerald-500 text-white flex items-center justify-center font-bold shrink-0 shadow-xs">
+              <div className="w-10 h-10 rounded-xl bg-primary text-primary-foreground flex items-center justify-center font-bold shrink-0 shadow-xs">
                 <Sparkles className="w-5 h-5" />
               </div>
               <div>
-                <h4 className="font-bold text-sm text-emerald-950 dark:text-emerald-100">
+                <h4 className="font-bold text-sm text-foreground">
                   Welcome Bonus Gift
                 </h4>
-                <p className="text-xs text-emerald-800 dark:text-emerald-300">
+                <p className="text-xs text-muted-foreground">
                   Join now & receive instant bonus points
                 </p>
               </div>
             </div>
-            <Badge className="bg-emerald-600 text-white font-mono font-bold text-xs px-2.5 py-1 shrink-0">
+            <Badge className="bg-primary text-primary-foreground font-mono font-bold text-xs px-2.5 py-1 shrink-0">
               +{store.welcomePoints} pts
             </Badge>
           </div>

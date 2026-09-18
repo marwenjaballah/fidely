@@ -7,7 +7,7 @@ export const strings = {
   nav_home: 'Home',
   nav_intro: 'Overview',
   nav_features: 'Features',
-  nav_use_cases: 'For Coffee Shops',
+  nav_use_cases: 'For Merchants',
   nav_contact: 'Contact',
   nav_dashboard: 'Dashboard',
   nav_account_settings: 'Account Settings',
@@ -20,19 +20,19 @@ export const strings = {
   footer_legal_title: 'Legal & docs',
   footer_resources_title: 'About Fidely',
   footer_resources_blurb:
-    'Fidely empowers specialty coffee shops and artisan cafes with seamless digital loyalty passes, cashier scanning, and customer retention.',
+    'Fidely empowers modern businesses and retail stores with seamless digital loyalty passes, cashier scanning, and customer retention.',
   footer_tagline:
-    'The modern digital loyalty and rewards ecosystem built for specialty coffee shops and their regulars.',
+    'The modern digital loyalty and rewards ecosystem built for modern businesses, retail stores, and their regulars.',
   footer_github: 'Fidely Platform',
   footer_rights_reserved: 'All rights reserved.',
-  footer_reviews: 'Cafe Reviews',
+  footer_reviews: 'Merchant Reviews',
 
   // Landing
-  landing_badge: 'Digital Loyalty for Coffee Shops',
-  landing_title_main: 'Turn Coffee Drinkers into',
+  landing_badge: 'Universal Digital Loyalty Platform',
+  landing_title_main: 'Turn First-Time Buyers into',
   landing_title_highlight: 'Lifelong Regulars',
   landing_description:
-    'Ditch paper punch cards. Launch an instant digital loyalty pass for your cafe with zero app downloads, live cashier scanning, and automated rewards.',
+    'Ditch paper punch cards. Launch an instant digital loyalty pass for your store with zero app downloads, live cashier scanning, and automated rewards.',
   landing_feature_auth_title: 'Zero App Downloads',
   landing_feature_auth_desc:
     'Customers simply scan your counter QR to get their digital loyalty card in seconds.',
@@ -41,21 +41,21 @@ export const strings = {
     'Staff scan customer QR passes on any device to issue points and redeem rewards in under a second.',
   landing_feature_user_title: 'Store & Staff Management',
   landing_feature_user_desc:
-    'Manage multiple coffee shops, customize points-per-dinar ratios, and control cashier accounts with ease.',
-  landing_architecture_title: 'Built for fast-paced cafes',
+    'Manage multiple store locations, customize points-per-dinar ratios, and control cashier accounts with ease.',
+  landing_architecture_title: 'Built for high-velocity businesses',
   landing_architecture_desc:
     'Everything you need to boost customer return rates, increase average spend, and delight your regulars.',
   landing_quickstart_title: 'Launch in 3 Simple Steps',
   landing_quickstart_desc:
-    'Create your cafe profile, place your QR code at checkout, and start rewarding your regulars today.',
+    'Create your store profile, place your QR code at checkout, and start rewarding your regulars today.',
   landing_repo_cta: 'Explore Platform',
-  landing_repo_title: 'Specialty Coffee Loyalty',
+  landing_repo_title: 'Modern Digital Loyalty',
   landing_repo_description:
-    'Designed specifically for artisan cafes, coffee roasters, and bakeries looking for a frictionless loyalty experience.',
+    'Designed specifically for cafes, restaurants, boutiques, and retail brands looking for a frictionless loyalty experience.',
   landing_cta_badge: 'Start in 2 minutes',
-  landing_cta_title: 'Ready to grow your coffee shop?',
+  landing_cta_title: 'Ready to grow your customer retention?',
   landing_cta_description:
-    'Sign up for free, create your first coffee store, and start issuing loyalty points to your customers right away.',
+    'Sign up for free, create your first store, and start issuing loyalty points to your customers right away.',
   landing_cta_primary_call: 'Create Free Store',
   landing_cta_secondary_call: 'Read Docs',
   landing_cta_benefit_free: 'Free tier available',

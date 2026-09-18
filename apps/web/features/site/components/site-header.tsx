@@ -59,7 +59,7 @@ export function SiteHeader() {
         {/* Brand Logo */}
         <Link href="/" className="flex items-center gap-2.5 group transition-opacity hover:opacity-90">
           <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary text-primary-foreground shadow-md shadow-primary/25 transition-transform duration-200 group-hover:scale-105">
-            <Coffee className="h-5 w-5" />
+            <Sparkles className="h-5 w-5" />
           </div>
           <div className="flex flex-col">
             <div className="flex items-center gap-1.5">
@@ -69,7 +69,7 @@ export function SiteHeader() {
               </span>
             </div>
             <span className="text-[10px] font-medium text-muted-foreground -mt-1 hidden sm:block">
-              Fidely Wallet Loyalty
+              Universal Digital Loyalty
             </span>
           </div>
         </Link>
@@ -138,7 +138,7 @@ export function SiteHeader() {
                   {profile?.role === "CASHIER" && (
                     <DropdownMenuItem asChild className="rounded-xl">
                       <Link href="/cashier">
-                        <Coffee className="w-4 h-4 mr-2" />
+                        <Store className="w-4 h-4 mr-2" />
                         Cashier Terminal
                       </Link>
                     </DropdownMenuItem>

@@ -70,7 +70,7 @@ export function FeedbackOverlay({ data, onDismiss }: FeedbackOverlayProps) {
       <div
         className={`relative w-full max-w-md overflow-hidden rounded-3xl border p-6 sm:p-8 shadow-2xl transition-all duration-300 animate-in zoom-in-95 ${
           isSuccess
-            ? 'bg-card border-emerald-500/30 text-card-foreground shadow-emerald-500/10'
+            ? 'bg-card border-primary/30 text-card-foreground shadow-primary/10'
             : 'bg-card border-destructive/40 text-card-foreground shadow-destructive/10'
         }`}
       >
@@ -78,7 +78,7 @@ export function FeedbackOverlay({ data, onDismiss }: FeedbackOverlayProps) {
         <div className="absolute top-0 left-0 right-0 h-1.5 bg-muted overflow-hidden">
           <div
             className={`h-full transition-all duration-75 ease-linear ${
-              isSuccess ? 'bg-emerald-500' : 'bg-destructive'
+              isSuccess ? 'bg-primary' : 'bg-destructive'
             }`}
             style={{ width: `${progress}%` }}
           />
@@ -87,7 +87,7 @@ export function FeedbackOverlay({ data, onDismiss }: FeedbackOverlayProps) {
         {/* Ambient Top Glow */}
         <div
           className={`absolute -top-24 left-1/2 -translate-x-1/2 w-48 h-48 rounded-full blur-3xl opacity-30 pointer-events-none ${
-            isSuccess ? 'bg-emerald-500' : 'bg-destructive'
+            isSuccess ? 'bg-primary' : 'bg-destructive'
           }`}
         />
 
@@ -105,7 +105,7 @@ export function FeedbackOverlay({ data, onDismiss }: FeedbackOverlayProps) {
           <div
             className={`w-20 h-20 rounded-2xl flex items-center justify-center shadow-inner ${
               isSuccess
-                ? 'bg-emerald-500/10 text-emerald-500 border border-emerald-500/20'
+                ? 'bg-primary/10 text-primary border border-primary/20'
                 : 'bg-destructive/10 text-destructive border border-destructive/20'
             }`}
           >
@@ -145,7 +145,7 @@ export function FeedbackOverlay({ data, onDismiss }: FeedbackOverlayProps) {
               {data.type === 'issue' && data.points !== undefined && (
                 <div className="flex justify-between items-center text-sm py-1">
                   <span className="font-medium text-muted-foreground">Points Issued</span>
-                  <Badge className="bg-emerald-500 text-white font-mono text-sm px-2.5 py-0.5">
+                  <Badge className="bg-primary text-primary-foreground font-mono text-sm px-2.5 py-0.5">
                     +{data.points} pts
                   </Badge>
                 </div>
@@ -175,7 +175,7 @@ export function FeedbackOverlay({ data, onDismiss }: FeedbackOverlayProps) {
                         onClick={copyVoucher}
                         className="h-8 px-2 text-xs gap-1 text-muted-foreground hover:text-foreground"
                       >
-                        {copied ? <Check className="w-3.5 h-3.5 text-emerald-500" /> : <Copy className="w-3.5 h-3.5" />}
+                        {copied ? <Check className="w-3.5 h-3.5 text-primary" /> : <Copy className="w-3.5 h-3.5" />}
                         {copied ? 'Copied' : 'Copy'}
                       </Button>
                     </div>
@@ -198,7 +198,7 @@ export function FeedbackOverlay({ data, onDismiss }: FeedbackOverlayProps) {
               onClick={onDismiss}
               className={`w-full h-12 text-sm font-bold rounded-2xl gap-2 shadow-md ${
                 isSuccess
-                  ? 'bg-emerald-600 hover:bg-emerald-500 text-white shadow-emerald-600/20'
+                  ? 'bg-primary hover:bg-primary/90 text-primary-foreground shadow-primary/20'
                   : 'bg-destructive hover:bg-destructive/90 text-white shadow-destructive/20'
               }`}
             >

@@ -334,7 +334,7 @@ export function QRScanner({
               : 'text-muted-foreground hover:text-foreground'
           }`}
         >
-          <Camera className="w-3.5 h-3.5 text-emerald-500" />
+          <Camera className="w-3.5 h-3.5 text-primary" />
           <span>Camera</span>
         </button>
 
@@ -351,7 +351,7 @@ export function QRScanner({
               : 'text-muted-foreground hover:text-foreground'
           }`}
         >
-          <Upload className="w-3.5 h-3.5 text-blue-500" />
+          <Upload className="w-3.5 h-3.5 text-indigo-400" />
           <span>Upload</span>
         </button>
 
@@ -386,13 +386,13 @@ export function QRScanner({
             <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
               <div className="relative w-[240px] h-[240px] sm:w-[260px] sm:h-[260px]">
                 {/* Reticle Corners */}
-                <div className="absolute top-0 left-0 w-8 h-8 border-t-4 border-l-4 border-emerald-400 rounded-tl-xl shadow-sm" />
-                <div className="absolute top-0 right-0 w-8 h-8 border-t-4 border-r-4 border-emerald-400 rounded-tr-xl shadow-sm" />
-                <div className="absolute bottom-0 left-0 w-8 h-8 border-b-4 border-l-4 border-emerald-400 rounded-bl-xl shadow-sm" />
-                <div className="absolute bottom-0 right-0 w-8 h-8 border-b-4 border-r-4 border-emerald-400 rounded-br-xl shadow-sm" />
+                <div className="absolute top-0 left-0 w-8 h-8 border-t-4 border-l-4 border-indigo-500 rounded-tl-xl shadow-sm" />
+                <div className="absolute top-0 right-0 w-8 h-8 border-t-4 border-r-4 border-indigo-500 rounded-tr-xl shadow-sm" />
+                <div className="absolute bottom-0 left-0 w-8 h-8 border-b-4 border-l-4 border-indigo-500 rounded-bl-xl shadow-sm" />
+                <div className="absolute bottom-0 right-0 w-8 h-8 border-b-4 border-r-4 border-indigo-500 rounded-br-xl shadow-sm" />
 
                 {/* Sweeping Laser Line */}
-                <div className="absolute left-2 right-2 h-0.5 bg-gradient-to-r from-transparent via-emerald-400 to-transparent shadow-[0_0_12px_#34d399] animate-pulse duration-1000 top-1/2 -translate-y-1/2" />
+                <div className="absolute left-2 right-2 h-0.5 bg-gradient-to-r from-transparent via-indigo-400 to-transparent shadow-[0_0_12px_#6366f1] animate-pulse duration-1000 top-1/2 -translate-y-1/2" />
               </div>
             </div>
           )}
@@ -401,7 +401,7 @@ export function QRScanner({
           {!isInitializing && hasPermission && (
             <div className="absolute top-3 left-3 right-3 flex items-center justify-between pointer-events-auto z-10">
               <div className="bg-black/60 backdrop-blur-md px-3 py-1.5 rounded-full border border-white/10 text-[11px] font-medium text-white/90 flex items-center gap-1.5">
-                <Camera className="w-3.5 h-3.5 text-emerald-400" />
+                <Camera className="w-3.5 h-3.5 text-indigo-400" />
                 <span>Align QR inside frame</span>
               </div>
 
@@ -438,7 +438,7 @@ export function QRScanner({
           {/* Initializing Spinner Overlay */}
           {isInitializing && (
             <div className="absolute inset-0 bg-black/80 backdrop-blur-sm flex flex-col items-center justify-center text-white space-y-2.5 z-20">
-              <RefreshCw className="w-8 h-8 animate-spin text-emerald-400" />
+              <RefreshCw className="w-8 h-8 animate-spin text-indigo-400" />
               <div className="text-center space-y-0.5">
                 <p className="text-xs font-bold text-white">Starting camera...</p>
                 <p className="text-[11px] text-white/60">Allow camera access if prompted</p>

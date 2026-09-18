@@ -288,19 +288,19 @@ export function TransactionPanel({
             )}
 
             {matchedCustomer && (
-              <div className="p-3 bg-emerald-500/10 border border-emerald-500/30 rounded-xl flex items-center justify-between animate-in zoom-in-95">
+              <div className="p-3 bg-primary/10 border border-primary/30 rounded-xl flex items-center justify-between animate-in zoom-in-95">
                 <div className="flex items-center gap-2.5">
-                  <div className="w-8 h-8 rounded-full bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 flex items-center justify-center">
+                  <div className="w-8 h-8 rounded-full bg-primary/20 text-primary flex items-center justify-center">
                     <UserCheck className="w-4 h-4" />
                   </div>
                   <div>
                     <div className="text-xs font-bold text-foreground">{matchedCustomer.fullName}</div>
                     <div className="text-[10px] text-muted-foreground font-mono">
-                      {matchedCustomer.phone} • <strong className="text-emerald-600 dark:text-emerald-400">{matchedCustomer.pointsBalance} pts</strong>
+                      {matchedCustomer.phone} • <strong className="text-primary">{matchedCustomer.pointsBalance} pts</strong>
                     </div>
                   </div>
                 </div>
-                <Badge className="bg-emerald-500 text-white text-[10px] font-bold">
+                <Badge className="bg-primary text-primary-foreground text-[10px] font-bold">
                   Active
                 </Badge>
               </div>
@@ -324,7 +324,7 @@ export function TransactionPanel({
               value="issue"
               className="rounded-xl font-bold text-xs sm:text-sm data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm flex items-center gap-2"
             >
-              <Coins className="w-4 h-4 text-emerald-500" />
+              <Coins className="w-4 h-4 text-primary" />
               <span>Issue Points</span>
             </TabsTrigger>
             <TabsTrigger
@@ -377,16 +377,16 @@ export function TransactionPanel({
             </div>
 
             {/* Live Calculation Preview Banner */}
-            <div className="bg-emerald-500/10 border border-emerald-500/20 rounded-2xl p-3.5 flex items-center justify-between">
+            <div className="bg-primary/10 border border-primary/20 rounded-2xl p-3.5 flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <Sparkles className="w-4 h-4 text-emerald-600 dark:text-emerald-400 shrink-0" />
-                <span className="text-xs font-medium text-emerald-800 dark:text-emerald-300">
+                <Sparkles className="w-4 h-4 text-primary shrink-0" />
+                <span className="text-xs font-medium text-foreground">
                   Rate: 1 TND = {pointsPerTnd} pts
                 </span>
               </div>
               <div className="text-right">
                 <span className="text-xs text-muted-foreground mr-1.5">Customer earns:</span>
-                <span className="font-mono font-black text-emerald-600 dark:text-emerald-400 text-base">
+                <span className="font-mono font-black text-primary text-base">
                   +{estimatedPoints} pts
                 </span>
               </div>
@@ -414,7 +414,7 @@ export function TransactionPanel({
                     variant="outline"
                     size="sm"
                     onClick={() => handleQuickAdd(amt)}
-                    className="h-10 rounded-xl font-bold text-xs hover:bg-emerald-500/10 hover:text-emerald-600 hover:border-emerald-500/30"
+                    className="h-10 rounded-xl font-bold text-xs hover:bg-primary/10 hover:text-primary hover:border-primary/30"
                   >
                     +{amt}
                   </Button>
@@ -461,7 +461,7 @@ export function TransactionPanel({
             <Button
               type="submit"
               disabled={!spendAmount || parsedSpend <= 0}
-              className="w-full h-14 text-base font-bold rounded-2xl bg-emerald-600 hover:bg-emerald-500 text-white shadow-lg shadow-emerald-600/20 gap-2"
+              className="w-full h-14 text-base font-bold rounded-2xl bg-primary hover:bg-primary/90 text-primary-foreground shadow-lg shadow-primary/20 gap-2"
             >
               {matchedCustomer ? (
                 <>

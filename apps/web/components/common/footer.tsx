@@ -1,7 +1,7 @@
 "use client"
 
 import Link from "next/link"
-import { Coffee } from "lucide-react"
+import { Sparkles } from "lucide-react"
 import { strings } from "@/lib/strings"
 import { SectionNavLink } from "@/components/common/section-nav-link"
 
@@ -27,7 +27,7 @@ export function Footer() {
               className="inline-flex items-center gap-2.5 rounded-lg font-bold text-lg text-foreground outline-none ring-offset-background focus-visible:ring-2 focus-visible:ring-ring"
             >
               <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/15 text-primary ring-1 ring-primary/20">
-                <Coffee className="h-5 w-5" />
+                <Sparkles className="h-5 w-5" />
               </span>
               {strings.app_name}
             </Link>

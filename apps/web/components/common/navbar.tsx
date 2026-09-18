@@ -2,7 +2,7 @@
 
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
-import { Menu, Coffee, BookOpen } from "lucide-react"
+import { Menu, Sparkles, BookOpen } from "lucide-react"
 import { useState, useEffect } from "react"
 import { useAuth } from "@/features/auth/hooks/use-auth"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
@@ -40,9 +40,9 @@ export function Navbar() {
     return "U"
   }
 
-  const handleLogout = () => {
-    signOut()
-    router.push("/")
+  const handleLogout = async () => {
+    await signOut()
+    router.push("/auth/login")
   }
 
   const closeMobile = () => setMobileMenuOpen(false)
@@ -64,7 +64,7 @@ export function Navbar() {
               aria-label={strings.app_name}
             >
               <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary/15 text-primary ring-1 ring-primary/20 transition-colors group-hover:bg-primary/20">
-                <Coffee className="h-5 w-5" />
+                <Sparkles className="h-5 w-5" />
               </span>
               <span className="hidden font-bold tracking-tight text-foreground sm:inline truncate max-w-[10rem] md:max-w-none text-lg">
                 {strings.app_name}
