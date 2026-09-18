@@ -125,6 +125,7 @@ export default function StoreSettingsPage() {
   const [isAutoSyncSlug, setIsAutoSyncSlug] = useState(true)
   const [primaryColor, setPrimaryColor] = useState('#D97706')
   const [pointsPerTnd, setPointsPerTnd] = useState(10)
+  const [welcomePoints, setWelcomePoints] = useState(0)
   const [logoUrl, setLogoUrl] = useState<string | null>(null)
   const [isOptimizingIcon, setIsOptimizingIcon] = useState(false)
   const [isSaving, setIsSaving] = useState(false)
@@ -146,6 +147,7 @@ export default function StoreSettingsPage() {
       setIsAutoSyncSlug(true)
       setPrimaryColor(activeStore.primaryColor || '#D97706')
       setPointsPerTnd(Number(activeStore.pointsPerTnd) || 10)
+      setWelcomePoints(Number((activeStore as any).welcomePoints) || 0)
       setLogoUrl(activeStore.logoUrl || null)
       fetchRewards(activeStore.id)
     }
@@ -207,6 +209,7 @@ export default function StoreSettingsPage() {
         slug: slug.trim() || undefined,
         primaryColor,
         pointsPerTnd: Number(pointsPerTnd),
+        welcomePoints: Number(welcomePoints),
         logoUrl,
       })
 
@@ -300,6 +303,7 @@ export default function StoreSettingsPage() {
       (name.trim() !== (activeStore.name || '').trim() ||
         primaryColor.toLowerCase() !== (activeStore.primaryColor || '#D97706').toLowerCase() ||
         Number(pointsPerTnd) !== (Number(activeStore.pointsPerTnd) || 10) ||
+        Number(welcomePoints) !== (Number((activeStore as any).welcomePoints) || 0) ||
         (logoUrl || null) !== (activeStore.logoUrl || null))
   )
 
@@ -623,10 +627,67 @@ export default function StoreSettingsPage() {
                       className="max-w-[120px]"
                     />
                     <span className="text-xs text-muted-foreground">
-                      Example: A <span className="font-semibold text-foreground">25 TND</span> bill earns{' '}
+                       Example: A <span className="font-semibold text-foreground">25 TND</span> bill earns{' '}
                       <span className="font-bold text-emerald-600 dark:text-emerald-400">
                         {25 * (Number(pointsPerTnd) || 10)} points
                       </span>
+                    </span>
+                  </div>
+                </div>
+
+                <Separator />
+
+                {/* Welcome Bonus Points */}
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between">
+                    <Label className="flex items-center gap-1.5">
+                      <Sparkles className="h-4 w-4 text-emerald-500" />
+                      Welcome Bonus Points (Optional)
+                    </Label>
+                    {welcomePoints > 0 ? (
+                      <Badge className="bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20 text-xs font-bold">
+                        +{welcomePoints} pts on join
+                      </Badge>
+                    ) : (
+                      <Badge variant="outline" className="text-xs text-muted-foreground">
+                        Disabled (0 pts)
+                      </Badge>
+                    )}
+                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    Award instant bonus points automatically to new customers when they scan your stand or join your store program. Set to 0 to disable.
+                  </p>
+
+                  <div className="flex flex-wrap gap-2">
+                    {[0, 10, 20, 50, 100].map((pts) => (
+                      <button
+                        key={pts}
+                        type="button"
+                        onClick={() => setWelcomePoints(pts)}
+                        className={`px-3 py-1.5 rounded-lg border text-xs font-semibold transition-all ${
+                          Number(welcomePoints) === pts
+                            ? 'bg-emerald-600 text-white border-emerald-600 shadow-xs'
+                            : 'bg-muted/50 border-border/60 text-muted-foreground hover:bg-muted hover:text-foreground'
+                        }`}
+                      >
+                        {pts === 0 ? 'No Bonus' : `+${pts} pts`}
+                      </button>
+                    ))}
+                  </div>
+
+                  <div className="flex items-center gap-3 pt-1">
+                    <Input
+                      type="number"
+                      min={0}
+                      max={1000}
+                      value={welcomePoints}
+                      onChange={(e) => setWelcomePoints(Math.max(0, Number(e.target.value)))}
+                      className="max-w-[120px]"
+                    />
+                    <span className="text-xs text-muted-foreground">
+                      {welcomePoints > 0
+                        ? `New members will get a +${welcomePoints} points welcome gift upon signup.`
+                        : 'No welcome gift credited on joining.'}
                     </span>
                   </div>
                 </div>

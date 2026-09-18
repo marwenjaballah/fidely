@@ -112,10 +112,29 @@ export function QRScanner({
           }
         };
 
+        // iOS Safari optimized configuration:
+        // Do NOT force aspectRatio: 1.0 (causes OverconstrainedError on iOS).
+        // Use dynamic function for qrbox.
         const scanConfig = {
           fps: 15,
-          qrbox: { width: 250, height: 250 },
-          aspectRatio: 1.0,
+          qrbox: (viewfinderWidth: number, viewfinderHeight: number) => {
+            const minEdge = Math.min(viewfinderWidth, viewfinderHeight);
+            const edgeSize = Math.max(180, Math.floor(minEdge * 0.72));
+            return { width: edgeSize, height: edgeSize };
+          },
+        };
+
+        // Helper to force iOS Safari playsinline & unblock video playback
+        const ensureIosVideoPlayback = () => {
+          const video = containerEl.querySelector('video');
+          if (video) {
+            video.setAttribute('playsinline', 'true');
+            video.setAttribute('webkit-playsinline', 'true');
+            video.setAttribute('autoplay', 'true');
+            video.setAttribute('muted', 'true');
+            video.muted = true;
+            video.play().catch(() => {});
+          }
         };
 
         // Strategy 1: Explicit camera ID if provided
@@ -127,7 +146,7 @@ export function QRScanner({
             scanErrorHandler
           );
         } else {
-          // Strategy 2: Attempt rear/environment camera
+          // Strategy 2: Attempt rear/environment camera (standard iOS facingMode)
           try {
             await scannerRef.current.start(
               { facingMode: 'environment' },
@@ -136,7 +155,7 @@ export function QRScanner({
               scanErrorHandler
             );
           } catch (envErr) {
-            console.warn('Environment camera unavailable, attempting fallback to user camera:', envErr);
+            console.warn('Environment camera failed, attempting fallback to user camera:', envErr);
             if (!isMountedRef.current) return;
             // Strategy 3: Fallback to user camera or default
             await scannerRef.current.start(
@@ -147,6 +166,11 @@ export function QRScanner({
             );
           }
         }
+
+        // Apply iOS video attributes immediately after starting
+        ensureIosVideoPlayback();
+        setTimeout(ensureIosVideoPlayback, 200);
+        setTimeout(ensureIosVideoPlayback, 500);
 
         if (!isMountedRef.current) return;
 
@@ -176,7 +200,9 @@ export function QRScanner({
           setHasPermission(false);
           const errorMsg =
             err?.name === 'NotAllowedError' || err?.message?.includes('Permission')
-              ? 'Camera permission was denied. Please allow camera access in your browser.'
+              ? 'Camera permission was denied. Please allow camera access in your browser settings.'
+              : err?.name === 'OverconstrainedError'
+              ? 'Camera resolution constraint error. Please try switching cameras or retry.'
               : err?.message || 'Unable to start camera feed on this device.';
           setPermissionError(errorMsg);
           setIsInitializing(false);
@@ -352,7 +378,7 @@ export function QRScanner({
           {/* Scanner HTML5 Container */}
           <div
             id={containerId}
-            className="w-full h-full aspect-square bg-black [&_video]:w-full [&_video]:h-full [&_video]:object-cover [&_#qr-shaded-region]:!hidden [&_#qr-shaded-region_*]:!hidden [&_canvas]:!hidden [&_div]:!border-none"
+            className="w-full h-full aspect-square bg-black [&_video]:w-full [&_video]:h-full [&_video]:object-cover [&_#qr-shaded-region]:!hidden [&_#qr-shaded-region_*]:!hidden [&_canvas]:!opacity-0 [&_canvas]:!absolute [&_canvas]:!pointer-events-none [&_div]:!border-none"
           />
 
           {/* Reticle Overlay (Active when camera is running) */}

@@ -43,16 +43,20 @@ import {
   TrendingUp,
   Search,
   Globe,
+  Smartphone,
 } from 'lucide-react'
 
 import { QRScanner } from '@/components/qr-scanner'
 import { AppleWalletPass } from '@/components/common/apple-wallet-card'
+import { CustomerBottomNav } from '@/components/common/customer-bottom-nav'
+import { useUserStore } from '@/store/user-store'
 import { format } from 'date-fns'
 
 export default function CustomerOverviewPage() {
   const router = useRouter()
   const { toast } = useToast()
-  const { profile, signOut, isAuthenticated, hasHydrated } = useAuth()
+  const { profile, signOut, isAuthenticated, hasHydrated, revalidateSession } = useAuth()
+  const { updateProfile } = useUserStore()
   const {
     memberships,
     activeMembership,
@@ -74,6 +78,33 @@ export default function CustomerOverviewPage() {
   const [slugInput, setSlugInput] = useState('')
   const [isJoiningSlug, setIsJoiningSlug] = useState(false)
   const [joinSlugError, setJoinSlugError] = useState<string | null>(null)
+
+  // Phone setup prompt state
+  const [phoneInput, setPhoneInput] = useState('')
+  const [isSavingPhone, setIsSavingPhone] = useState(false)
+  const [mobileTab, setMobileTab] = useState<'pass' | 'rewards' | 'stores'>('pass')
+
+  const handleSavePhone = async () => {
+    if (!phoneInput.trim()) return
+    setIsSavingPhone(true)
+    try {
+      await updateProfile({ phone: phoneInput.trim() })
+      await revalidateSession()
+      toast({
+        title: 'Phone Saved!',
+        description: 'Baristas can now award your loyalty points by phone number.',
+      })
+      setPhoneInput('')
+    } catch (err: any) {
+      toast({
+        title: 'Error',
+        description: err.message || 'Could not update phone number.',
+        variant: 'destructive',
+      })
+    } finally {
+      setIsSavingPhone(false)
+    }
+  }
 
   useEffect(() => {
     if (hasHydrated && !isAuthenticated) {
@@ -387,6 +418,41 @@ export default function CustomerOverviewPage() {
               </div>
             </div>
 
+            {/* ── Phone Number Setup Action Banner ── */}
+            {!profile?.phone && (
+              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 p-4 rounded-2xl border border-amber-500/30 bg-amber-500/10 text-foreground">
+                <div className="flex items-center gap-3">
+                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-amber-500/20 text-amber-600 dark:text-amber-400">
+                    <Smartphone className="h-5 w-5" />
+                  </div>
+                  <div>
+                    <p className="text-xs font-bold tracking-tight">Add your Phone Number</p>
+                    <p className="text-[11px] text-muted-foreground">
+                      Baristas can find your loyalty pass and award points even if you forget your phone.
+                    </p>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-2 w-full sm:w-auto">
+                  <Input
+                    type="tel"
+                    placeholder="e.g. 98123456"
+                    value={phoneInput}
+                    onChange={(e) => setPhoneInput(e.target.value)}
+                    className="h-8 text-xs bg-background/80 w-full sm:w-36 rounded-xl"
+                  />
+                  <Button
+                    size="sm"
+                    onClick={handleSavePhone}
+                    disabled={isSavingPhone || !phoneInput.trim()}
+                    className="h-8 px-3 text-xs font-semibold rounded-xl shrink-0"
+                  >
+                    {isSavingPhone ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : 'Save'}
+                  </Button>
+                </div>
+              </div>
+            )}
+
             {/* ── Horizontal Coffee Passes Pills ── */}
             {memberships.length > 1 && (
               <div className="flex items-center gap-2 overflow-x-auto pb-2 scrollbar-none">
@@ -445,7 +511,7 @@ export default function CustomerOverviewPage() {
 
                 {/* Right: Rewards, Vouchers, & History Tabs (7 cols) */}
                 <div className="lg:col-span-7 space-y-6">
-                  <Tabs defaultValue="rewards" className="w-full">
+                  <Tabs id="rewards-tabs-section" defaultValue="rewards" className="w-full scroll-mt-20">
                     <TabsList className="grid grid-cols-3 w-full bg-muted/60 p-1 rounded-2xl">
                       <TabsTrigger value="rewards" className="rounded-xl text-xs gap-1">
                         <Gift className="h-3.5 w-3.5" /> Rewards
@@ -806,6 +872,28 @@ export default function CustomerOverviewPage() {
             </Tabs>
           </DialogContent>
         </Dialog>
+
+        {/* ── Mobile-First Bottom Navigation Bar ── */}
+        <CustomerBottomNav
+          activeTab={mobileTab}
+          onSelectTab={(tab) => {
+            setMobileTab(tab)
+            if (tab === 'pass') {
+              window.scrollTo({ top: 0, behavior: 'smooth' })
+            } else if (tab === 'rewards') {
+              const el = document.getElementById('rewards-tabs-section')
+              if (el) el.scrollIntoView({ behavior: 'smooth' })
+            } else if (tab === 'stores') {
+              setActiveJoinTab('explore')
+              setJoinModalOpen(true)
+            }
+          }}
+          onOpenQrPass={() => {
+            setActiveJoinTab('scan')
+            setJoinModalOpen(true)
+          }}
+          unlockedRewardsCount={reachableRewards.length}
+        />
       </main>
     </div>
   )

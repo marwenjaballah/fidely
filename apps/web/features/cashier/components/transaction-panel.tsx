@@ -16,9 +16,13 @@ import {
   Calculator,
   RefreshCw,
   AlertCircle,
-  HelpCircle,
+  Phone,
+  Search,
+  UserCheck,
+  X,
 } from 'lucide-react';
 import { posAudio } from '../lib/pos-audio';
+import { posHaptics } from '@/lib/haptics';
 import { createCookieAuthApiClient, refreshAuthSession } from '@/lib/api-client';
 import { AUTH_ROUTES } from '@/features/auth/services/auth-service';
 
@@ -30,11 +34,26 @@ interface StoreReward {
   active?: boolean;
 }
 
+export interface SearchedCustomer {
+  id: string;
+  fullName: string;
+  phone: string;
+  qrToken: string;
+  pointsBalance: number;
+}
+
 interface TransactionPanelProps {
   storeId?: string;
   storeName?: string;
   pointsPerTnd?: number;
-  onProcess: (type: 'issue' | 'redeem', amount: number, rewardId?: string, rewardName?: string) => void;
+  onProcess: (
+    type: 'issue' | 'redeem',
+    amount: number,
+    rewardId?: string,
+    rewardName?: string,
+    customerQrToken?: string,
+    customerName?: string
+  ) => void;
 }
 
 const PRESET_AMOUNTS = [5, 10, 15, 20, 30, 50, 100];
@@ -62,6 +81,13 @@ export function TransactionPanel({
   const [activeTab, setActiveTab] = useState<'issue' | 'redeem'>('issue');
   const [spendAmount, setSpendAmount] = useState('');
   const [showNumpad, setShowNumpad] = useState(false);
+
+  // Phone lookup state
+  const [phoneQuery, setPhoneQuery] = useState('');
+  const [isSearchingPhone, setIsSearchingPhone] = useState(false);
+  const [phoneSearchError, setPhoneSearchError] = useState<string | null>(null);
+  const [matchedCustomer, setMatchedCustomer] = useState<SearchedCustomer | null>(null);
+  const [showPhoneLookup, setShowPhoneLookup] = useState(false);
 
   // Rewards state
   const [rewards, setRewards] = useState<StoreReward[]>([]);
@@ -97,6 +123,32 @@ export function TransactionPanel({
     }
   }, [activeTab, fetchRewards]);
 
+  // Handle phone search
+  const handleSearchCustomerPhone = async (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
+    const cleanPhone = phoneQuery.replace(/\D/g, '');
+    if (!cleanPhone || cleanPhone.length < 4 || !storeId) return;
+
+    setIsSearchingPhone(true);
+    setPhoneSearchError(null);
+    posHaptics.tap();
+
+    try {
+      const api = getApiClient();
+      const { data } = await api.get<SearchedCustomer>('/api/v1/transactions/lookup-by-phone', {
+        params: { phone: cleanPhone, storeId },
+      });
+      setMatchedCustomer(data);
+      posHaptics.scan();
+    } catch (err: any) {
+      setMatchedCustomer(null);
+      setPhoneSearchError(err?.message || 'Customer not found with this phone number.');
+      posHaptics.error();
+    } finally {
+      setIsSearchingPhone(false);
+    }
+  };
+
   // Points preview calculation
   const parsedSpend = parseFloat(spendAmount) || 0;
   const estimatedPoints = Math.max(0, Math.round(parsedSpend * pointsPerTnd));
@@ -104,23 +156,27 @@ export function TransactionPanel({
   // Quick preset button click
   const handleQuickAdd = (amount: number) => {
     posAudio.playClick();
+    posHaptics.tap();
     const current = parseFloat(spendAmount) || 0;
     setSpendAmount((current + amount).toString());
   };
 
   const handleSetExact = (amount: number) => {
     posAudio.playClick();
+    posHaptics.tap();
     setSpendAmount(amount.toString());
   };
 
   const handleClear = () => {
     posAudio.playClick();
+    posHaptics.tap();
     setSpendAmount('');
   };
 
   // Numpad key tap
   const handleNumpadTap = (val: string) => {
     posAudio.playClick();
+    posHaptics.tap();
     if (val === 'DEL') {
       setSpendAmount((prev) => prev.slice(0, -1));
     } else if (val === '.') {
@@ -136,7 +192,12 @@ export function TransactionPanel({
     e.preventDefault();
     if (!spendAmount || isNaN(Number(spendAmount)) || Number(spendAmount) <= 0) return;
     posAudio.playClick();
-    onProcess('issue', Number(spendAmount));
+    posHaptics.tap();
+    if (matchedCustomer) {
+      onProcess('issue', Number(spendAmount), undefined, undefined, matchedCustomer.qrToken, matchedCustomer.fullName);
+    } else {
+      onProcess('issue', Number(spendAmount));
+    }
   };
 
   const handleRedeemSubmit = (e: React.FormEvent) => {
@@ -146,15 +207,113 @@ export function TransactionPanel({
 
     if (!targetId) return;
     posAudio.playClick();
-    onProcess('redeem', 0, targetId, targetName);
+    posHaptics.tap();
+    if (matchedCustomer) {
+      onProcess('redeem', 0, targetId, targetName, matchedCustomer.qrToken, matchedCustomer.fullName);
+    } else {
+      onProcess('redeem', 0, targetId, targetName);
+    }
   };
 
   return (
     <div className="w-full bg-card border border-border/80 rounded-3xl shadow-xl overflow-hidden transition-all">
+      {/* PHONE LOOKUP DOCK / DRAWER */}
+      <div className="border-b border-border/40 bg-muted/40 p-3 sm:p-4">
+        {!showPhoneLookup && !matchedCustomer ? (
+          <button
+            type="button"
+            onClick={() => {
+              setShowPhoneLookup(true);
+              posHaptics.tap();
+            }}
+            className="w-full flex items-center justify-between px-4 py-2.5 rounded-2xl bg-background border border-border/60 hover:border-primary/50 text-xs font-semibold text-muted-foreground hover:text-foreground transition-all shadow-xs"
+          >
+            <div className="flex items-center gap-2">
+              <Phone className="w-4 h-4 text-primary" />
+              <span>Customer Forgot Phone? Lookup by Phone Number</span>
+            </div>
+            <Search className="w-3.5 h-3.5 text-muted-foreground" />
+          </button>
+        ) : (
+          <div className="space-y-3 bg-background border border-border rounded-2xl p-3.5 animate-in fade-in-50 duration-200">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Phone className="w-4 h-4 text-primary" />
+                <span className="text-xs font-bold uppercase tracking-wider">Search Customer by Phone</span>
+              </div>
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => {
+                  setShowPhoneLookup(false);
+                  setMatchedCustomer(null);
+                  setPhoneQuery('');
+                  setPhoneSearchError(null);
+                  posHaptics.tap();
+                }}
+                className="w-6 h-6 rounded-full"
+              >
+                <X className="w-3.5 h-3.5" />
+              </Button>
+            </div>
+
+            <form onSubmit={handleSearchCustomerPhone} className="flex gap-2">
+              <div className="relative flex-1">
+                <Input
+                  type="tel"
+                  placeholder="Digits only (e.g. 21698123456)"
+                  value={phoneQuery}
+                  onChange={(e) => {
+                    // Strictly numbers only
+                    const digits = e.target.value.replace(/\D/g, '');
+                    setPhoneQuery(digits);
+                  }}
+                  className="h-10 text-xs rounded-xl font-mono tracking-wider pl-8"
+                />
+                <Phone className="w-3.5 h-3.5 text-muted-foreground absolute left-3 top-1/2 -translate-y-1/2" />
+              </div>
+              <Button
+                type="submit"
+                disabled={isSearchingPhone || !phoneQuery}
+                size="sm"
+                className="h-10 px-4 rounded-xl text-xs font-bold gap-1.5"
+              >
+                {isSearchingPhone ? <RefreshCw className="w-3.5 h-3.5 animate-spin" /> : <Search className="w-3.5 h-3.5" />}
+                Find
+              </Button>
+            </form>
+
+            {phoneSearchError && (
+              <p className="text-[11px] text-destructive font-medium">{phoneSearchError}</p>
+            )}
+
+            {matchedCustomer && (
+              <div className="p-3 bg-emerald-500/10 border border-emerald-500/30 rounded-xl flex items-center justify-between animate-in zoom-in-95">
+                <div className="flex items-center gap-2.5">
+                  <div className="w-8 h-8 rounded-full bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 flex items-center justify-center">
+                    <UserCheck className="w-4 h-4" />
+                  </div>
+                  <div>
+                    <div className="text-xs font-bold text-foreground">{matchedCustomer.fullName}</div>
+                    <div className="text-[10px] text-muted-foreground font-mono">
+                      {matchedCustomer.phone} • <strong className="text-emerald-600 dark:text-emerald-400">{matchedCustomer.pointsBalance} pts</strong>
+                    </div>
+                  </div>
+                </div>
+                <Badge className="bg-emerald-500 text-white text-[10px] font-bold">
+                  Active
+                </Badge>
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+
       <Tabs
         value={activeTab}
         onValueChange={(val) => {
           posAudio.playClick();
+          posHaptics.tap();
           setActiveTab(val as 'issue' | 'redeem');
         }}
         className="w-full"
@@ -189,7 +348,10 @@ export function TransactionPanel({
                 </Label>
                 <button
                   type="button"
-                  onClick={() => setShowNumpad(!showNumpad)}
+                  onClick={() => {
+                    setShowNumpad(!showNumpad);
+                    posHaptics.tap();
+                  }}
                   className="text-xs font-semibold text-primary hover:underline flex items-center gap-1"
                 >
                   <Calculator className="w-3.5 h-3.5" />
@@ -295,14 +457,23 @@ export function TransactionPanel({
               </div>
             )}
 
-            {/* Launch Scanner Button */}
+            {/* Submit / Action Button */}
             <Button
               type="submit"
               disabled={!spendAmount || parsedSpend <= 0}
               className="w-full h-14 text-base font-bold rounded-2xl bg-emerald-600 hover:bg-emerald-500 text-white shadow-lg shadow-emerald-600/20 gap-2"
             >
-              <QrCode className="w-5 h-5" />
-              Scan Customer Pass ({parsedSpend > 0 ? `${parsedSpend} TND` : '0 TND'})
+              {matchedCustomer ? (
+                <>
+                  <UserCheck className="w-5 h-5" />
+                  Award +{estimatedPoints} pts to {matchedCustomer.fullName.split(' ')[0]} ({parsedSpend} TND)
+                </>
+              ) : (
+                <>
+                  <QrCode className="w-5 h-5" />
+                  Scan Customer Pass ({parsedSpend > 0 ? `${parsedSpend} TND` : '0 TND'})
+                </>
+              )}
             </Button>
           </form>
         </TabsContent>
@@ -316,7 +487,10 @@ export function TransactionPanel({
               </Label>
               <button
                 type="button"
-                onClick={() => setIsManualRewardMode(!isManualRewardMode)}
+                onClick={() => {
+                  setIsManualRewardMode(!isManualRewardMode);
+                  posHaptics.tap();
+                }}
                 className="text-xs font-semibold text-primary hover:underline"
               >
                 {isManualRewardMode ? 'Choose from Catalog' : 'Enter Reward ID'}
@@ -355,6 +529,7 @@ export function TransactionPanel({
                           key={r.id}
                           onClick={() => {
                             posAudio.playClick();
+                            posHaptics.tap();
                             setSelectedReward(r);
                           }}
                           className={`flex items-center justify-between p-3.5 rounded-2xl border cursor-pointer transition-all ${
@@ -417,14 +592,23 @@ export function TransactionPanel({
               </div>
             )}
 
-            {/* Launch Scanner Button */}
+            {/* Submit / Action Button */}
             <Button
               type="submit"
               disabled={(!isManualRewardMode && !selectedReward) || (isManualRewardMode && !customRewardId)}
               className="w-full h-14 text-base font-bold rounded-2xl bg-primary hover:bg-primary/90 text-primary-foreground shadow-lg shadow-primary/20 gap-2"
             >
-              <QrCode className="w-5 h-5" />
-              Scan Pass to Redeem {selectedReward ? `(${selectedReward.pointsCost} pts)` : ''}
+              {matchedCustomer ? (
+                <>
+                  <UserCheck className="w-5 h-5" />
+                  Redeem {selectedReward?.name || 'Perk'} for {matchedCustomer.fullName.split(' ')[0]}
+                </>
+              ) : (
+                <>
+                  <QrCode className="w-5 h-5" />
+                  Scan Pass to Redeem {selectedReward ? `(${selectedReward.pointsCost} pts)` : ''}
+                </>
+              )}
             </Button>
           </form>
         </TabsContent>

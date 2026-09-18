@@ -7,6 +7,7 @@ import { QRScanner } from '@/components/qr-scanner';
 import { TransactionPanel } from '@/features/cashier/components/transaction-panel';
 import { FeedbackOverlay, FeedbackData } from '@/features/cashier/components/feedback-overlay';
 import { posAudio } from '@/features/cashier/lib/pos-audio';
+import { posHaptics } from '@/lib/haptics';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import {
@@ -171,25 +172,15 @@ export default function CashierPage() {
     router.push('/auth/login');
   };
 
-  const handleProcessStart = (
+  const executeTransaction = async (
     type: 'issue' | 'redeem',
-    amount: number,
-    rewardId?: string,
+    value: any,
+    qrToken: string,
     rewardName?: string
   ) => {
-    setScanMode({
-      active: true,
-      type,
-      value: type === 'issue' ? amount : rewardId,
-      rewardName,
-    });
-  };
-
-  const handleScanSuccess = async (decodedText: string) => {
-    setScanMode((prev) => ({ ...prev, active: false }));
-
     if (!activeStore) {
       posAudio.playError();
+      posHaptics.error();
       setFeedback({
         state: 'error',
         title: 'Store Not Selected',
@@ -201,45 +192,46 @@ export default function CashierPage() {
     try {
       const client = getCashierApiClient();
 
-      if (scanMode.type === 'issue') {
+      if (type === 'issue') {
         const { data } = await client.post<{
           newBalance: number;
           pointsIssued: number;
           storeName: string;
           customerName: string;
         }>('/api/v1/transactions/issue', {
-          qrToken: decodedText,
-          amountTnd: Number(scanMode.value),
+          qrToken,
+          amountTnd: Number(value),
           storeId: activeStore.id,
         });
 
         posAudio.playSuccess();
+        posHaptics.pointsIssued();
         setFeedback({
           state: 'success',
           type: 'issue',
           title: 'Points Awarded!',
-          message: `Successfully issued +${data.pointsIssued} points for ${scanMode.value} TND.`,
+          message: `Successfully issued +${data.pointsIssued} points for ${value} TND.`,
           points: data.pointsIssued,
           customerName: data.customerName || 'Customer',
           newBalance: data.newBalance,
           storeName: data.storeName,
         });
 
-        // Refresh recent activity feed
         fetchRecentTransactions(activeStore.id);
-      } else if (scanMode.type === 'redeem') {
+      } else if (type === 'redeem') {
         const { data } = await client.post<{
           newBalance: number;
           voucherCode: string;
           rewardName: string;
           storeName: string;
         }>('/api/v1/transactions/redeem', {
-          qrToken: decodedText,
-          rewardId: String(scanMode.value),
+          qrToken,
+          rewardId: String(value),
           storeId: activeStore.id,
         });
 
         posAudio.playSuccess();
+        posHaptics.rewardClaimed();
         setFeedback({
           state: 'success',
           type: 'redeem',
@@ -251,11 +243,11 @@ export default function CashierPage() {
           storeName: data.storeName,
         });
 
-        // Refresh recent activity feed
         fetchRecentTransactions(activeStore.id);
       }
     } catch (err: any) {
       posAudio.playError();
+      posHaptics.error();
       const message =
         err instanceof ApiError
           ? err.message
@@ -266,6 +258,45 @@ export default function CashierPage() {
         title: 'Transaction Declined',
         message,
       });
+    }
+  };
+
+  const handleProcessStart = (
+    type: 'issue' | 'redeem',
+    amount: number,
+    rewardId?: string,
+    rewardName?: string,
+    customerQrToken?: string,
+    customerName?: string
+  ) => {
+    if (customerQrToken) {
+      // Direct phone lookup execution without camera
+      executeTransaction(
+        type,
+        type === 'issue' ? amount : rewardId,
+        customerQrToken,
+        rewardName
+      );
+      return;
+    }
+
+    setScanMode({
+      active: true,
+      type,
+      value: type === 'issue' ? amount : rewardId,
+      rewardName,
+    });
+  };
+
+  const handleScanSuccess = async (decodedText: string) => {
+    posHaptics.scan();
+    const modeType = scanMode.type;
+    const modeValue = scanMode.value;
+    const modeRewardName = scanMode.rewardName;
+    setScanMode((prev) => ({ ...prev, active: false }));
+
+    if (modeType && modeValue !== null) {
+      await executeTransaction(modeType, modeValue, decodedText, modeRewardName);
     }
   };
 

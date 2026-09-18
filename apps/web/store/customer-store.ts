@@ -69,6 +69,25 @@ export interface CustomerState {
 }
 
 const baseURL = (process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3000').replace(/\/$/, '')
+const OFFLINE_PASS_CACHE_KEY = 'fidely_customer_offline_pass'
+
+function getInitialOfflineState() {
+  if (typeof window === 'undefined') {
+    return { memberships: [], activeMembership: null, availableStores: [] }
+  }
+  try {
+    const raw = localStorage.getItem(OFFLINE_PASS_CACHE_KEY)
+    if (raw) {
+      const parsed = JSON.parse(raw)
+      return {
+        memberships: parsed.memberships || [],
+        activeMembership: parsed.activeMembership || null,
+        availableStores: parsed.availableStores || [],
+      }
+    }
+  } catch {}
+  return { memberships: [], activeMembership: null, availableStores: [] }
+}
 
 let customerClient: ReturnType<typeof createCookieAuthApiClient> | null = null
 
@@ -83,15 +102,20 @@ function getCustomerClient() {
   return customerClient
 }
 
+const initialOffline = getInitialOfflineState()
+
 export const useCustomerStore = create<CustomerState>((set, get) => ({
-  memberships: [],
-  activeMembership: null,
-  availableStores: [],
+  memberships: initialOffline.memberships,
+  activeMembership: initialOffline.activeMembership,
+  availableStores: initialOffline.availableStores,
   loading: false,
   error: null,
 
   fetchOverview: async () => {
-    set({ loading: true, error: null })
+    // Only show loading spinner if we don't already have an offline pass cached
+    if (get().memberships.length === 0) {
+      set({ loading: true, error: null })
+    }
     try {
       const client = getCustomerClient()
       const { data } = await client.get<{
@@ -106,6 +130,16 @@ export const useCustomerStore = create<CustomerState>((set, get) => ({
       const activeMembership =
         memberships.find((m) => m.id === currentActiveId) || (memberships.length > 0 ? memberships[0] : null)
 
+      // Persist offline cache
+      if (typeof window !== 'undefined') {
+        try {
+          localStorage.setItem(
+            OFFLINE_PASS_CACHE_KEY,
+            JSON.stringify({ memberships, availableStores, activeMembership, cachedAt: Date.now() })
+          )
+        } catch {}
+      }
+
       set({
         memberships,
         activeMembership,
@@ -114,6 +148,11 @@ export const useCustomerStore = create<CustomerState>((set, get) => ({
         error: null,
       })
     } catch (err) {
+      // If we have cached offline data, retain it and gracefully handle the network drop
+      if (get().memberships.length > 0) {
+        set({ loading: false, error: null })
+        return
+      }
       const message = err instanceof ApiError ? err.message : 'Failed to load loyalty overview.'
       set({ error: message, loading: false })
     }

@@ -35,6 +35,7 @@ interface StorePublicData {
   slug: string
   primaryColor: string
   pointsPerTnd: number
+  welcomePoints?: number
   logoUrl?: string | null
   rewards: StoreReward[]
 }
@@ -146,6 +147,8 @@ export default function CustomerStorePage({ params }: { params: Promise<{ slug: 
     )
   }
 
+  const hasWelcomeBonus = Boolean(store.welcomePoints && store.welcomePoints > 0)
+
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-zinc-950 flex flex-col items-center p-4 sm:p-6 pb-24">
       <div className="w-full max-w-md mt-4 space-y-5">
@@ -161,6 +164,28 @@ export default function CustomerStorePage({ params }: { params: Promise<{ slug: 
             </p>
           </div>
         </div>
+
+        {/* Conditional Welcome Bonus Incentive Banner */}
+        {hasWelcomeBonus && (
+          <div className="bg-gradient-to-r from-emerald-500/15 via-emerald-500/10 to-teal-500/15 border border-emerald-500/30 rounded-2xl p-4 flex items-center justify-between shadow-xs animate-in zoom-in-95 duration-200">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-emerald-500 text-white flex items-center justify-center font-bold shrink-0 shadow-xs">
+                <Sparkles className="w-5 h-5" />
+              </div>
+              <div>
+                <h4 className="font-bold text-sm text-emerald-950 dark:text-emerald-100">
+                  Welcome Bonus Gift
+                </h4>
+                <p className="text-xs text-emerald-800 dark:text-emerald-300">
+                  Join now & receive instant bonus points
+                </p>
+              </div>
+            </div>
+            <Badge className="bg-emerald-600 text-white font-mono font-bold text-xs px-2.5 py-1 shrink-0">
+              +{store.welcomePoints} pts
+            </Badge>
+          </div>
+        )}
 
         {/* Apple Wallet Pass Graphic */}
         <AppleWalletPass

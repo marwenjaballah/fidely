@@ -8,6 +8,7 @@ export interface Store {
   slug: string
   primaryColor: string
   pointsPerTnd: number
+  welcomePoints?: number
   logoUrl?: string | null
 }
 

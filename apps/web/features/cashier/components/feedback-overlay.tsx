@@ -27,19 +27,35 @@ interface FeedbackOverlayProps {
 
 export function FeedbackOverlay({ data, onDismiss }: FeedbackOverlayProps) {
   const [copied, setCopied] = useState(false);
-
-  useEffect(() => {
-    if (data.state !== 'idle') {
-      const timer = setTimeout(() => {
-        onDismiss();
-      }, data.state === 'success' ? 5000 : 6000);
-      return () => clearTimeout(timer);
-    }
-  }, [data.state, onDismiss]);
-
-  if (data.state === 'idle') return null;
+  const [progress, setProgress] = useState(100);
+  const [remainingSecs, setRemainingSecs] = useState(3);
 
   const isSuccess = data.state === 'success';
+  const totalDuration = isSuccess ? 3000 : 5000;
+
+  useEffect(() => {
+    if (data.state === 'idle') return;
+
+    setProgress(100);
+    setRemainingSecs(Math.ceil(totalDuration / 1000));
+    const startTime = Date.now();
+
+    const interval = setInterval(() => {
+      const elapsed = Date.now() - startTime;
+      const remaining = Math.max(0, totalDuration - elapsed);
+      setProgress((remaining / totalDuration) * 100);
+      setRemainingSecs(Math.ceil(remaining / 1000));
+
+      if (remaining <= 0) {
+        clearInterval(interval);
+        onDismiss();
+      }
+    }, 50);
+
+    return () => clearInterval(interval);
+  }, [data.state, onDismiss, totalDuration]);
+
+  if (data.state === 'idle') return null;
 
   const copyVoucher = () => {
     if (data.voucherCode) {
@@ -58,6 +74,16 @@ export function FeedbackOverlay({ data, onDismiss }: FeedbackOverlayProps) {
             : 'bg-card border-destructive/40 text-card-foreground shadow-destructive/10'
         }`}
       >
+        {/* Countdown Progress Bar */}
+        <div className="absolute top-0 left-0 right-0 h-1.5 bg-muted overflow-hidden">
+          <div
+            className={`h-full transition-all duration-75 ease-linear ${
+              isSuccess ? 'bg-emerald-500' : 'bg-destructive'
+            }`}
+            style={{ width: `${progress}%` }}
+          />
+        </div>
+
         {/* Ambient Top Glow */}
         <div
           className={`absolute -top-24 left-1/2 -translate-x-1/2 w-48 h-48 rounded-full blur-3xl opacity-30 pointer-events-none ${
@@ -74,7 +100,7 @@ export function FeedbackOverlay({ data, onDismiss }: FeedbackOverlayProps) {
           <X className="w-5 h-5" />
         </button>
 
-        <div className="flex flex-col items-center text-center space-y-4">
+        <div className="flex flex-col items-center text-center space-y-4 pt-1">
           {/* Status Icon */}
           <div
             className={`w-20 h-20 rounded-2xl flex items-center justify-center shadow-inner ${
@@ -166,18 +192,23 @@ export function FeedbackOverlay({ data, onDismiss }: FeedbackOverlayProps) {
             </div>
           )}
 
-          {/* Action Button */}
-          <Button
-            onClick={onDismiss}
-            className={`w-full h-11 text-sm font-semibold rounded-xl gap-2 ${
-              isSuccess
-                ? 'bg-emerald-600 hover:bg-emerald-500 text-white'
-                : 'bg-destructive hover:bg-destructive/90 text-white'
-            }`}
-          >
-            {isSuccess ? 'Done & Next Scan' : 'Dismiss & Try Again'}
-            <ArrowRight className="w-4 h-4" />
-          </Button>
+          {/* Action Button & Auto-countdown hint */}
+          <div className="w-full space-y-2 pt-1">
+            <Button
+              onClick={onDismiss}
+              className={`w-full h-12 text-sm font-bold rounded-2xl gap-2 shadow-md ${
+                isSuccess
+                  ? 'bg-emerald-600 hover:bg-emerald-500 text-white shadow-emerald-600/20'
+                  : 'bg-destructive hover:bg-destructive/90 text-white shadow-destructive/20'
+              }`}
+            >
+              <span>{isSuccess ? 'Next Customer (Instant)' : 'Dismiss & Try Again'}</span>
+              <ArrowRight className="w-4 h-4" />
+            </Button>
+            <p className="text-[11px] text-muted-foreground font-medium">
+              Auto-resetting in <span className="font-mono font-bold text-foreground">{remainingSecs}s</span>
+            </p>
+          </div>
         </div>
       </div>
     </div>

@@ -5,8 +5,9 @@ import { useAuth } from '@/features/auth/hooks/use-auth'
 import { useMerchantStore } from '@/store/merchant-store'
 import { strings } from '@/lib/strings'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card'
-import { Users, Zap, TrendingUp, Award, Plus, Coffee, ExternalLink, Check, Loader2, ArrowRight } from 'lucide-react'
+import { Users, Zap, TrendingUp, Award, Plus, Coffee, ExternalLink, Check, Loader2, ArrowRight, Sparkles } from 'lucide-react'
 import { Button } from '@/components/ui/button'
+import { Badge } from '@/components/ui/badge'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { useToast } from '@/hooks/use-toast'
@@ -264,6 +265,97 @@ export default function OverviewPage() {
               </CardContent>
             </Card>
           </div>
+
+          {/* ACTIONABLE SMART INSIGHTS BAR */}
+          {(() => {
+            const netOutstanding = analytics.totalPointsIssued - analytics.totalPointsRedeemed;
+            const redemptionRate = analytics.totalPointsIssued > 0
+              ? (analytics.totalPointsRedeemed / analytics.totalPointsIssued) * 100
+              : 0;
+            const hasWelcome = Boolean((activeStore as any)?.welcomePoints && (activeStore as any).welcomePoints > 0);
+
+            return (
+              <div className="rounded-3xl border border-border/80 bg-gradient-to-r from-card via-card to-muted/40 p-5 shadow-sm space-y-3">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <div className="w-8 h-8 rounded-xl bg-primary/10 text-primary flex items-center justify-center font-bold">
+                      <Sparkles className="w-4 h-4" />
+                    </div>
+                    <div>
+                      <h3 className="text-sm font-bold text-foreground">Actionable Smart Insights</h3>
+                      <p className="text-[11px] text-muted-foreground">Automated customer retention and revenue recommendations</p>
+                    </div>
+                  </div>
+                  <Badge variant="outline" className="text-[10px] font-bold bg-primary/5 text-primary border-primary/20">
+                    Live Diagnostics
+                  </Badge>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-3 pt-1">
+                  {/* Insight 1: Redemption Velocity */}
+                  <div className="p-3.5 rounded-2xl bg-background border border-border/60 flex flex-col justify-between space-y-2">
+                    <div className="space-y-1">
+                      <div className="flex items-center gap-1.5 text-xs font-bold text-foreground">
+                        <Award className="w-3.5 h-3.5 text-primary" />
+                        <span>Redemption Velocity ({redemptionRate.toFixed(0)}%)</span>
+                      </div>
+                      <p className="text-[11px] text-muted-foreground leading-relaxed">
+                        {redemptionRate < 15 && analytics.totalPointsIssued > 100
+                          ? 'Customers are accumulating points. Consider introducing lower-tier 50-80 pt perks to drive visits.'
+                          : 'Healthy reward cycle! Customers frequently redeem perks, driving higher return visits.'}
+                      </p>
+                    </div>
+                    <Link
+                      href="/merchant/settings/store"
+                      className="text-[11px] font-semibold text-primary hover:underline flex items-center gap-1 pt-1"
+                    >
+                      Manage Perk Catalog <ArrowRight className="w-3 h-3" />
+                    </Link>
+                  </div>
+
+                  {/* Insight 2: Counter Stand Print */}
+                  <div className="p-3.5 rounded-2xl bg-background border border-border/60 flex flex-col justify-between space-y-2">
+                    <div className="space-y-1">
+                      <div className="flex items-center gap-1.5 text-xs font-bold text-foreground">
+                        <Coffee className="w-3.5 h-3.5 text-emerald-500" />
+                        <span>Counter Stand Setup</span>
+                      </div>
+                      <p className="text-[11px] text-muted-foreground leading-relaxed">
+                        Display the shadow-free acrylic QR stand at checkout. 85% of members join via the counter QR code.
+                      </p>
+                    </div>
+                    <Link
+                      href="/merchant/settings/store"
+                      className="text-[11px] font-semibold text-emerald-600 dark:text-emerald-400 hover:underline flex items-center gap-1 pt-1"
+                    >
+                      Print A5/A6 Acrylic Stand <ArrowRight className="w-3 h-3" />
+                    </Link>
+                  </div>
+
+                  {/* Insight 3: Welcome Gift Incentive */}
+                  <div className="p-3.5 rounded-2xl bg-background border border-border/60 flex flex-col justify-between space-y-2">
+                    <div className="space-y-1">
+                      <div className="flex items-center gap-1.5 text-xs font-bold text-foreground">
+                        <Sparkles className="w-3.5 h-3.5 text-amber-500" />
+                        <span>Welcome Bonus Incentive</span>
+                      </div>
+                      <p className="text-[11px] text-muted-foreground leading-relaxed">
+                        {hasWelcome
+                          ? `Active: +${(activeStore as any).welcomePoints} bonus points gifted upon new customer joining.`
+                          : 'Offer +20 free welcome points on join to double your counter stand signup conversions.'}
+                      </p>
+                    </div>
+                    <Link
+                      href="/merchant/settings/store"
+                      className="text-[11px] font-semibold text-amber-600 dark:text-amber-400 hover:underline flex items-center gap-1 pt-1"
+                    >
+                      {hasWelcome ? 'Edit Welcome Bonus' : 'Enable Welcome Gift'} <ArrowRight className="w-3 h-3" />
+                    </Link>
+                  </div>
+                </div>
+              </div>
+            );
+          })()}
 
           {/* Quick Action Navigation Grid for Merchant on Mobile */}
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-2">

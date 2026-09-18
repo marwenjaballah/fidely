@@ -16,6 +16,7 @@ export function useAuth() {
   const getGoogleOAuthUrl = useAuthStore((state) => state.getGoogleOAuthUrl)
   const handleGoogleCallback = useAuthStore((state) => state.handleGoogleCallback)
   const handleGoogleTokens = useAuthStore((state) => state.handleGoogleTokens)
+  const revalidateSession = useAuthStore((state) => state.revalidateSession)
 
   const signInWithGoogle = useCallback(async (redirectTo?: string) => {
     const url = await getGoogleOAuthUrl(redirectTo)
@@ -36,5 +37,6 @@ export function useAuth() {
     signInWithGoogle,
     handleGoogleCallback,
     handleGoogleTokens,
+    revalidateSession,
   }
 }
