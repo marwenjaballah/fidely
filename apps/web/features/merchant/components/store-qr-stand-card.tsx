@@ -10,7 +10,7 @@ import {
   Download,
   Copy,
   Check,
-  Coffee,
+  Store,
   Sparkles,
   Printer,
   FileText,
@@ -43,7 +43,8 @@ export function StoreQRStandCard({ store }: StoreQRStandCardProps) {
 
   const qrUrl = `${origin}/store/${store.slug}?ref=${store.id}`;
   const pointsPerTnd = store.pointsPerTnd || 10;
-  const primaryColor = store.primaryColor || '#D97706';
+  const primaryColor = store.primaryColor || '#4F46E5';
+  const welcomePoints = store.welcomePoints || 0;
 
   const handleCopyLink = () => {
     navigator.clipboard.writeText(qrUrl);
@@ -75,6 +76,12 @@ export function StoreQRStandCard({ store }: StoreQRStandCardProps) {
       });
       return;
     }
+
+    const welcomeBonusHtml = welcomePoints > 0 ? `
+      <div class="welcome-gift-badge">
+        ✨ GET +${welcomePoints} FREE WELCOME POINTS ON SIGNUP!
+      </div>
+    ` : '';
 
     printWindow.document.write(`
       <!DOCTYPE html>
@@ -135,7 +142,7 @@ export function StoreQRStandCard({ store }: StoreQRStandCardProps) {
               display: flex;
               flex-direction: column;
               align-items: center;
-              gap: 3mm;
+              gap: 2.5mm;
             }
             .brand-badge {
               display: inline-block;
@@ -161,6 +168,18 @@ export function StoreQRStandCard({ store }: StoreQRStandCardProps) {
               font-size: 3.5mm;
               font-weight: 700;
               color: #334155;
+            }
+            .welcome-gift-badge {
+              display: inline-block;
+              padding: 1.5mm 4mm;
+              background: #f8fafc;
+              border: 1.5px solid #0f172a;
+              color: #0f172a;
+              font-size: 2.8mm;
+              font-weight: 800;
+              letter-spacing: 0.5px;
+              text-transform: uppercase;
+              border-radius: 2.5mm;
             }
             .qr-wrapper {
               background: #ffffff;
@@ -226,6 +245,7 @@ export function StoreQRStandCard({ store }: StoreQRStandCardProps) {
               <div class="brand-badge">Loyalty Pass</div>
               <div class="store-name">${store.name}</div>
               <div class="multiplier-tag">1 TND Spent = ${pointsPerTnd} Reward Points</div>
+              ${welcomeBonusHtml}
             </div>
 
             <div class="qr-wrapper">
@@ -311,27 +331,47 @@ export function StoreQRStandCard({ store }: StoreQRStandCardProps) {
       ctx.lineTo(width - 50, height - 50 - cornerSize);
       ctx.stroke();
 
-      let currentY = 180;
+      let currentY = 170;
 
       // 3. Store Name & Loyalty Title
       ctx.fillStyle = '#ffffff';
-      ctx.font = 'bold 56px Inter, system-ui, sans-serif';
+      ctx.font = 'bold 54px Inter, system-ui, sans-serif';
       ctx.textAlign = 'center';
       ctx.fillText(store.name.toUpperCase(), width / 2, currentY);
 
-      currentY += 56;
+      currentY += 52;
       ctx.fillStyle = primaryColor;
-      ctx.font = 'bold 36px Inter, system-ui, sans-serif';
+      ctx.font = 'bold 34px Inter, system-ui, sans-serif';
       ctx.fillText('LOYALTY REWARDS CLUB', width / 2, currentY);
 
-      currentY += 60;
+      currentY += 54;
       ctx.fillStyle = '#cbd5e1';
-      ctx.font = '600 28px Inter, system-ui, sans-serif';
+      ctx.font = '600 26px Inter, system-ui, sans-serif';
       ctx.fillText(`Earn points with every purchase (1 TND = ${pointsPerTnd} pts)`, width / 2, currentY);
 
+      // Optional Welcome Bonus Badge on Poster
+      if (welcomePoints > 0) {
+        currentY += 42;
+        const badgeText = `✨ +${welcomePoints} BONUS POINTS ON SIGNUP!`;
+        ctx.font = 'bold 24px Inter, system-ui, sans-serif';
+        const textWidth = ctx.measureText(badgeText).width;
+        const badgePadX = 26;
+        const badgeW = textWidth + badgePadX * 2;
+        const badgeH = 44;
+        const badgeX = (width - badgeW) / 2;
+
+        ctx.fillStyle = primaryColor;
+        ctx.beginPath();
+        ctx.roundRect(badgeX, currentY, badgeW, badgeH, 12);
+        ctx.fill();
+
+        ctx.fillStyle = '#ffffff';
+        ctx.fillText(badgeText, width / 2, currentY + 30);
+      }
+
       // 4. Render QR Code Container (Crisp solid border, no blur)
-      currentY += 70;
-      const qrBoxSize = 520;
+      currentY += welcomePoints > 0 ? 50 : 65;
+      const qrBoxSize = 500;
       const qrBoxX = (width - qrBoxSize) / 2;
       const qrBoxY = currentY;
 
@@ -363,18 +403,18 @@ export function StoreQRStandCard({ store }: StoreQRStandCardProps) {
       }
 
       // 5. Action Callout & Instructions
-      currentY = qrBoxY + qrBoxSize + 85;
+      currentY = qrBoxY + qrBoxSize + 75;
       ctx.fillStyle = '#ffffff';
-      ctx.font = 'bold 44px Inter, system-ui, sans-serif';
+      ctx.font = 'bold 42px Inter, system-ui, sans-serif';
       ctx.fillText('SCAN WITH YOUR PHONE', width / 2, currentY);
 
-      currentY += 45;
+      currentY += 42;
       ctx.fillStyle = '#94a3b8';
-      ctx.font = '500 26px Inter, system-ui, sans-serif';
+      ctx.font = '500 24px Inter, system-ui, sans-serif';
       ctx.fillText('Point your smartphone camera to join our loyalty pass', width / 2, currentY);
 
       // 6. Step bubbles at bottom
-      currentY += 90;
+      currentY += 75;
       const steps = [
         '1. Open Camera',
         '2. Scan & Sign Up',
@@ -387,7 +427,7 @@ export function StoreQRStandCard({ store }: StoreQRStandCardProps) {
         const bx = startX + idx * stepWidth + 20;
         ctx.fillStyle = '#1e293b';
         ctx.beginPath();
-        ctx.roundRect(bx, currentY, stepWidth - 40, 64, 16);
+        ctx.roundRect(bx, currentY, stepWidth - 40, 60, 14);
         ctx.fill();
 
         ctx.strokeStyle = '#334155';
@@ -396,7 +436,7 @@ export function StoreQRStandCard({ store }: StoreQRStandCardProps) {
 
         ctx.fillStyle = '#ffffff';
         ctx.font = '600 20px Inter, system-ui, sans-serif';
-        ctx.fillText(stepText, bx + (stepWidth - 40) / 2, currentY + 39);
+        ctx.fillText(stepText, bx + (stepWidth - 40) / 2, currentY + 37);
       });
 
       // 7. Footer Brand Mark
@@ -500,13 +540,20 @@ export function StoreQRStandCard({ store }: StoreQRStandCardProps) {
                   />
                 ) : (
                   <div className="w-12 h-12 rounded-2xl bg-white/10 text-white flex items-center justify-center mx-auto border border-white/10">
-                    <Coffee className="w-6 h-6" />
+                    <Store className="w-6 h-6" />
                   </div>
                 )}
                 <h3 className="font-black text-lg tracking-tight uppercase leading-tight">{store.name}</h3>
                 <span className="text-[11px] font-bold tracking-wider uppercase block" style={{ color: primaryColor }}>
                   Loyalty Club
                 </span>
+
+                {welcomePoints > 0 && (
+                  <div className="bg-primary/20 border border-primary/40 rounded-xl px-2.5 py-1 text-[10px] font-bold text-white flex items-center justify-center gap-1 animate-in zoom-in-95">
+                    <Sparkles className="w-3 h-3 text-amber-300" />
+                    <span>+{welcomePoints} Welcome Points</span>
+                  </div>
+                )}
               </div>
 
               {/* QR Code Container */}
@@ -546,7 +593,7 @@ export function StoreQRStandCard({ store }: StoreQRStandCardProps) {
               <h4 className="text-base font-bold text-foreground">How Customer Auto-Referral Works:</h4>
               <ul className="space-y-2.5 text-xs text-muted-foreground">
                 <li className="flex items-start gap-2">
-                  <div className="w-5 h-5 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center font-bold text-[10px] shrink-0 mt-0.5">
+                  <div className="w-5 h-5 rounded-full bg-primary/10 text-primary flex items-center justify-center font-bold text-[10px] shrink-0 mt-0.5">
                     1
                   </div>
                   <span>
@@ -554,15 +601,15 @@ export function StoreQRStandCard({ store }: StoreQRStandCardProps) {
                   </span>
                 </li>
                 <li className="flex items-start gap-2">
-                  <div className="w-5 h-5 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center font-bold text-[10px] shrink-0 mt-0.5">
+                  <div className="w-5 h-5 rounded-full bg-primary/10 text-primary flex items-center justify-center font-bold text-[10px] shrink-0 mt-0.5">
                     2
                   </div>
                   <span>
-                    <strong>One-Tap Join & Sign Up</strong>: If new, their sign-up form is tagged with your store referral code and automatically creates their membership upon completion.
+                    <strong>One-Tap Join & Sign Up</strong>: If new, their sign-up form is tagged with your store referral code and automatically creates their membership upon completion{welcomePoints > 0 ? ` (with +${welcomePoints} instant welcome bonus points)` : ''}.
                   </span>
                 </li>
                 <li className="flex items-start gap-2">
-                  <div className="w-5 h-5 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center font-bold text-[10px] shrink-0 mt-0.5">
+                  <div className="w-5 h-5 rounded-full bg-primary/10 text-primary flex items-center justify-center font-bold text-[10px] shrink-0 mt-0.5">
                     3
                   </div>
                   <span>
@@ -589,7 +636,7 @@ export function StoreQRStandCard({ store }: StoreQRStandCardProps) {
                   onClick={handleCopyLink}
                   className="h-11 px-4 rounded-xl text-xs font-bold gap-1.5 shrink-0"
                 >
-                  {copied ? <Check className="w-4 h-4 text-emerald-400" /> : <Copy className="w-4 h-4" />}
+                  {copied ? <Check className="w-4 h-4 text-primary" /> : <Copy className="w-4 h-4" />}
                   {copied ? 'Copied' : 'Copy'}
                 </Button>
               </div>
@@ -600,7 +647,7 @@ export function StoreQRStandCard({ store }: StoreQRStandCardProps) {
               <Button
                 type="button"
                 onClick={handlePrintStand}
-                className="h-12 rounded-xl text-xs font-bold bg-emerald-600 hover:bg-emerald-500 text-white shadow-lg shadow-emerald-600/20 gap-2"
+                className="h-12 rounded-xl text-xs font-bold bg-primary hover:bg-primary/90 text-primary-foreground shadow-lg shadow-primary/20 gap-2"
               >
                 <Printer className="w-4 h-4" />
                 1-Click Print Stand (A5/A6)

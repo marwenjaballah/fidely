@@ -755,6 +755,7 @@ export default function StoreSettingsPage() {
           primaryColor: primaryColor || activeStore.primaryColor,
           logoUrl: logoUrl,
           pointsPerTnd: Number(pointsPerTnd) || activeStore.pointsPerTnd || 10,
+          welcomePoints: Number(welcomePoints) || activeStore.welcomePoints || 0,
         }}
       />
 
