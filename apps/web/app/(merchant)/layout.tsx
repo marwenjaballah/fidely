@@ -18,8 +18,7 @@ import {
 import { strings } from '@/lib/strings'
 import { useAuth } from '@/features/auth/hooks/use-auth'
 import { useRouter, usePathname } from 'next/navigation'
-import { useEffect, useState, useMemo, useCallback } from 'react'
-import { navItems } from '@/config/nav-config'
+import { useEffect, useState, useMemo } from 'react'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { Settings } from 'lucide-react'
@@ -28,178 +27,119 @@ import { StoreSwitcher } from '@/components/common/store-switcher'
 import { useMerchantStore } from '@/store/merchant-store'
 
 /**
- * Dashboard Layout
+ * Merchant Dashboard Layout
  * 
- * Wraps all dashboard pages with:
- * - Authentication protection
+ * Wraps all merchant dashboard pages with:
+ * - Authentication & role protection
  * - Sidebar navigation
- * - Header with user menu
+ * - Header with breadcrumbs and store switcher
  * - Responsive structure
- * - RTL/LTR support
  */
 export default function DashboardLayout({
     children,
 }: {
     children: React.ReactNode
 }) {
-    const { isAuthenticated, hasHydrated } = useAuth()
+    const { isAuthenticated, hasHydrated, profile } = useAuth()
     const { fetchStores } = useMerchantStore()
     const router = useRouter()
     const pathname = usePathname()
     const [isMounted, setIsMounted] = useState(false)
 
     useEffect(() => {
-        if (isAuthenticated) {
-            fetchStores()
-        }
-    }, [isAuthenticated, fetchStores])
-
-    const getNavTitle = useCallback((title: string): string => {
-        const translations: Record<string, string> = {
-            'Overview': strings.dashboard_overview,
-            'Settings': strings.dashboard_settings,
-            'Account': strings.nav_account_settings,
-        }
-        return translations[title] || title
-    }, [])
-
-    // Generate dynamic breadcrumbs based on current pathname
-    const breadcrumbs = useMemo(() => {
-        const generateBreadcrumbs = () => {
-            const items: Array<{ title: string; href: string; isLast: boolean }> = []
-            
-            // If we're at root or marketplace, return just Marketplace
-            if (pathname === '/' || pathname === '/overview') {
-                items.push({
-                    title: strings.dashboard_overview,
-                    href: '/overview',
-                    isLast: true,
-                })
-                return items
-            }
-
-            // Split pathname into segments and filter out empty strings
-            const segments = pathname.split('/').filter(Boolean)
-            
-            // Track if we've added marketplace as the first breadcrumb
-            let marketplaceAdded = false
-            
-            // Find matching nav items
-            let currentPath = ''
-            
-            for (let i = 0; i < segments.length; i++) {
-                currentPath += `/${segments[i]}`
-
-                // Try to find a matching nav item
-                let found = false
-                
-                // Check main nav items
-                for (const navItem of navItems) {
-                    if (navItem.href === currentPath) {
-                        // Add marketplace as first breadcrumb if not already added and not on marketplace
-                        if (!marketplaceAdded && navItem.href !== '/overview') {
-                            items.push({
-                                title: strings.dashboard_overview,
-                                href: '/overview',
-                                isLast: false,
-                            })
-                            marketplaceAdded = true
-                        }
-                        
-                        items.push({
-                            title: getNavTitle(navItem.title),
-                            href: navItem.href,
-                            isLast: i === segments.length - 1,
-                        })
-                        found = true
-                        break
-                    }
-                    
-                    // Check sub-items
-                    if (navItem.items) {
-                        for (const subItem of navItem.items) {
-                            if (subItem.href === currentPath) {
-                                // Add marketplace as first breadcrumb if not already added
-                                if (!marketplaceAdded) {
-                                    items.push({
-                                        title: strings.dashboard_overview,
-                                        href: '/overview',
-                                        isLast: false,
-                                    })
-                                    marketplaceAdded = true
-                                }
-                                
-                                // Add parent if not already added
-                                const parentExists = items.some(item => item.href === navItem.href)
-                                if (!parentExists) {
-                                    items.push({
-                                        title: getNavTitle(navItem.title),
-                                        href: navItem.href,
-                                        isLast: false,
-                                    })
-                                }
-                                
-                                items.push({
-                                    title: getNavTitle(subItem.title),
-                                    href: subItem.href,
-                                    isLast: i === segments.length - 1,
-                                })
-                                found = true
-                                break
-                            }
-                        }
-                    }
-                }
-                
-                // If no nav item found, create a breadcrumb from the segment
-                if (!found) {
-                    // Add marketplace as first breadcrumb if not already added
-                    if (!marketplaceAdded) {
-                        items.push({
-                            title: strings.dashboard_overview,
-                            href: '/overview',
-                            isLast: false,
-                        })
-                        marketplaceAdded = true
-                    }
-                    
-                    const segmentTranslations: Record<string, string> = {
-                        'account': strings.nav_account_settings,
-                    }
-                    const title =
-                        segmentTranslations[segments[i]] ||
-                        segments[i].split('-').map((word) => word.charAt(0).toUpperCase() + word.slice(1)).join(' ')
-                    
-                    items.push({
-                        title,
-                        href: currentPath,
-                        isLast: i === segments.length - 1,
-                    })
-                }
-            }
-            
-            // Mark the last item
-            if (items.length > 0) {
-                items[items.length - 1].isLast = true
-            }
-            
-            return items
-        }
-        
-        return generateBreadcrumbs()
-    }, [pathname, getNavTitle])
-
-    useEffect(() => {
-        // Mark component as mounted to ensure hydration is complete
         setIsMounted(true)
     }, [])
 
     useEffect(() => {
-        // Only check auth after component is mounted (hydration complete)
-        if (isMounted && hasHydrated && !isAuthenticated) {
-            router.push('/auth/login')
+        if (isMounted && hasHydrated) {
+            if (!isAuthenticated) {
+                router.push('/auth/login')
+            } else if (profile && profile.role !== 'MERCHANT' && profile.role !== 'SUPER_ADMIN') {
+                // If not merchant or super admin, redirect to role-specific overview
+                router.push('/overview')
+            } else if (isAuthenticated) {
+                fetchStores()
+            }
         }
-    }, [isMounted, hasHydrated, isAuthenticated, router])
+    }, [isMounted, hasHydrated, isAuthenticated, profile, router, fetchStores])
+
+    // Generate dynamic, clean breadcrumbs based on current pathname
+    const breadcrumbs = useMemo(() => {
+        const items: Array<{ title: string; href: string; isLast: boolean }> = [
+            {
+                title: 'Merchant',
+                href: '/merchant/overview',
+                isLast: pathname === '/merchant' || pathname === '/merchant/overview',
+            },
+        ]
+
+        if (pathname === '/merchant' || pathname === '/merchant/overview') {
+            items.push({
+                title: strings.dashboard_overview,
+                href: '/merchant/overview',
+                isLast: true,
+            })
+            return items
+        }
+
+        if (pathname.startsWith('/merchant/crm')) {
+            items.push({
+                title: 'CRM',
+                href: '/merchant/crm',
+                isLast: true,
+            })
+        } else if (pathname.startsWith('/merchant/staff')) {
+            items.push({
+                title: 'Staff',
+                href: '/merchant/staff',
+                isLast: true,
+            })
+        } else if (pathname.startsWith('/merchant/analytics')) {
+            items.push({
+                title: 'Analytics',
+                href: '/merchant/analytics',
+                isLast: true,
+            })
+        } else if (pathname.startsWith('/merchant/settings')) {
+            const isStore = pathname.includes('/store')
+            const isAccount = pathname.includes('/account')
+
+            items.push({
+                title: strings.dashboard_settings,
+                href: '/merchant/settings/store',
+                isLast: !isStore && !isAccount,
+            })
+
+            if (isStore) {
+                items.push({
+                    title: 'Store & Rewards',
+                    href: '/merchant/settings/store',
+                    isLast: true,
+                })
+            } else if (isAccount) {
+                items.push({
+                    title: strings.nav_account_settings,
+                    href: '/merchant/settings/account',
+                    isLast: true,
+                })
+            }
+        } else {
+            // Fallback for custom or nested sub-pages
+            const subPath = pathname.replace('/merchant/', '')
+            const segments = subPath.split('/').filter(Boolean)
+            let currentHref = '/merchant'
+            segments.forEach((seg, idx) => {
+                currentHref += `/${seg}`
+                items.push({
+                    title: seg.charAt(0).toUpperCase() + seg.slice(1).replace(/-/g, ' '),
+                    href: currentHref,
+                    isLast: idx === segments.length - 1,
+                })
+            })
+        }
+
+        return items
+    }, [pathname])
 
     // Show loading state while checking authentication and hydrating
     if (!isMounted || !hasHydrated) {
@@ -212,8 +152,8 @@ export default function DashboardLayout({
         )
     }
 
-    // Don't render dashboard if not authenticated
-    if (!isAuthenticated) {
+    // Don't render dashboard if not authenticated or unauthorized
+    if (!isAuthenticated || (profile && profile.role !== 'MERCHANT' && profile.role !== 'SUPER_ADMIN')) {
         return (
             <div className="min-h-svh flex items-center justify-center">
                 <div className="text-muted-foreground">
@@ -238,7 +178,7 @@ export default function DashboardLayout({
                             <Breadcrumb>
                                 <BreadcrumbList>
                                     {breadcrumbs.map((crumb, index) => (
-                                        <div key={crumb.href} className="flex items-center">
+                                        <div key={`${crumb.href}-${index}`} className="flex items-center">
                                             {index > 0 && (
                                                 <BreadcrumbSeparator className="hidden md:block" />
                                             )}

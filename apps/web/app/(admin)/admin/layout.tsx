@@ -215,7 +215,9 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         {/* Top Header */}
         <header className="hidden md:flex h-16 items-center justify-between px-8 border-b bg-background/80 backdrop-blur sticky top-0 z-30">
           <div className="flex items-center gap-2 text-sm">
-            <span className="text-muted-foreground">Super Admin</span>
+            <Link href="/admin/overview" className="text-muted-foreground hover:text-foreground transition-colors font-medium">
+              Super Admin
+            </Link>
             <ChevronRight className="h-4 w-4 text-muted-foreground/60" />
             <span className="font-semibold text-foreground">{currentNav.title}</span>
           </div>

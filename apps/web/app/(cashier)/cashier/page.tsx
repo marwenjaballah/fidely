@@ -144,11 +144,13 @@ export default function CashierPage() {
     if (hasHydrated) {
       if (!isAuthenticated) {
         router.push('/auth/login');
+      } else if (profile?.role === 'CUSTOMER') {
+        router.push('/customer/overview');
       } else {
         fetchStores();
       }
     }
-  }, [hasHydrated, isAuthenticated, router, fetchStores]);
+  }, [hasHydrated, isAuthenticated, profile?.role, router, fetchStores]);
 
   useEffect(() => {
     if (activeStore?.id) {
