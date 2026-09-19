@@ -42,6 +42,7 @@ export function MerchantBottomNav() {
   const isOverview = pathname === '/merchant' || pathname === '/merchant/overview'
   const isCards = pathname.startsWith('/merchant/customizer') || pathname.startsWith('/merchant/rewards')
   const isCrm = pathname.startsWith('/merchant/crm')
+  const isAnalytics = pathname.startsWith('/merchant/analytics')
 
   const handleTabClick = (href: string) => {
     posHaptics.tap()
@@ -64,12 +65,12 @@ export function MerchantBottomNav() {
         dir={dir}
         className="fixed bottom-0 inset-x-0 z-40 md:hidden bg-background/90 backdrop-blur-2xl border-t border-border/70 pb-safe shadow-[0_-8px_24px_rgba(0,0,0,0.08)] select-none"
       >
-        <nav className="max-w-md mx-auto flex items-center justify-around px-2 py-1">
+        <nav className="max-w-md mx-auto flex items-center justify-around px-1 py-1">
           {/* Tab 1: Overview */}
           <button
             type="button"
             onClick={() => handleTabClick('/merchant/overview')}
-            className={`flex flex-1 flex-col items-center justify-center py-1.5 px-1 rounded-xl transition-all active:scale-95 ${
+            className={`flex flex-1 flex-col items-center justify-center py-1.5 px-0.5 rounded-xl transition-all active:scale-95 ${
               isOverview
                 ? 'text-primary font-bold'
                 : 'text-muted-foreground hover:text-foreground'
@@ -82,38 +83,16 @@ export function MerchantBottomNav() {
             >
               <LayoutDashboard className="h-5 w-5" />
             </div>
-            <span className="text-[10px] mt-0.5 tracking-tight font-medium">
+            <span className="text-[10px] mt-0.5 tracking-tight font-medium truncate max-w-full">
               {t('dashboard_overview') || 'Overview'}
             </span>
           </button>
 
-          {/* Tab 2: Loyalty Cards & Rewards */}
-          <button
-            type="button"
-            onClick={() => handleTabClick('/merchant/customizer')}
-            className={`flex flex-1 flex-col items-center justify-center py-1.5 px-1 rounded-xl transition-all active:scale-95 ${
-              isCards
-                ? 'text-primary font-bold'
-                : 'text-muted-foreground hover:text-foreground'
-            }`}
-          >
-            <div
-              className={`p-1 rounded-xl transition-colors ${
-                isCards ? 'bg-primary/15 text-primary' : ''
-              }`}
-            >
-              <Palette className="h-5 w-5" />
-            </div>
-            <span className="text-[10px] mt-0.5 tracking-tight font-medium">
-              {t('nav_customizer') || 'Cards'}
-            </span>
-          </button>
-
-          {/* Tab 3: Customers CRM */}
+          {/* Tab 2: Customers CRM */}
           <button
             type="button"
             onClick={() => handleTabClick('/merchant/crm')}
-            className={`flex flex-1 flex-col items-center justify-center py-1.5 px-1 rounded-xl transition-all active:scale-95 ${
+            className={`flex flex-1 flex-col items-center justify-center py-1.5 px-0.5 rounded-xl transition-all active:scale-95 ${
               isCrm
                 ? 'text-primary font-bold'
                 : 'text-muted-foreground hover:text-foreground'
@@ -126,16 +105,60 @@ export function MerchantBottomNav() {
             >
               <Users className="h-5 w-5" />
             </div>
-            <span className="text-[10px] mt-0.5 tracking-tight font-medium">
+            <span className="text-[10px] mt-0.5 tracking-tight font-medium truncate max-w-full">
               {t('nav_crm') || 'Customers'}
             </span>
           </button>
 
-          {/* Tab 4: More / Management Drawer */}
+          {/* Tab 3: Loyalty Cards & Rewards */}
+          <button
+            type="button"
+            onClick={() => handleTabClick('/merchant/customizer')}
+            className={`flex flex-1 flex-col items-center justify-center py-1.5 px-0.5 rounded-xl transition-all active:scale-95 ${
+              isCards
+                ? 'text-primary font-bold'
+                : 'text-muted-foreground hover:text-foreground'
+            }`}
+          >
+            <div
+              className={`p-1 rounded-xl transition-colors ${
+                isCards ? 'bg-primary/15 text-primary' : ''
+              }`}
+            >
+              <Palette className="h-5 w-5" />
+            </div>
+            <span className="text-[10px] mt-0.5 tracking-tight font-medium truncate max-w-full">
+              {t('nav_customizer') || 'Loyalty'}
+            </span>
+          </button>
+
+          {/* Tab 4: Analytics */}
+          <button
+            type="button"
+            onClick={() => handleTabClick('/merchant/analytics')}
+            className={`flex flex-1 flex-col items-center justify-center py-1.5 px-0.5 rounded-xl transition-all active:scale-95 ${
+              isAnalytics
+                ? 'text-primary font-bold'
+                : 'text-muted-foreground hover:text-foreground'
+            }`}
+          >
+            <div
+              className={`p-1 rounded-xl transition-colors ${
+                isAnalytics ? 'bg-primary/15 text-primary' : ''
+              }`}
+            >
+              <LineChart className="h-5 w-5" />
+            </div>
+            <span className="text-[10px] mt-0.5 tracking-tight font-medium truncate max-w-full">
+              {t('nav_analytics') || 'Analytics'}
+            </span>
+          </button>
+
+          {/* Tab 5: Settings / Store Drawer */}
           <button
             type="button"
             onClick={handleOpenMore}
-            className={`flex flex-1 flex-col items-center justify-center py-1.5 px-1 rounded-xl transition-all active:scale-95 ${
+            className={`flex flex-1 flex-col items-center justify-center py-1.5 px-0.5 rounded-xl transition-all active:scale-95 ${
               moreDrawerOpen
                 ? 'text-primary font-bold'
                 : 'text-muted-foreground hover:text-foreground'
@@ -146,10 +169,10 @@ export function MerchantBottomNav() {
                 moreDrawerOpen ? 'bg-primary/15 text-primary' : ''
               }`}
             >
-              <Menu className="h-5 w-5" />
+              <Settings className="h-5 w-5" />
             </div>
-            <span className="text-[10px] mt-0.5 tracking-tight font-medium">
-              {t('nav_more') || 'More'}
+            <span className="text-[10px] mt-0.5 tracking-tight font-medium truncate max-w-full">
+              {t('nav_settings') || 'Settings'}
             </span>
           </button>
         </nav>

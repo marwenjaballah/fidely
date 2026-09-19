@@ -36,6 +36,7 @@ import {
   RefreshCw,
   ChevronRight,
   TrendingUp,
+  Settings,
 } from 'lucide-react';
 import { createCookieAuthApiClient, refreshAuthSession, ApiError } from '@/lib/api-client';
 import { AUTH_ROUTES } from '@/features/auth/services/auth-service';
@@ -112,21 +113,13 @@ export default function CashierPage() {
 
   // Modal feedback state
   const [feedback, setFeedback] = useState<FeedbackData>({ state: 'idle' });
-  const [mobileTab, setMobileTab] = useState<CashierTab>('pos');
+  const [mobileTab, setMobileTab] = useState<CashierTab>('award');
 
   const handleSelectMobileTab = (tab: CashierTab) => {
     setMobileTab(tab);
-    if (tab === 'scan') {
-      setScanMode({ active: true, type: null, value: null });
-    } else if (tab === 'pos') {
-      setScanMode((prev) => ({ ...prev, active: false }));
-    } else if (tab === 'redeem') {
-      setScanMode((prev) => ({ ...prev, active: false }));
-    } else if (tab === 'shift') {
-      setScanMode((prev) => ({ ...prev, active: false }));
-      if (activeStore) {
-        fetchRecentTransactions(activeStore.id);
-      }
+    setScanMode((prev) => ({ ...prev, active: false }));
+    if (tab === 'activity' && activeStore) {
+      fetchRecentTransactions(activeStore.id);
     }
   };
 
@@ -453,7 +446,7 @@ export default function CashierPage() {
         {/* SCANNER / INPUT WORKSPACE */}
         <div className="w-full max-w-lg space-y-4 sm:space-y-6">
           {/* Mobile Shift Scene */}
-          {mobileTab === 'shift' && activeStore ? (
+          {mobileTab === 'activity' && activeStore ? (
             <div className="space-y-4 md:hidden animate-in fade-in duration-200">
               {/* Shift Stats Card */}
               <div className="p-4 rounded-3xl bg-card border border-border/70 shadow-sm space-y-3">
@@ -537,6 +530,82 @@ export default function CashierPage() {
                 )}
               </div>
             </div>
+          ) : mobileTab === 'settings' ? (
+            /* Cashier Settings Scene */
+            <div className="space-y-4 md:hidden animate-in fade-in duration-200 text-start">
+              <div className="p-4 rounded-3xl bg-card border border-border/70 shadow-sm space-y-4">
+                <div className="flex items-center gap-2.5">
+                  <div className="h-10 w-10 rounded-2xl bg-primary/15 text-primary flex items-center justify-center font-bold">
+                    <Settings className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <h3 className="font-bold text-sm">{t('cashier_settings_title') || 'Cashier Settings'}</h3>
+                    <p className="text-xs text-muted-foreground">{profile?.email}</p>
+                  </div>
+                </div>
+
+                {/* Assigned Store Switcher */}
+                <div className="pt-2 border-t border-border/50 space-y-2">
+                  <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider block">
+                    {t('store_switcher_select_store') || 'Active Store Location'}
+                  </label>
+                  {stores.length > 1 ? (
+                    <Select value={activeStore?.id || ''} onValueChange={handleSelectStore} dir={dir}>
+                      <SelectTrigger className="h-10 text-xs font-semibold w-full rounded-2xl">
+                        <SelectValue placeholder={t('store_switcher_select_store')} />
+                      </SelectTrigger>
+                      <SelectContent dir={dir}>
+                        {stores.map((s) => (
+                          <SelectItem key={s.id} value={s.id} className="text-xs font-medium">
+                            {s.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  ) : activeStore ? (
+                    <div className="flex items-center gap-2 p-3 rounded-2xl bg-muted/40 border border-border/60">
+                      <span
+                        className="w-2.5 h-2.5 rounded-full shrink-0"
+                        style={{ backgroundColor: activeStore.primaryColor || '#10b981' }}
+                      />
+                      <span className="text-xs font-bold text-foreground">{activeStore.name}</span>
+                    </div>
+                  ) : null}
+                </div>
+
+                {/* Preferences */}
+                <div className="pt-3 border-t border-border/50 space-y-3">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-xs font-bold text-foreground">{t('theme_mode') || 'Appearance'}</p>
+                      <p className="text-[11px] text-muted-foreground">Dark or light mode</p>
+                    </div>
+                    <ThemeToggleButton />
+                  </div>
+
+                  <div className="flex items-center justify-between pt-2 border-t border-border/40">
+                    <div>
+                      <p className="text-xs font-bold text-foreground">{t('language_selection') || 'Language'}</p>
+                      <p className="text-[11px] text-muted-foreground">English, Français, العربية</p>
+                    </div>
+                    <LanguageSwitcher />
+                  </div>
+                </div>
+
+                {/* End Shift & Logout */}
+                <div className="pt-3 border-t border-border/50">
+                  <Button
+                    variant="destructive"
+                    size="default"
+                    onClick={handleLogout}
+                    className="w-full h-11 rounded-2xl text-xs font-bold gap-2"
+                  >
+                    <LogOut className="w-4 h-4 rtl:rotate-180" />
+                    <span>{t('logout') || 'End Shift & Logout'}</span>
+                  </Button>
+                </div>
+              </div>
+            </div>
           ) : activeStore ? (
             <>
               {!scanMode.active ? (
@@ -545,9 +614,10 @@ export default function CashierPage() {
                   storeName={activeStore.name}
                   pointsPerTnd={activeStore.pointsPerTnd}
                   controlledTab={mobileTab === 'redeem' ? 'redeem' : 'issue'}
-                  onTabChange={(tab) => setMobileTab(tab === 'redeem' ? 'redeem' : 'pos')}
+                  onTabChange={(tab) => setMobileTab(tab === 'redeem' ? 'redeem' : 'award')}
                   onProcess={handleProcessStart}
                 />
+
               ) : (
                 <div className="space-y-4 bg-card border border-border/80 rounded-3xl p-6 shadow-xl animate-in zoom-in-95 duration-200">
                   <div className="bg-primary/10 border border-primary/20 text-primary p-3.5 rounded-2xl text-center space-y-1">

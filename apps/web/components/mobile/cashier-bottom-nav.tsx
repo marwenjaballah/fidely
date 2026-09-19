@@ -1,11 +1,11 @@
 'use client'
 
 import React from 'react'
-import { Calculator, QrCode, Gift, History } from 'lucide-react'
+import { Coins, Gift, History, Settings } from 'lucide-react'
 import { useI18n } from '@/lib/i18n'
 import { posHaptics } from '@/lib/haptics'
 
-export type CashierTab = 'pos' | 'scan' | 'redeem' | 'shift'
+export type CashierTab = 'award' | 'redeem' | 'activity' | 'settings'
 
 interface CashierBottomNavProps {
   activeTab: CashierTab
@@ -31,45 +31,29 @@ export function CashierBottomNav({
       className="fixed bottom-0 inset-x-0 z-40 md:hidden bg-background/90 backdrop-blur-2xl border-t border-border/70 pb-safe shadow-[0_-8px_24px_rgba(0,0,0,0.08)] select-none"
     >
       <nav className="max-w-md mx-auto flex items-center justify-around px-2 py-1">
-        {/* Tab 1: Keypad POS */}
+        {/* Tab 1: Award Points */}
         <button
           type="button"
-          onClick={() => handleTabClick('pos')}
+          onClick={() => handleTabClick('award')}
           className={`flex flex-1 flex-col items-center justify-center py-1.5 px-1 rounded-xl transition-all active:scale-95 ${
-            activeTab === 'pos'
+            activeTab === 'award'
               ? 'text-primary font-bold'
               : 'text-muted-foreground hover:text-foreground'
           }`}
         >
           <div
             className={`p-1 rounded-xl transition-colors ${
-              activeTab === 'pos' ? 'bg-primary/15 text-primary' : ''
+              activeTab === 'award' ? 'bg-primary/15 text-primary' : ''
             }`}
           >
-            <Calculator className="h-5 w-5" />
+            <Coins className="h-5 w-5" />
           </div>
           <span className="text-[10px] mt-0.5 tracking-tight font-medium">
-            {t('cashier_nav_keypad') || 'POS'}
+            {t('nav_award_points') || 'Award'}
           </span>
         </button>
 
-        {/* Tab 2: Elevated Center Quick Scan */}
-        <div className="flex -my-3 px-1">
-          <button
-            type="button"
-            onClick={() => handleTabClick('scan')}
-            className={`flex h-12 w-12 items-center justify-center rounded-2xl shadow-lg transition-all active:scale-90 ${
-              activeTab === 'scan'
-                ? 'bg-emerald-600 text-white ring-4 ring-emerald-500/20 shadow-emerald-500/30'
-                : 'bg-primary text-primary-foreground hover:bg-primary/90'
-            }`}
-            title={t('cashier_nav_scan') || 'Scan QR'}
-          >
-            <QrCode className="h-6 w-6" />
-          </button>
-        </div>
-
-        {/* Tab 3: Redeem Perks */}
+        {/* Tab 2: Redeem Rewards */}
         <button
           type="button"
           onClick={() => handleTabClick('redeem')}
@@ -87,16 +71,16 @@ export function CashierBottomNav({
             <Gift className="h-5 w-5" />
           </div>
           <span className="text-[10px] mt-0.5 tracking-tight font-medium">
-            {t('cashier_nav_redeem') || 'Redeem'}
+            {t('nav_redeem_perks') || 'Redeem'}
           </span>
         </button>
 
-        {/* Tab 4: Shift Stats & History */}
+        {/* Tab 3: Shift Activity */}
         <button
           type="button"
-          onClick={() => handleTabClick('shift')}
+          onClick={() => handleTabClick('activity')}
           className={`relative flex flex-1 flex-col items-center justify-center py-1.5 px-1 rounded-xl transition-all active:scale-95 ${
-            activeTab === 'shift'
+            activeTab === 'activity'
               ? 'text-primary font-bold'
               : 'text-muted-foreground hover:text-foreground'
           }`}
@@ -108,13 +92,35 @@ export function CashierBottomNav({
           )}
           <div
             className={`p-1 rounded-xl transition-colors ${
-              activeTab === 'shift' ? 'bg-primary/15 text-primary' : ''
+              activeTab === 'activity' ? 'bg-primary/15 text-primary' : ''
             }`}
           >
             <History className="h-5 w-5" />
           </div>
           <span className="text-[10px] mt-0.5 tracking-tight font-medium">
-            {t('cashier_nav_shift') || 'Shift'}
+            {t('nav_activity') || 'Activity'}
+          </span>
+        </button>
+
+        {/* Tab 4: Cashier Settings */}
+        <button
+          type="button"
+          onClick={() => handleTabClick('settings')}
+          className={`flex flex-1 flex-col items-center justify-center py-1.5 px-1 rounded-xl transition-all active:scale-95 ${
+            activeTab === 'settings'
+              ? 'text-primary font-bold'
+              : 'text-muted-foreground hover:text-foreground'
+          }`}
+        >
+          <div
+            className={`p-1 rounded-xl transition-colors ${
+              activeTab === 'settings' ? 'bg-primary/15 text-primary' : ''
+            }`}
+          >
+            <Settings className="h-5 w-5" />
+          </div>
+          <span className="text-[10px] mt-0.5 tracking-tight font-medium">
+            {t('nav_settings') || 'Settings'}
           </span>
         </button>
       </nav>
