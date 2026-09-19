@@ -157,7 +157,7 @@ export default function CustomerStorePage({ params }: { params: Promise<{ slug: 
       <div className="w-full max-w-md space-y-5">
         {/* Top Header Controls */}
         <div className="flex items-center justify-between pt-2">
-          <Link href="/" className="flex items-center gap-2">
+          <Link href={isAuthenticated ? "/customer/overview" : "/"} className="flex items-center gap-2">
             <div className="w-8 h-8 rounded-xl bg-primary/15 text-primary flex items-center justify-center font-bold">
               <Sparkles className="w-4 h-4" />
             </div>

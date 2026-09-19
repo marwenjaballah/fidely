@@ -36,8 +36,27 @@ function LoginForm() {
   const [showPassword, setShowPassword] = useState(false)
   const [storeName, setStoreName] = useState<string | null>(null)
   const router = useRouter()
-  const { signIn, signInWithGoogle } = useAuth()
+  const { signIn, signInWithGoogle, isAuthenticated, profile, hasHydrated } = useAuth()
   const [isGoogleLoading, setIsGoogleLoading] = useState(false)
+
+  useEffect(() => {
+    if (hasHydrated && isAuthenticated && profile) {
+      switch (profile.role) {
+        case 'SUPER_ADMIN':
+          router.replace('/admin/overview')
+          break
+        case 'CASHIER':
+          router.replace('/cashier')
+          break
+        case 'CUSTOMER':
+          router.replace('/customer/overview')
+          break
+        default:
+          router.replace('/merchant/overview')
+          break
+      }
+    }
+  }, [hasHydrated, isAuthenticated, profile, router])
 
   useEffect(() => {
     let effectiveRef = searchRef

@@ -281,7 +281,7 @@ export default function CustomerOverviewPage() {
       {/* ── Desktop Customer Navigation Bar (md+) ── */}
       <header className="sticky top-0 z-40 hidden md:flex h-14 lg:h-16 shrink-0 items-center justify-between border-b border-border/60 bg-background/95 px-4 sm:px-8 backdrop-blur supports-[backdrop-filter]:bg-background/60">
         <div className="flex items-center gap-2 sm:gap-3">
-          <Link href="/" className="flex items-center gap-1.5 sm:gap-2.5 font-bold text-foreground group">
+          <Link href="/customer/overview" className="flex items-center gap-1.5 sm:gap-2.5 font-bold text-foreground group">
             <FidelyLogo size="sm" variant="subtle" className="transition-transform group-hover:scale-105" />
             <span className="text-sm sm:text-lg font-bold tracking-tight">{BRAND_NAME}</span>
           </Link>

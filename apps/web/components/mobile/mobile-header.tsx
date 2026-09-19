@@ -40,13 +40,22 @@ export function MobileHeader({
     }
   }
 
+  const homeHref =
+    scene === 'cashier'
+      ? '/cashier'
+      : scene === 'merchant'
+      ? '/merchant/overview'
+      : scene === 'admin'
+      ? '/admin/overview'
+      : '/customer/overview'
+
   return (
     <header
       dir={dir}
       className="sticky top-0 z-40 flex h-11 shrink-0 items-center justify-between border-b border-border/60 bg-background/95 px-3.5 backdrop-blur supports-[backdrop-filter]:bg-background/80 md:hidden select-none"
     >
       {/* Side 1: App Logo & App Name */}
-      <Link href="/" className="flex items-center gap-1.5 shrink-0 group">
+      <Link href={homeHref} className="flex items-center gap-1.5 shrink-0 group">
         <FidelyLogo size="sm" variant="subtle" className="transition-transform group-hover:scale-105" />
         <span className="text-sm font-black tracking-tight text-foreground">{BRAND_NAME}</span>
       </Link>

@@ -85,7 +85,26 @@ function SignUpForm() {
   const [isLoading, setIsLoading] = useState(false)
   const [isGoogleLoading, setIsGoogleLoading] = useState(false)
 
-  const { signUp, signInWithGoogle } = useAuth()
+  const { signUp, signInWithGoogle, isAuthenticated, profile, hasHydrated } = useAuth()
+
+  useEffect(() => {
+    if (hasHydrated && isAuthenticated && profile) {
+      switch (profile.role) {
+        case 'SUPER_ADMIN':
+          router.replace('/admin/overview')
+          break
+        case 'CASHIER':
+          router.replace('/cashier')
+          break
+        case 'CUSTOMER':
+          router.replace('/customer/overview')
+          break
+        default:
+          router.replace('/merchant/overview')
+          break
+      }
+    }
+  }, [hasHydrated, isAuthenticated, profile, router])
 
   // Sync and fetch store referral details if available
   useEffect(() => {
