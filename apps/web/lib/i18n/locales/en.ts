@@ -877,19 +877,8 @@ export const en = {
   cashier_nav_shift: 'Shift',
   nav_more: 'More',
   merchant_management_title: 'Store Management',
-  customer_scene_title: 'Customer Wallet',
-  customer_scene_desc: 'Digital loyalty cards, stamps, rewards & store exploration',
-  cashier_scene_title: 'Cashier POS Terminal',
-  cashier_scene_desc: 'Fast keypad checkout, counter scanner, perks redemption & shift stats',
-  merchant_scene_title: 'Merchant Commander',
-  merchant_scene_desc: 'Business analytics, card design, customer CRM & team management',
-  admin_scene_title: 'Global Admin',
-  admin_scene_desc: 'System stores, user management, and platform oversight',
-  scene_switcher_title: 'Switch Mode & Scene',
-  scene_switcher_subtitle: 'Select the experience you want to use on this device',
   cashier_shift_sales: 'Earn Txs',
   cashier_points_issued: 'Points Issued',
-  active: 'Active',
 } as const
 
 export type TranslationKey = keyof typeof en

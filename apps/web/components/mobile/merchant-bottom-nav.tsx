@@ -228,36 +228,9 @@ export function MerchantBottomNav() {
             </Link>
           </div>
 
-          {/* Quick Scene Switch Buttons */}
-          <div className="mt-4 pt-3 border-t border-border/60 grid grid-cols-2 gap-2">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => {
-                setMoreDrawerOpen(false)
-                router.push('/cashier')
-              }}
-              className="rounded-xl h-10 text-xs font-semibold gap-1.5 justify-center"
-            >
-              <Calculator className="h-3.5 w-3.5 text-emerald-500" />
-              <span>{t('nav_cashier') || 'POS Mode'}</span>
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => {
-                setMoreDrawerOpen(false)
-                router.push('/customer/overview')
-              }}
-              className="rounded-xl h-10 text-xs font-semibold gap-1.5 justify-center"
-            >
-              <CreditCard className="h-3.5 w-3.5 text-amber-500" />
-              <span>{t('nav_customer') || 'Customer Pass'}</span>
-            </Button>
-          </div>
-
           {/* Drawer Footer Actions */}
           <div className="mt-4 flex items-center justify-between pt-3 border-t border-border/60">
+
             <div className="flex items-center gap-2">
               <LanguageSwitcher />
               <ThemeToggleButton />
