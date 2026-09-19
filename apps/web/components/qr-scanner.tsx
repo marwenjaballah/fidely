@@ -101,6 +101,36 @@ export function QRScanner({
 
         // Safely stop if already active
         await safeStopScanner();
+        if (!isMountedRef.current) return;
+
+        // ─────────────────────────────────────────────────────────────────────
+        // STEP 1: Enumerate cameras FIRST (this is the ONLY getUserMedia call).
+        // On mobile, calling getCameras() AFTER start() issues a second
+        // getUserMedia which kills the already-running stream — exactly the
+        // "video appears then disappears" bug.
+        // ─────────────────────────────────────────────────────────────────────
+        let cameraId = preferredCameraId;
+
+        if (!cameraId) {
+          try {
+            const devices = await Html5Qrcode.getCameras();
+            if (isMountedRef.current && devices && devices.length > 0) {
+              setCameras(devices);
+
+              // Prefer a rear-facing camera by label heuristic
+              const rear = devices.find((d) =>
+                /back|rear|environment|0/i.test(d.label)
+              );
+              // If only one camera, use it; otherwise prefer rear or last device
+              cameraId =
+                rear?.id ??
+                (devices.length > 1 ? devices[devices.length - 1].id : devices[0].id);
+            }
+          } catch {
+            // getCameras failed (can happen if permission was previously denied
+            // and the user hasn't reset it). Fall through to facingMode strategy.
+          }
+        }
 
         if (!isMountedRef.current) return;
 
@@ -115,11 +145,10 @@ export function QRScanner({
           }
         };
 
-        // iOS Safari optimized configuration:
-        // Do NOT force aspectRatio: 1.0 (causes OverconstrainedError on iOS).
-        // Use dynamic function for qrbox.
+        // fps: 10 is sufficient and less CPU-heavy on mobile.
+        // Do NOT include aspectRatio — causes OverconstrainedError on iOS.
         const scanConfig = {
-          fps: 15,
+          fps: 10,
           qrbox: (viewfinderWidth: number, viewfinderHeight: number) => {
             const minEdge = Math.min(viewfinderWidth, viewfinderHeight);
             const edgeSize = Math.max(180, Math.floor(minEdge * 0.72));
@@ -127,15 +156,16 @@ export function QRScanner({
           },
         };
 
-        // Helper to force iOS Safari playsinline & unblock video playback.
-        // We MUST set these *before* play() is called, so use a MutationObserver
-        // to catch the exact moment html5-qrcode inserts the <video> element.
-        const ensureIosVideoPlayback = (video: HTMLVideoElement) => {
+        // ─────────────────────────────────────────────────────────────────────
+        // STEP 2: Attach a MutationObserver BEFORE calling start() so we can
+        // set playsinline/muted the instant html5-qrcode injects <video>.
+        // This must happen before start() to avoid a race on slow mobile CPUs.
+        // ─────────────────────────────────────────────────────────────────────
+        const ensureVideoPlayback = (video: HTMLVideoElement) => {
           video.setAttribute('playsinline', 'true');
           video.setAttribute('webkit-playsinline', 'true');
           video.setAttribute('autoplay', 'true');
           video.setAttribute('muted', 'true');
-          // Explicit dimensions prevent black frame on mobile before stream resolves
           video.setAttribute('width', String(containerEl.offsetWidth || 320));
           video.setAttribute('height', String(containerEl.offsetHeight || 320));
           video.muted = true;
@@ -143,18 +173,15 @@ export function QRScanner({
           video.play().catch(() => {});
         };
 
-        // Disconnect any previous observer
         videoObserverRef.current?.disconnect();
-
-        // Observe the container for the video element that html5-qrcode will inject
         const existingVideo = containerEl.querySelector('video');
         if (existingVideo) {
-          ensureIosVideoPlayback(existingVideo as HTMLVideoElement);
+          ensureVideoPlayback(existingVideo as HTMLVideoElement);
         } else {
           const observer = new MutationObserver(() => {
             const video = containerEl.querySelector('video');
             if (video) {
-              ensureIosVideoPlayback(video as HTMLVideoElement);
+              ensureVideoPlayback(video as HTMLVideoElement);
               observer.disconnect();
             }
           });
@@ -162,16 +189,20 @@ export function QRScanner({
           videoObserverRef.current = observer;
         }
 
-        // Strategy 1: Explicit camera ID if provided
-        if (preferredCameraId) {
+        // ─────────────────────────────────────────────────────────────────────
+        // STEP 3: Start with concrete camera ID when available, otherwise fall
+        // back to facingMode hints (which can cause OverconstrainedError on some
+        // Android devices — the explicit ID path avoids that entirely).
+        // ─────────────────────────────────────────────────────────────────────
+        if (cameraId) {
           await scannerRef.current.start(
-            preferredCameraId,
+            cameraId,
             scanConfig,
             scanSuccessHandler,
             scanErrorHandler
           );
         } else {
-          // Strategy 2: Attempt rear/environment camera (standard iOS facingMode)
+          // Last resort: use facingMode without any device enumeration
           try {
             await scannerRef.current.start(
               { facingMode: 'environment' },
@@ -179,10 +210,8 @@ export function QRScanner({
               scanSuccessHandler,
               scanErrorHandler
             );
-          } catch (envErr) {
-            console.warn('Environment camera failed, attempting fallback to user camera:', envErr);
+          } catch {
             if (!isMountedRef.current) return;
-            // Strategy 3: Fallback to user camera or default
             await scannerRef.current.start(
               { facingMode: 'user' },
               scanConfig,
@@ -192,17 +221,16 @@ export function QRScanner({
           }
         }
 
-        // The MutationObserver above handles video attribute injection.
-        // Belt-and-suspenders: also run it on the existing video if already present.
+        // Belt-and-suspenders: if video is already present post-start, ensure attrs
         const videoNow = containerEl.querySelector('video');
-        if (videoNow) ensureIosVideoPlayback(videoNow as HTMLVideoElement);
+        if (videoNow) ensureVideoPlayback(videoNow as HTMLVideoElement);
 
         if (!isMountedRef.current) return;
 
         setHasPermission(true);
         setPermissionError(null);
 
-        // Check torch capability
+        // Check torch capability (no extra getUserMedia needed here)
         try {
           const capabilities = (scannerRef.current as any).getRunningTrackCapabilities?.();
           if (capabilities && 'torch' in capabilities) {
@@ -210,13 +238,11 @@ export function QRScanner({
           }
         } catch {}
 
-        // Enumerate cameras now that permission is granted
-        try {
-          const availableDevices = await Html5Qrcode.getCameras();
-          if (isMountedRef.current && availableDevices && availableDevices.length > 0) {
-            setCameras(availableDevices);
-          }
-        } catch {}
+        // ─── DO NOT call Html5Qrcode.getCameras() here ───────────────────────
+        // Doing so after start() triggers a second getUserMedia on mobile which
+        // kills the active stream (the exact "disappearing video" bug).
+        // Camera list was already populated in STEP 1 above.
+        // ─────────────────────────────────────────────────────────────────────
 
         setIsInitializing(false);
       } catch (err: any) {
@@ -227,7 +253,7 @@ export function QRScanner({
             err?.name === 'NotAllowedError' || err?.message?.includes('Permission')
               ? 'Camera permission was denied. Please allow camera access in your browser settings.'
               : err?.name === 'OverconstrainedError'
-              ? 'Camera resolution constraint error. Please try switching cameras or retry.'
+              ? 'Camera constraint error. Please try again.'
               : err?.message || 'Unable to start camera feed on this device.';
           setPermissionError(errorMsg);
           setIsInitializing(false);
@@ -238,6 +264,7 @@ export function QRScanner({
     },
     [containerId, onScanSuccess, onScanError, safeStopScanner]
   );
+
 
   // Initialize camera when activeTab is 'camera'
   useEffect(() => {
