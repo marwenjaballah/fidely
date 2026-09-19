@@ -138,7 +138,7 @@ export function SiteHeader() {
                   {profile?.role === "SUPER_ADMIN" && (
                     <DropdownMenuItem asChild className="rounded-xl font-semibold text-primary">
                       <Link href="/admin/overview">
-                        <ShieldCheck className="w-4 h-4 mr-2" />
+                        <ShieldCheck className="w-4 h-4 me-2" />
                         Super Admin Panel
                       </Link>
                     </DropdownMenuItem>
@@ -147,7 +147,7 @@ export function SiteHeader() {
                   {profile?.role === "CASHIER" && (
                     <DropdownMenuItem asChild className="rounded-xl">
                       <Link href="/cashier">
-                        <Store className="w-4 h-4 mr-2" />
+                        <Store className="w-4 h-4 me-2" />
                         Cashier Terminal
                       </Link>
                     </DropdownMenuItem>
@@ -156,7 +156,7 @@ export function SiteHeader() {
                   {profile?.role === "CUSTOMER" && (
                     <DropdownMenuItem asChild className="rounded-xl">
                       <Link href="/customer/overview">
-                        <User className="w-4 h-4 mr-2" />
+                        <User className="w-4 h-4 me-2" />
                         My Loyalty Cards
                       </Link>
                     </DropdownMenuItem>
@@ -166,7 +166,7 @@ export function SiteHeader() {
                     <>
                       <DropdownMenuItem asChild className="rounded-xl font-medium">
                         <Link href="/merchant/overview">
-                          <Store className="w-4 h-4 mr-2" />
+                          <Store className="w-4 h-4 me-2" />
                           Merchant Dashboard
                         </Link>
                       </DropdownMenuItem>
@@ -178,7 +178,7 @@ export function SiteHeader() {
 
                   <DropdownMenuSeparator />
                   <DropdownMenuItem onClick={handleLogout} className="rounded-xl text-rose-500 focus:text-rose-500">
-                    <LogOut className="w-4 h-4 mr-2" />
+                    <LogOut className="w-4 h-4 me-2 rtl:rotate-180" />
                     Sign Out
                   </DropdownMenuItem>
                 </DropdownMenuContent>
