@@ -59,6 +59,7 @@ export function QRScanner({
   const scannerRef = useRef<Html5Qrcode | null>(null);
   const isMountedRef = useRef(true);
   const isStartingRef = useRef(false);
+  const videoObserverRef = useRef<MutationObserver | null>(null);
 
   const safeStopScanner = useCallback(async () => {
     if (!scannerRef.current) return;
@@ -126,18 +127,40 @@ export function QRScanner({
           },
         };
 
-        // Helper to force iOS Safari playsinline & unblock video playback
-        const ensureIosVideoPlayback = () => {
-          const video = containerEl.querySelector('video');
-          if (video) {
-            video.setAttribute('playsinline', 'true');
-            video.setAttribute('webkit-playsinline', 'true');
-            video.setAttribute('autoplay', 'true');
-            video.setAttribute('muted', 'true');
-            video.muted = true;
-            video.play().catch(() => {});
-          }
+        // Helper to force iOS Safari playsinline & unblock video playback.
+        // We MUST set these *before* play() is called, so use a MutationObserver
+        // to catch the exact moment html5-qrcode inserts the <video> element.
+        const ensureIosVideoPlayback = (video: HTMLVideoElement) => {
+          video.setAttribute('playsinline', 'true');
+          video.setAttribute('webkit-playsinline', 'true');
+          video.setAttribute('autoplay', 'true');
+          video.setAttribute('muted', 'true');
+          // Explicit dimensions prevent black frame on mobile before stream resolves
+          video.setAttribute('width', String(containerEl.offsetWidth || 320));
+          video.setAttribute('height', String(containerEl.offsetHeight || 320));
+          video.muted = true;
+          video.playsInline = true;
+          video.play().catch(() => {});
         };
+
+        // Disconnect any previous observer
+        videoObserverRef.current?.disconnect();
+
+        // Observe the container for the video element that html5-qrcode will inject
+        const existingVideo = containerEl.querySelector('video');
+        if (existingVideo) {
+          ensureIosVideoPlayback(existingVideo as HTMLVideoElement);
+        } else {
+          const observer = new MutationObserver(() => {
+            const video = containerEl.querySelector('video');
+            if (video) {
+              ensureIosVideoPlayback(video as HTMLVideoElement);
+              observer.disconnect();
+            }
+          });
+          observer.observe(containerEl, { childList: true, subtree: true });
+          videoObserverRef.current = observer;
+        }
 
         // Strategy 1: Explicit camera ID if provided
         if (preferredCameraId) {
@@ -169,10 +192,10 @@ export function QRScanner({
           }
         }
 
-        // Apply iOS video attributes immediately after starting
-        ensureIosVideoPlayback();
-        setTimeout(ensureIosVideoPlayback, 200);
-        setTimeout(ensureIosVideoPlayback, 500);
+        // The MutationObserver above handles video attribute injection.
+        // Belt-and-suspenders: also run it on the existing video if already present.
+        const videoNow = containerEl.querySelector('video');
+        if (videoNow) ensureIosVideoPlayback(videoNow as HTMLVideoElement);
 
         if (!isMountedRef.current) return;
 
@@ -244,6 +267,7 @@ export function QRScanner({
   useEffect(() => {
     return () => {
       isMountedRef.current = false;
+      videoObserverRef.current?.disconnect();
       if (scannerRef.current) {
         try {
           const state = scannerRef.current.getState();
@@ -378,9 +402,11 @@ export function QRScanner({
       <div className={`relative ${activeTab === 'camera' ? 'block' : 'hidden'}`}>
         <div className="relative w-full aspect-square max-w-md mx-auto overflow-hidden rounded-3xl shadow-2xl bg-black border-2 border-border/80 group">
           {/* Scanner HTML5 Container */}
+          {/* Note: do NOT use object-cover on mobile – it produces a black frame */}
+          {/* when the video dimensions aren't resolved at stream-start time.     */}
           <div
             id={containerId}
-            className="w-full h-full aspect-square bg-black [&_video]:w-full [&_video]:h-full [&_video]:object-cover [&_#qr-shaded-region]:!hidden [&_#qr-shaded-region_*]:!hidden [&_canvas]:!opacity-0 [&_canvas]:!absolute [&_canvas]:!pointer-events-none [&_div]:!border-none"
+            className="w-full h-full bg-black [&_video]:w-full [&_video]:h-full [&_video]:object-fill [&_#qr-shaded-region]:!hidden [&_#qr-shaded-region_*]:!hidden [&_canvas]:!opacity-0 [&_canvas]:!absolute [&_canvas]:!pointer-events-none [&_div]:!border-none"
           />
 
           {/* Reticle Overlay (Active when camera is running) */}

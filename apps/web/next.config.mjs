@@ -17,6 +17,27 @@ const nextConfig = {
       },
     ],
   },
+  async headers() {
+    return [
+      {
+        // Apply camera permission headers to every page/route.
+        // iOS Safari 16+ and Android Chrome 112+ require 'Permissions-Policy: camera'
+        // to be present on the response before getUserMedia will resolve.
+        source: '/(.*)',
+        headers: [
+          {
+            key: 'Permissions-Policy',
+            value: 'camera=*, microphone=()',
+          },
+          {
+            // Legacy header for older Android WebView / Chrome
+            key: 'Feature-Policy',
+            value: 'camera *',
+          },
+        ],
+      },
+    ];
+  },
   async rewrites() {
     const apiBase = (process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3000').replace(/\/$/, '');
     return [
