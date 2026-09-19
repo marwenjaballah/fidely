@@ -51,6 +51,7 @@ import { QRScanner } from '@/components/qr-scanner'
 import { AppleWalletPass } from '@/components/common/apple-wallet-card'
 import { CustomerBottomNav } from '@/components/common/customer-bottom-nav'
 import { useUserStore } from '@/store/user-store'
+import { useI18n } from '@/lib/i18n'
 import { format } from 'date-fns'
 
 export default function CustomerOverviewPage() {
@@ -58,6 +59,7 @@ export default function CustomerOverviewPage() {
   const { toast } = useToast()
   const { profile, signOut, isAuthenticated, hasHydrated, revalidateSession } = useAuth()
   const { updateProfile } = useUserStore()
+  const { t, isRtl, dir } = useI18n()
   const {
     memberships,
     activeMembership,
@@ -92,14 +94,14 @@ export default function CustomerOverviewPage() {
       await updateProfile({ phone: phoneInput.trim() })
       await revalidateSession()
       toast({
-        title: 'Phone Saved!',
-        description: 'Baristas can now award your loyalty points by phone number.',
+        title: t('customer_phone_saved_title'),
+        description: t('customer_phone_saved_desc'),
       })
       setPhoneInput('')
     } catch (err: any) {
       toast({
-        title: 'Error',
-        description: err.message || 'Could not update phone number.',
+        title: t('auth_generic_error'),
+        description: err.message || t('auth_generic_error'),
         variant: 'destructive',
       })
     } finally {
@@ -125,8 +127,8 @@ export default function CustomerOverviewPage() {
             .then((joined) => {
               localStorage.removeItem('fidely_pending_join_store')
               toast({
-                title: 'Welcome!',
-                description: `Successfully added ${joined.name}'s loyalty card to your wallet.`,
+                title: t('customer_join_success_title'),
+                description: t('customer_join_success_desc', { name: joined.name }),
               })
             })
             .catch(() => {
@@ -135,7 +137,7 @@ export default function CustomerOverviewPage() {
         }
       }
     }
-  }, [isAuthenticated, fetchOverview, joinStoreBySlug, toast])
+  }, [isAuthenticated, fetchOverview, joinStoreBySlug, toast, t])
 
   const handleLogout = async () => {
     await signOut()
@@ -147,8 +149,8 @@ export default function CustomerOverviewPage() {
     try {
       await joinStore(storeId)
       toast({
-        title: 'Coffee Card Added!',
-        description: 'Successfully joined the loyalty program.',
+        title: t('customer_join_success_title'),
+        description: t('customer_join_success_title'),
       })
       setJoinModalOpen(false)
     } catch {
@@ -166,13 +168,13 @@ export default function CustomerOverviewPage() {
     try {
       const joined = await joinStoreBySlug(slugInput.trim())
       toast({
-        title: 'Coffee Card Added!',
-        description: `Successfully joined ${joined.name}'s loyalty program.`,
+        title: t('customer_join_success_title'),
+        description: t('customer_join_success_desc', { name: joined.name }),
       })
       setSlugInput('')
       setJoinModalOpen(false)
     } catch (err: any) {
-      setJoinSlugError(err.message || 'Failed to find or join store.')
+      setJoinSlugError(err.message || t('auth_generic_error'))
     } finally {
       setIsJoiningSlug(false)
     }
@@ -185,12 +187,12 @@ export default function CustomerOverviewPage() {
     try {
       const joined = await joinStoreBySlug(decodedText.trim())
       toast({
-        title: 'QR Code Scanned!',
-        description: `Successfully added ${joined.name}'s loyalty pass!`,
+        title: t('customer_join_success_title'),
+        description: t('customer_join_success_desc', { name: joined.name }),
       })
       setJoinModalOpen(false)
     } catch (err: any) {
-      setJoinSlugError(err.message || 'Could not recognize store QR code.')
+      setJoinSlugError(err.message || t('scanner_invalid_qr'))
     } finally {
       setIsJoiningSlug(false)
     }
@@ -206,13 +208,13 @@ export default function CustomerOverviewPage() {
     try {
       await refreshQrToken(membershipId)
       toast({
-        title: 'QR Pass Refreshed',
-        description: 'New dynamic security pass token generated successfully.',
+        title: t('copied'),
+        description: t('copied'),
       })
     } catch (err: any) {
       toast({
-        title: 'Refresh Failed',
-        description: err.message || 'Could not refresh QR code.',
+        title: t('auth_generic_error'),
+        description: err.message || t('auth_generic_error'),
         variant: 'destructive',
       })
     }
@@ -241,7 +243,7 @@ export default function CustomerOverviewPage() {
             <span className="text-lg font-bold tracking-tight">Fidely</span>
           </Link>
           <span className="hidden sm:inline text-xs text-muted-foreground bg-muted px-2.5 py-1 rounded-full font-medium">
-            Customer Pass
+            {t('nav_customer')}
           </span>
         </div>
 
@@ -249,12 +251,12 @@ export default function CustomerOverviewPage() {
           <LanguageSwitcher />
           <ThemeToggleButton />
 
-          <div className="flex items-center gap-2 border-l border-border/60 pl-3">
-            <div className="hidden md:flex flex-col text-right">
+          <div className="flex items-center gap-2 border-s border-border/60 ps-3">
+            <div className="hidden md:flex flex-col text-start">
               <span className="text-xs font-semibold leading-tight text-foreground">
                 {profile?.email?.split('@')[0] || 'Customer'}
               </span>
-              <span className="text-[11px] text-muted-foreground leading-tight">{profile?.email}</span>
+              <span className="text-[11px] text-muted-foreground leading-tight font-mono">{profile?.email}</span>
             </div>
 
             <Button
@@ -263,8 +265,8 @@ export default function CustomerOverviewPage() {
               onClick={handleLogout}
               className="text-muted-foreground hover:text-destructive gap-1.5"
             >
-              <LogOut className="h-4 w-4" />
-              <span className="hidden sm:inline text-xs">Sign Out</span>
+              <LogOut className="h-4 w-4 rtl:rotate-180" />
+              <span className="hidden sm:inline text-xs">{t('logout')}</span>
             </Button>
           </div>
         </div>
@@ -275,7 +277,7 @@ export default function CustomerOverviewPage() {
         {loading && memberships.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-24 space-y-4">
             <Loader2 className="h-8 w-8 animate-spin text-primary" />
-            <p className="text-sm text-muted-foreground">Loading your loyalty passes...</p>
+            <p className="text-sm text-muted-foreground">{t('loading')}</p>
           </div>
         ) : memberships.length === 0 ? (
           /* ── Empty State: No Loyalty Passes Enrolled Yet ── */
@@ -283,10 +285,10 @@ export default function CustomerOverviewPage() {
             <div className="h-20 w-20 rounded-3xl bg-primary/10 text-primary flex items-center justify-center mx-auto">
               <Sparkles className="h-10 w-10" />
             </div>
-            <div className="space-y-2">
-              <h2 className="text-2xl font-bold tracking-tight">Welcome to Fidely Loyalty!</h2>
+            <div className="space-y-2 text-center">
+              <h2 className="text-2xl font-bold tracking-tight">{t('customer_empty_cards_title')}</h2>
               <p className="text-muted-foreground text-sm leading-relaxed">
-                You don't have any active coffee loyalty cards yet. Join a coffee shop below to start earning points with every cup!
+                {t('customer_empty_cards_desc')}
               </p>
             </div>
 
@@ -300,16 +302,16 @@ export default function CustomerOverviewPage() {
                 className="w-full gap-2 rounded-2xl h-12 font-semibold shadow-md"
               >
                 <QrCode className="h-5 w-5" />
-                Scan In-Store QR Stand
+                {t('customer_scan_qr_stand')}
               </Button>
             </div>
 
             {availableStores.length > 0 ? (
-              <div className="space-y-3 pt-2">
+              <div className="space-y-3 pt-2 text-start">
                 <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                  Available Partner Cafes
+                  {t('store_switcher_my_stores')}
                 </p>
-                <div className="grid gap-2 text-left">
+                <div className="grid gap-2">
                   {availableStores.map((store) => (
                     <div
                       key={store.id}
@@ -323,10 +325,10 @@ export default function CustomerOverviewPage() {
                             <Coffee className="h-5 w-5" />
                           )}
                         </div>
-                        <div>
+                        <div className="text-start">
                           <p className="font-semibold text-sm">{store.name}</p>
-                          <p className="text-xs text-muted-foreground">
-                            {store.pointsPerTnd * 10} pts per 10 TND spent
+                          <p className="text-xs text-muted-foreground font-mono">
+                            fidely.app/{store.slug}
                           </p>
                         </div>
                       </div>
@@ -338,7 +340,7 @@ export default function CustomerOverviewPage() {
                         {joiningStoreId === store.id ? (
                           <Loader2 className="h-4 w-4 animate-spin" />
                         ) : (
-                          'Add Card'
+                          t('customer_add_coffee_card')
                         )}
                       </Button>
                     </div>
@@ -348,18 +350,19 @@ export default function CustomerOverviewPage() {
             ) : null}
 
             {/* Direct Link / Code Input in Empty State */}
-            <div className="pt-2 border-t border-border/40">
-              <form onSubmit={handleJoinBySlug} className="space-y-3 text-left">
+            <div className="pt-2 border-t border-border/40 text-start">
+              <form onSubmit={handleJoinBySlug} className="space-y-3">
                 <Label htmlFor="empty-store-slug-input" className="text-xs font-semibold text-foreground">
-                  Or Join with Coffee Shop Link / Code
+                  {t('customer_join_by_slug_label')}
                 </Label>
                 <div className="flex items-center gap-2">
                   <div className="flex flex-1 items-center rounded-lg border bg-background px-3 py-1.5 text-xs text-muted-foreground focus-within:ring-1 focus-within:ring-primary shadow-2xs">
-                    <span className="font-mono text-muted-foreground/80 select-none">fidely.app/store/</span>
+                    <span className="font-mono text-muted-foreground/80 select-none" dir="ltr">fidely.app/store/</span>
                     <input
                       id="empty-store-slug-input"
                       type="text"
-                      className="w-full bg-transparent px-1 py-0.5 text-foreground font-mono font-medium outline-none text-xs"
+                      dir="ltr"
+                      className="w-full bg-transparent px-1 py-0.5 text-foreground font-mono font-medium outline-none text-xs text-start"
                       placeholder="artisan-cafe"
                       value={slugInput}
                       onChange={(e) => {
@@ -369,7 +372,7 @@ export default function CustomerOverviewPage() {
                     />
                   </div>
                   <Button type="submit" size="sm" disabled={isJoiningSlug || !slugInput.trim()} className="h-9 px-4 text-xs font-medium shrink-0">
-                    {isJoiningSlug ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : 'Join Cafe'}
+                    {isJoiningSlug ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : t('customer_join_slug_btn')}
                   </Button>
                 </div>
                 {joinSlugError && (
@@ -383,11 +386,11 @@ export default function CustomerOverviewPage() {
         ) : (
           <>
             {/* ── Store Switcher / Loyalty Cards Carousel Header ── */}
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 text-start">
               <div>
-                <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">My Loyalty Cards</h1>
-                <p className="text-sm text-muted-foreground">
-                  Present your QR code at checkout to collect points and redeem free drinks.
+                <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">{t('customer_my_cards')}</h1>
+                <p className="text-sm text-muted-foreground mt-1">
+                  {t('customer_cards_desc')}
                 </p>
               </div>
 
@@ -402,7 +405,7 @@ export default function CustomerOverviewPage() {
                   className="gap-1.5 shadow-2xs font-semibold"
                 >
                   <QrCode className="h-4 w-4" />
-                  Scan QR Stand
+                  {t('customer_scan_qr_stand')}
                 </Button>
 
                 <Button
@@ -415,22 +418,22 @@ export default function CustomerOverviewPage() {
                   className="gap-1.5 shadow-2xs"
                 >
                   <Plus className="h-4 w-4" />
-                  Add Coffee Card
+                  {t('customer_add_coffee_card')}
                 </Button>
               </div>
             </div>
 
             {/* ── Phone Number Setup Action Banner ── */}
             {!profile?.phone && (
-              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 p-4 rounded-2xl border border-amber-500/30 bg-amber-500/10 text-foreground">
+              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 p-4 rounded-2xl border border-amber-500/30 bg-amber-500/10 text-foreground text-start">
                 <div className="flex items-center gap-3">
                   <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-amber-500/20 text-amber-600 dark:text-amber-400">
                     <Smartphone className="h-5 w-5" />
                   </div>
                   <div>
-                    <p className="text-xs font-bold tracking-tight">Add your Phone Number</p>
-                    <p className="text-[11px] text-muted-foreground">
-                      Baristas can find your loyalty pass and award points even if you forget your phone.
+                    <p className="text-xs font-bold tracking-tight">{t('customer_phone_banner_title')}</p>
+                    <p className="text-[11px] text-muted-foreground mt-0.5">
+                      {t('customer_phone_banner_desc')}
                     </p>
                   </div>
                 </div>
@@ -438,10 +441,11 @@ export default function CustomerOverviewPage() {
                 <div className="flex items-center gap-2 w-full sm:w-auto">
                   <Input
                     type="tel"
-                    placeholder="e.g. 98123456"
+                    dir="ltr"
+                    placeholder="+216 55 123 456"
                     value={phoneInput}
                     onChange={(e) => setPhoneInput(e.target.value)}
-                    className="h-8 text-xs bg-background/80 w-full sm:w-36 rounded-xl"
+                    className="h-8 text-xs bg-background/80 w-full sm:w-36 rounded-xl font-mono text-start"
                   />
                   <Button
                     size="sm"
@@ -449,7 +453,7 @@ export default function CustomerOverviewPage() {
                     disabled={isSavingPhone || !phoneInput.trim()}
                     className="h-8 px-3 text-xs font-semibold rounded-xl shrink-0"
                   >
-                    {isSavingPhone ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : 'Save'}
+                    {isSavingPhone ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : t('save')}
                   </Button>
                 </div>
               </div>
@@ -476,8 +480,8 @@ export default function CustomerOverviewPage() {
                         <Coffee className="h-4 w-4 shrink-0" />
                       )}
                       <span>{m.storeName}</span>
-                      <Badge variant={isSelected ? 'default' : 'secondary'} className="text-[11px] ml-1">
-                        {m.pointsBalance} pts
+                      <Badge variant={isSelected ? 'default' : 'secondary'} className="text-[11px] ms-1">
+                        {m.pointsBalance} {t('pts')}
                       </Badge>
                     </button>
                   )
@@ -507,36 +511,36 @@ export default function CustomerOverviewPage() {
                     onRefreshQr={() => handleRefreshQr(activeMembership.id)}
                   />
                   <p className="text-center text-[11px] text-muted-foreground">
-                    Tap the pass or barcode to view fullscreen brightness pass or flip for details.
+                    {t('customer_show_code')}
                   </p>
                 </div>
 
                 {/* Right: Rewards, Vouchers, & History Tabs (7 cols) */}
                 <div className="lg:col-span-7 space-y-6">
-                  <Tabs id="rewards-tabs-section" defaultValue="rewards" className="w-full scroll-mt-20">
+                  <Tabs id="rewards-tabs-section" defaultValue="rewards" dir={dir} className="w-full scroll-mt-20">
                     <TabsList className="grid grid-cols-3 w-full bg-muted/60 p-1 rounded-2xl">
                       <TabsTrigger value="rewards" className="rounded-xl text-xs gap-1">
-                        <Gift className="h-3.5 w-3.5" /> Rewards
+                        <Gift className="h-3.5 w-3.5" /> {t('customer_bottom_nav_perks')}
                       </TabsTrigger>
                       <TabsTrigger value="vouchers" className="rounded-xl text-xs gap-1">
-                        <Ticket className="h-3.5 w-3.5" /> Vouchers ({activeMembership.vouchers.length})
+                        <Ticket className="h-3.5 w-3.5" /> {t('customer_tab_rewards')} ({activeMembership.vouchers.length})
                       </TabsTrigger>
                       <TabsTrigger value="history" className="rounded-xl text-xs gap-1">
-                        <History className="h-3.5 w-3.5" /> History
+                        <History className="h-3.5 w-3.5" /> {t('customer_history_title')}
                       </TabsTrigger>
                     </TabsList>
 
                     {/* Rewards Tab */}
                     <TabsContent value="rewards" className="mt-4 space-y-3">
-                      <div className="rounded-2xl border border-border/70 bg-card p-4 shadow-sm">
-                        <h3 className="font-bold text-sm mb-1">Available Rewards</h3>
+                      <div className="rounded-2xl border border-border/70 bg-card p-4 shadow-sm text-start">
+                        <h3 className="font-bold text-sm mb-1">{t('rewards_title')}</h3>
                         <p className="text-xs text-muted-foreground mb-4">
-                          Redeem your points directly at the counter.
+                          {t('rewards_subtitle')}
                         </p>
 
                         {activeMembership.rewards.length === 0 ? (
                           <div className="p-6 text-center text-xs text-muted-foreground">
-                            No active rewards listed for this store.
+                            {t('customizer_no_rewards_title')}
                           </div>
                         ) : (
                           <div className="space-y-2.5">
@@ -551,13 +555,13 @@ export default function CustomerOverviewPage() {
                                       : 'border-border/60 bg-muted/20'
                                   }`}
                                 >
-                                  <div className="space-y-0.5">
+                                  <div className="space-y-0.5 text-start">
                                     <p className="font-semibold text-sm text-foreground">{reward.name}</p>
                                     {reward.description && (
                                       <p className="text-xs text-muted-foreground">{reward.description}</p>
                                     )}
                                     <span className="inline-block text-xs font-bold text-primary">
-                                      {reward.pointsCost} pts
+                                      {reward.pointsCost} {t('pts')}
                                     </span>
                                   </div>
 
@@ -569,7 +573,7 @@ export default function CustomerOverviewPage() {
                                         : 'text-muted-foreground'
                                     }`}
                                   >
-                                    {canAfford ? 'Available' : `${reward.pointsCost - activeMembership.pointsBalance} pts left`}
+                                    {canAfford ? t('customizer_reward_active') : `${reward.pointsCost - activeMembership.pointsBalance} ${t('pts')} left`}
                                   </Badge>
                                 </div>
                               )
@@ -581,17 +585,17 @@ export default function CustomerOverviewPage() {
 
                     {/* Vouchers Tab */}
                     <TabsContent value="vouchers" className="mt-4 space-y-3">
-                      <div className="rounded-2xl border border-border/70 bg-card p-4 shadow-sm">
-                        <h3 className="font-bold text-sm mb-1">Redeemed Perk Receipts</h3>
+                      <div className="rounded-2xl border border-border/70 bg-card p-4 shadow-sm text-start">
+                        <h3 className="font-bold text-sm mb-1">{t('rewards_voucher_code')}</h3>
                         <p className="text-xs text-muted-foreground mb-4">
-                          History and voucher records of rewards redeemed at checkout.
+                          {t('rewards_voucher_instruction')}
                         </p>
 
                         {activeMembership.vouchers.length === 0 ? (
                           <div className="p-8 text-center space-y-2">
                             <Ticket className="h-8 w-8 text-muted-foreground/40 mx-auto" />
                             <p className="text-xs text-muted-foreground">
-                              No vouchers yet. Redeem rewards with the cashier at checkout to generate voucher records.
+                              {t('rewards_voucher_instruction')}
                             </p>
                           </div>
                         ) : (
@@ -601,15 +605,15 @@ export default function CustomerOverviewPage() {
                                 key={voucher.id}
                                 className="p-3.5 rounded-2xl border border-border/60 bg-muted/20 flex flex-col sm:flex-row sm:items-center justify-between gap-2"
                               >
-                                <div className="space-y-1">
+                                <div className="space-y-1 text-start">
                                   <div className="flex items-center gap-2">
                                     <p className="font-semibold text-sm">{voucher.rewardName}</p>
                                     <span className="text-[11px] text-muted-foreground font-mono">
-                                      ({voucher.pointsCost} pts)
+                                      ({voucher.pointsCost} {t('pts')})
                                     </span>
                                   </div>
                                   <div className="flex items-center gap-2">
-                                    <code className="text-xs bg-muted px-2 py-0.5 rounded font-mono font-bold text-foreground">
+                                    <code className="text-xs bg-muted px-2 py-0.5 rounded font-mono font-bold text-foreground" dir="ltr">
                                       {voucher.code}
                                     </code>
                                     <span className="text-[11px] text-muted-foreground">
@@ -631,7 +635,7 @@ export default function CustomerOverviewPage() {
                                     {voucher.status === 'used' ? (
                                       <>
                                         <CheckCircle2 className="w-3 h-3" />
-                                        CLAIMED AT POS
+                                        CLAIMED
                                       </>
                                     ) : (
                                       'ACTIVE'
@@ -647,31 +651,31 @@ export default function CustomerOverviewPage() {
 
                     {/* History Tab */}
                     <TabsContent value="history" className="mt-4 space-y-3">
-                      <div className="rounded-2xl border border-border/70 bg-card p-4 shadow-sm">
-                        <h3 className="font-bold text-sm mb-1">Recent Activity</h3>
+                      <div className="rounded-2xl border border-border/70 bg-card p-4 shadow-sm text-start">
+                        <h3 className="font-bold text-sm mb-1">{t('customer_history_title')}</h3>
                         <p className="text-xs text-muted-foreground mb-4">
-                          Points earned and rewards redeemed at {activeMembership.storeName}.
+                          {t('customer_no_history')}
                         </p>
 
                         {activeMembership.transactions.length === 0 ? (
                           <div className="p-8 text-center space-y-2">
                             <History className="h-8 w-8 text-muted-foreground/40 mx-auto" />
                             <p className="text-xs text-muted-foreground">
-                              No recent transactions yet. Make your first purchase to earn points!
+                              {t('customer_no_history')}
                             </p>
                           </div>
                         ) : (
                           <div className="space-y-2.5">
-                            {activeMembership.transactions.map((t) => {
-                              const isEarn = t.type === 'earn'
+                            {activeMembership.transactions.map((tItem) => {
+                              const isEarn = tItem.type === 'earn'
                               return (
                                 <div
-                                  key={t.id}
+                                  key={tItem.id}
                                   className="p-3 rounded-2xl border border-border/40 bg-muted/20 flex items-center justify-between"
                                 >
                                   <div className="flex items-center gap-3">
                                     <div
-                                      className={`h-9 w-9 rounded-xl flex items-center justify-center ${
+                                      className={`h-9 w-9 rounded-xl flex items-center justify-center shrink-0 ${
                                         isEarn
                                           ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400'
                                           : 'bg-primary/10 text-primary'
@@ -683,12 +687,12 @@ export default function CustomerOverviewPage() {
                                         <Gift className="h-4 w-4" />
                                       )}
                                     </div>
-                                    <div>
+                                    <div className="text-start">
                                       <p className="font-semibold text-xs text-foreground">
-                                        {isEarn ? 'Order Points Earned' : 'Reward Redeemed'}
+                                        {isEarn ? t('pos_points_to_award') : t('pos_redeem_reward_tab')}
                                       </p>
                                       <p className="text-[11px] text-muted-foreground">
-                                        {new Date(t.createdAt).toLocaleDateString(undefined, {
+                                        {new Date(tItem.createdAt).toLocaleDateString(undefined, {
                                           month: 'short',
                                           day: 'numeric',
                                           hour: '2-digit',
@@ -698,7 +702,7 @@ export default function CustomerOverviewPage() {
                                     </div>
                                   </div>
 
-                                  <div className="text-right">
+                                  <div className="text-end">
                                     <span
                                       className={`text-xs font-bold ${
                                         isEarn
@@ -706,11 +710,11 @@ export default function CustomerOverviewPage() {
                                           : 'text-foreground'
                                       }`}
                                     >
-                                      {isEarn ? `+${t.pointsAffected}` : t.pointsAffected} pts
+                                      {isEarn ? `+${tItem.pointsAffected}` : tItem.pointsAffected} {t('pts')}
                                     </span>
-                                    {t.amountTnd !== null && (
-                                      <p className="text-[11px] text-muted-foreground">
-                                        {t.amountTnd.toFixed(2)} TND
+                                    {tItem.amountTnd !== null && (
+                                      <p className="text-[11px] text-muted-foreground font-mono">
+                                        {tItem.amountTnd.toFixed(2)} TND
                                       </p>
                                     )}
                                   </div>
@@ -731,26 +735,26 @@ export default function CustomerOverviewPage() {
         {/* ── Global Join Coffee Pass Modal (Accessible from both Empty State & Card Views) ── */}
         <Dialog open={joinModalOpen} onOpenChange={setJoinModalOpen}>
           <DialogContent className="sm:max-w-[480px]">
-            <DialogHeader>
+            <DialogHeader className="text-start">
               <DialogTitle className="flex items-center gap-2 text-lg">
                 <Coffee className="h-5 w-5 text-primary" />
-                Add Coffee Loyalty Card
+                {t('customer_add_coffee_card')}
               </DialogTitle>
               <DialogDescription>
-                Scan a table QR poster, browse partner cafes, or enter a store link.
+                {t('customer_cards_desc')}
               </DialogDescription>
             </DialogHeader>
 
-            <Tabs value={activeJoinTab} onValueChange={(val) => setActiveJoinTab(val as any)} className="w-full pt-2">
+            <Tabs value={activeJoinTab} onValueChange={(val) => setActiveJoinTab(val as any)} dir={dir} className="w-full pt-2">
               <TabsList className="grid grid-cols-3 w-full mb-4">
                 <TabsTrigger value="scan" className="text-xs gap-1">
-                  <QrCode className="h-3.5 w-3.5" /> Scan QR
+                  <QrCode className="h-3.5 w-3.5" /> {t('scanner_title')}
                 </TabsTrigger>
                 <TabsTrigger value="explore" className="text-xs gap-1">
-                  <Coffee className="h-3.5 w-3.5" /> Browse {availableStores.length > 0 && `(${availableStores.length})`}
+                  <Coffee className="h-3.5 w-3.5" /> {t('customer_bottom_nav_stores')} {availableStores.length > 0 && `(${availableStores.length})`}
                 </TabsTrigger>
                 <TabsTrigger value="code" className="text-xs gap-1">
-                  <Globe className="h-3.5 w-3.5" /> Enter Link
+                  <Globe className="h-3.5 w-3.5" /> {t('customer_join_by_slug_label')}
                 </TabsTrigger>
               </TabsList>
 
@@ -763,7 +767,7 @@ export default function CustomerOverviewPage() {
                   />
                 </div>
                 <p className="text-[11px] text-muted-foreground text-center">
-                  Point your camera at any table stand QR poster or pass link to instantly add the store.
+                  {t('scanner_instruction')}
                 </p>
                 {joinSlugError && (
                   <p className="text-xs font-medium text-destructive bg-destructive/10 p-2.5 rounded-lg border border-destructive/20 text-center">
@@ -775,7 +779,7 @@ export default function CustomerOverviewPage() {
               {/* Tab 2: Available partner stores */}
               <TabsContent value="explore" className="space-y-3">
                 {availableStores.length > 0 ? (
-                  <div className="space-y-2.5 max-h-[320px] overflow-y-auto pr-1">
+                  <div className="space-y-2.5 max-h-[320px] overflow-y-auto pe-1">
                     {availableStores.map((store) => (
                       <div
                         key={store.id}
@@ -789,10 +793,10 @@ export default function CustomerOverviewPage() {
                               <Coffee className="h-5 w-5" />
                             )}
                           </div>
-                          <div>
+                          <div className="text-start">
                             <p className="font-semibold text-sm text-foreground">{store.name}</p>
-                            <p className="text-xs text-muted-foreground">
-                              {store.rewardsCount} rewards available • /{store.slug}
+                            <p className="text-xs text-muted-foreground font-mono">
+                              fidely.app/{store.slug}
                             </p>
                           </div>
                         </div>
@@ -805,7 +809,7 @@ export default function CustomerOverviewPage() {
                           {joiningStoreId === store.id ? (
                             <Loader2 className="h-3.5 w-3.5 animate-spin" />
                           ) : (
-                            'Join'
+                            t('customer_join_slug_btn')
                           )}
                         </Button>
                       </div>
@@ -814,27 +818,28 @@ export default function CustomerOverviewPage() {
                 ) : (
                   <div className="p-6 rounded-2xl bg-muted/40 text-center space-y-2 border border-border/40">
                     <CheckCircle2 className="h-8 w-8 text-emerald-500 mx-auto" />
-                    <p className="text-sm font-semibold">You've joined all partner cafes!</p>
+                    <p className="text-sm font-semibold">{t('customer_empty_cards_title')}</p>
                     <p className="text-xs text-muted-foreground">
-                      When visiting a new cafe, you can scan their in-store QR code or enter their store link in the other tabs.
+                      {t('customer_empty_cards_desc')}
                     </p>
                   </div>
                 )}
               </TabsContent>
 
               {/* Tab 3: Join by Slug / URL */}
-              <TabsContent value="code" className="space-y-4">
+              <TabsContent value="code" className="space-y-4 text-start">
                 <form onSubmit={handleJoinBySlug} className="space-y-4">
                   <div className="space-y-2">
                     <Label htmlFor="store-slug-input" className="text-xs font-medium">
-                      Store Link or Identifier
+                      {t('customer_join_by_slug_label')}
                     </Label>
                     <div className="flex items-center rounded-lg border bg-background px-3 py-1.5 text-xs text-muted-foreground focus-within:ring-1 focus-within:ring-primary shadow-2xs">
-                      <span className="font-mono text-muted-foreground/80 select-none">fidely.app/store/</span>
+                      <span className="font-mono text-muted-foreground/80 select-none" dir="ltr">fidely.app/store/</span>
                       <input
                         id="store-slug-input"
                         type="text"
-                        className="w-full bg-transparent px-1 py-0.5 text-foreground font-mono font-medium outline-none text-xs"
+                        dir="ltr"
+                        className="w-full bg-transparent px-1 py-0.5 text-foreground font-mono font-medium outline-none text-xs text-start"
                         placeholder="artisan-cafe"
                         value={slugInput}
                         onChange={(e) => {
@@ -845,9 +850,6 @@ export default function CustomerOverviewPage() {
                         required
                       />
                     </div>
-                    <p className="text-[11px] text-muted-foreground">
-                      Enter the coffee shop URL handle or paste their public link.
-                    </p>
                   </div>
 
                   {joinSlugError && (
@@ -860,12 +862,12 @@ export default function CustomerOverviewPage() {
                     {isJoiningSlug ? (
                       <>
                         <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                        Adding Coffee Card...
+                        {t('loading')}
                       </>
                     ) : (
                       <>
                         <Plus className="h-3.5 w-3.5" />
-                        Add Coffee Card
+                        {t('customer_join_slug_btn')}
                       </>
                     )}
                   </Button>
@@ -900,3 +902,4 @@ export default function CustomerOverviewPage() {
     </div>
   )
 }
+

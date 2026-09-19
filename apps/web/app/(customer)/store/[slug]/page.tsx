@@ -222,7 +222,7 @@ export default function CustomerStorePage({ params }: { params: Promise<{ slug: 
         />
 
         {/* Action Button */}
-        <div className="space-y-3">
+        <div className="space-y-3 text-center">
           <Button
             size="lg"
             onClick={handleJoinClick}
@@ -231,22 +231,22 @@ export default function CustomerStorePage({ params }: { params: Promise<{ slug: 
           >
             {joining ? (
               <>
-                <Loader2 className="h-5 w-5 animate-spin" /> Adding Card...
+                <Loader2 className="h-5 w-5 animate-spin" /> {t('loading')}
               </>
             ) : isAuthenticated ? (
               <>
-                Add {store.name} Card <ArrowRight className="h-4 w-4" />
+                {t('customer_add_coffee_card')} <ArrowRight className="h-4 w-4 rtl:rotate-180" />
               </>
             ) : (
               <>
-                Sign Up & Collect Points <ArrowRight className="h-4 w-4" />
+                {t('auth_signup_button')} <ArrowRight className="h-4 w-4 rtl:rotate-180" />
               </>
             )}
           </Button>
           <p className="text-center text-xs text-muted-foreground">
             {isAuthenticated
-              ? 'Already registered. Tap above to add to your wallet.'
-              : 'Create a free account in seconds to start earning loyalty points!'}
+              ? t('customer_cards_desc')
+              : t('landing_cta_description')}
           </p>
         </div>
 
