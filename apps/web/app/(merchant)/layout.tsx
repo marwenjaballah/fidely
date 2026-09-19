@@ -26,15 +26,17 @@ import { ThemeToggleButton } from '@/components/common/theme-toggle-button'
 import { StoreSwitcher } from '@/components/common/store-switcher'
 import { useMerchantStore } from '@/store/merchant-store'
 import { LanguageSwitcher } from '@/components/common/language-switcher'
+import { MobileHeader } from '@/components/mobile/mobile-header'
+import { MerchantBottomNav } from '@/components/mobile/merchant-bottom-nav'
 
 /**
  * Merchant Dashboard Layout
  * 
  * Wraps all merchant dashboard pages with:
  * - Authentication & role protection
- * - Sidebar navigation
+ * - Sidebar navigation (Desktop) & Bottom navigation (Mobile)
  * - Header with breadcrumbs, language switcher, and store switcher
- * - Responsive structure
+ * - Responsive structure & 1-tap Scene Switcher
  */
 export default function DashboardLayout({
     children,
@@ -42,8 +44,9 @@ export default function DashboardLayout({
     children: React.ReactNode
 }) {
     const { isAuthenticated, hasHydrated, profile } = useAuth()
-    const { fetchStores } = useMerchantStore()
+    const { fetchStores, activeStore } = useMerchantStore()
     const { t } = useI18n()
+
     const router = useRouter()
     const pathname = usePathname()
     const [isMounted, setIsMounted] = useState(false)
@@ -159,7 +162,16 @@ export default function DashboardLayout({
             <SidebarProvider>
                 <AppSidebar />
                 <SidebarInset>
-                    <header className="sticky top-0 z-40 flex h-12 md:h-14 lg:h-16 shrink-0 items-center gap-2 px-2 sm:px-4 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 border-b">
+                    {/* Mobile Top Bar with 1-Tap Scene Switcher (<md) */}
+                    <MobileHeader
+                        scene="merchant"
+                        storeName={activeStore?.name}
+                        storeColor={activeStore?.primaryColor}
+                        logoUrl={activeStore?.logoUrl}
+                    />
+
+                    {/* Desktop Header with Breadcrumbs & Controls (md+) */}
+                    <header className="sticky top-0 z-40 hidden md:flex h-12 md:h-14 lg:h-16 shrink-0 items-center gap-2 px-2 sm:px-4 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 border-b">
                         <div className="flex flex-1 items-center gap-1 sm:gap-2 min-w-0">
                             <SidebarTrigger className="-ms-1 shrink-0" />
                             <Separator
@@ -188,11 +200,11 @@ export default function DashboardLayout({
                             </Breadcrumb>
                         </div>
                         <div className="ms-auto flex items-center gap-1 sm:gap-2 shrink-0">
-                            {/* StoreSwitcher: hidden on mobile to save space */}
+                            {/* StoreSwitcher */}
                             <div className="hidden sm:block">
                                 <StoreSwitcher variant="header" />
                             </div>
-                            {/* Language switcher: hidden on small phones */}
+                            {/* Language switcher */}
                             <div className="hidden md:block">
                                 <LanguageSwitcher />
                             </div>
@@ -204,9 +216,13 @@ export default function DashboardLayout({
                             </Button>
                         </div>
                     </header>
-                    <main className="flex flex-1 flex-col overflow-hidden">
+
+                    <main className="flex flex-1 flex-col overflow-x-hidden overflow-y-auto pb-24 md:pb-6">
                         {children}
                     </main>
+
+                    {/* Docked Mobile Bottom Navigation Bar (<md) */}
+                    <MerchantBottomNav />
                 </SidebarInset>
             </SidebarProvider>
         </div>

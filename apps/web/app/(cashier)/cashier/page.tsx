@@ -41,6 +41,8 @@ import { createCookieAuthApiClient, refreshAuthSession, ApiError } from '@/lib/a
 import { AUTH_ROUTES } from '@/features/auth/services/auth-service';
 
 import { useI18n } from '@/lib/i18n';
+import { MobileHeader } from '@/components/mobile/mobile-header';
+import { CashierBottomNav, CashierTab } from '@/components/mobile/cashier-bottom-nav';
 
 interface CashierStoreInfo {
   id: string;
@@ -110,6 +112,23 @@ export default function CashierPage() {
 
   // Modal feedback state
   const [feedback, setFeedback] = useState<FeedbackData>({ state: 'idle' });
+  const [mobileTab, setMobileTab] = useState<CashierTab>('pos');
+
+  const handleSelectMobileTab = (tab: CashierTab) => {
+    setMobileTab(tab);
+    if (tab === 'scan') {
+      setScanMode({ active: true, type: null, value: null });
+    } else if (tab === 'pos') {
+      setScanMode((prev) => ({ ...prev, active: false }));
+    } else if (tab === 'redeem') {
+      setScanMode((prev) => ({ ...prev, active: false }));
+    } else if (tab === 'shift') {
+      setScanMode((prev) => ({ ...prev, active: false }));
+      if (activeStore) {
+        fetchRecentTransactions(activeStore.id);
+      }
+    }
+  };
 
   const fetchStores = useCallback(async () => {
     setIsLoadingStores(true);
@@ -317,8 +336,16 @@ export default function CashierPage() {
 
   return (
     <div className="min-h-screen bg-background flex flex-col text-foreground" dir={dir}>
-      {/* CASHIER TOP BAR */}
-      <header className="sticky top-0 z-40 flex h-11 sm:h-14 lg:h-16 shrink-0 items-center justify-between border-b border-border/60 bg-background/95 px-3 sm:px-8 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+      {/* MOBILE TOP BAR with 1-Tap Scene Switcher (<md) */}
+      <MobileHeader
+        scene="cashier"
+        storeName={activeStore?.name}
+        storeColor={activeStore?.primaryColor}
+        onLogout={handleLogout}
+      />
+
+      {/* DESKTOP TOP BAR (md+) */}
+      <header className="sticky top-0 z-40 hidden md:flex h-14 lg:h-16 shrink-0 items-center justify-between border-b border-border/60 bg-background/95 px-4 sm:px-8 backdrop-blur supports-[backdrop-filter]:bg-background/60">
         <div className="flex items-center gap-1.5 sm:gap-3 shrink-0">
           <FidelyLogo size="sm" variant="subtle" />
           <div>
@@ -387,10 +414,10 @@ export default function CashierPage() {
       </header>
 
       {/* MAIN TERMINAL BODY */}
-      <main className="flex-1 flex flex-col items-center justify-start p-4 sm:p-8 max-w-5xl mx-auto w-full space-y-6">
-        {/* SHIFT STATS & STORE BRAND BAR */}
+      <main className="flex-1 flex flex-col items-center justify-start p-3 sm:p-8 max-w-5xl mx-auto w-full space-y-4 sm:space-y-6 pb-24 md:pb-8">
+        {/* SHIFT STATS & STORE BRAND BAR (Desktop only) */}
         {activeStore && (
-          <div className="w-full flex flex-col sm:flex-row items-center justify-between gap-3 p-4 rounded-3xl bg-muted/40 border border-border/60">
+          <div className="w-full hidden md:flex flex-col sm:flex-row items-center justify-between gap-3 p-4 rounded-3xl bg-muted/40 border border-border/60">
             <div className="flex items-center gap-3">
               <div
                 className="w-3 h-10 rounded-full shrink-0"
@@ -424,14 +451,101 @@ export default function CashierPage() {
         )}
 
         {/* SCANNER / INPUT WORKSPACE */}
-        <div className="w-full max-w-lg space-y-6">
-          {activeStore ? (
+        <div className="w-full max-w-lg space-y-4 sm:space-y-6">
+          {/* Mobile Shift Scene */}
+          {mobileTab === 'shift' && activeStore ? (
+            <div className="space-y-4 md:hidden animate-in fade-in duration-200">
+              {/* Shift Stats Card */}
+              <div className="p-4 rounded-3xl bg-card border border-border/70 shadow-sm space-y-3">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <History className="w-4 h-4 text-primary" />
+                    <h3 className="font-bold text-sm">{t('cashier_shift_log_title') || 'Today’s Shift Summary'}</h3>
+                  </div>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => fetchRecentTransactions(activeStore.id)}
+                    disabled={isLoadingRecent}
+                    className="h-7 px-2 text-xs gap-1 rounded-xl"
+                  >
+                    <RefreshCw className={`w-3 h-3 ${isLoadingRecent ? 'animate-spin' : ''}`} />
+                    <span>{t('refresh') || 'Refresh'}</span>
+                  </Button>
+                </div>
+
+                <div className="grid grid-cols-2 gap-2">
+                  <div className="p-3 rounded-2xl bg-muted/40 border border-border/50 text-start">
+                    <p className="text-[11px] text-muted-foreground font-medium">{t('cashier_shift_sales') || 'Earn Txs'}</p>
+                    <p className="text-xl font-black text-foreground mt-0.5">{totalEarnTxs}</p>
+                  </div>
+                  <div className="p-3 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 text-start">
+                    <p className="text-[11px] text-emerald-600 dark:text-emerald-400 font-medium">{t('cashier_points_issued') || 'Points Issued'}</p>
+                    <p className="text-xl font-black text-emerald-600 dark:text-emerald-400 mt-0.5">+{totalPointsIssued}</p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Transactions List */}
+              <div className="p-4 rounded-3xl bg-card border border-border/70 shadow-sm space-y-3">
+                <h4 className="text-xs font-bold text-muted-foreground uppercase tracking-wider text-start">
+                  {t('cashier_recent_activity_title') || 'Recent Shift Receipts'} ({recentTxs.length})
+                </h4>
+
+                {recentTxs.length === 0 ? (
+                  <div className="py-8 text-center text-xs text-muted-foreground">
+                    {t('cashier_no_shift_txns') || 'No transactions yet in this shift.'}
+                  </div>
+                ) : (
+                  <div className="space-y-2">
+                    {recentTxs.map((tx) => (
+                      <div
+                        key={tx.id}
+                        className="flex items-center justify-between p-3 rounded-2xl bg-muted/30 border border-border/40 text-start"
+                      >
+                        <div className="flex items-center gap-2.5 min-w-0">
+                          <div
+                            className={`w-8 h-8 rounded-xl flex items-center justify-center text-xs font-bold shrink-0 ${
+                              tx.type === 'earn' ? 'bg-emerald-500/10 text-emerald-600' : 'bg-primary/10 text-primary'
+                            }`}
+                          >
+                            {tx.type === 'earn' ? <Coins className="w-4 h-4" /> : <Gift className="w-4 h-4" />}
+                          </div>
+                          <div className="truncate">
+                            <p className="text-xs font-bold text-foreground truncate">{tx.customerName}</p>
+                            <p className="text-[10px] text-muted-foreground font-mono">
+                              {new Date(tx.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                              {tx.amountTnd ? ` • ${tx.amountTnd} TND` : ''}
+                            </p>
+                          </div>
+                        </div>
+
+                        <Badge
+                          variant="outline"
+                          className={`font-mono text-xs font-bold shrink-0 ${
+                            tx.type === 'earn'
+                              ? 'bg-emerald-500/10 text-emerald-600 border-emerald-500/30'
+                              : 'bg-primary/10 text-primary border-primary/30'
+                          }`}
+                          dir="ltr"
+                        >
+                          {tx.type === 'earn' ? `+${tx.pointsAffected}` : `${tx.pointsAffected}`} pts
+                        </Badge>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
+          ) : activeStore ? (
             <>
               {!scanMode.active ? (
                 <TransactionPanel
                   storeId={activeStore.id}
                   storeName={activeStore.name}
                   pointsPerTnd={activeStore.pointsPerTnd}
+                  controlledTab={mobileTab === 'redeem' ? 'redeem' : 'issue'}
+                  onTabChange={(tab) => setMobileTab(tab === 'redeem' ? 'redeem' : 'pos')}
                   onProcess={handleProcessStart}
                 />
               ) : (
@@ -631,7 +745,15 @@ export default function CashierPage() {
         data={feedback}
         onDismiss={() => setFeedback({ state: 'idle' })}
       />
+
+      {/* DOCKED MOBILE BOTTOM NAVIGATION BAR (<md) */}
+      <CashierBottomNav
+        activeTab={mobileTab}
+        onSelectTab={handleSelectMobileTab}
+        shiftTxCount={recentTxs.length}
+      />
     </div>
   );
 }
+
 

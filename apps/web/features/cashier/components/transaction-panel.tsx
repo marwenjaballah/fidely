@@ -47,6 +47,8 @@ interface TransactionPanelProps {
   storeId?: string;
   storeName?: string;
   pointsPerTnd?: number;
+  controlledTab?: 'issue' | 'redeem';
+  onTabChange?: (tab: 'issue' | 'redeem') => void;
   onProcess: (
     type: 'issue' | 'redeem',
     amount: number,
@@ -77,12 +79,20 @@ export function TransactionPanel({
   storeId,
   storeName,
   pointsPerTnd = 10,
+  controlledTab,
+  onTabChange,
   onProcess,
 }: TransactionPanelProps) {
   const { t, dir } = useI18n();
-  const [activeTab, setActiveTab] = useState<'issue' | 'redeem'>('issue');
+  const [internalTab, setInternalTab] = useState<'issue' | 'redeem'>('issue');
+  const activeTab = controlledTab ?? internalTab;
+  const setActiveTab = (tab: 'issue' | 'redeem') => {
+    setInternalTab(tab);
+    onTabChange?.(tab);
+  };
   const [spendAmount, setSpendAmount] = useState('');
   const [showNumpad, setShowNumpad] = useState(false);
+
 
   // Phone lookup state
   const [phoneQuery, setPhoneQuery] = useState('');

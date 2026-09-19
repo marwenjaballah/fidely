@@ -218,3 +218,21 @@
   box-shadow: none !important;
   background: transparent !important;
 }
+
+/* Mobile Safe Area & Touch Ergonomics */
+.pb-safe {
+  padding-bottom: max(0.75rem, env(safe-area-inset-bottom, 0px));
+}
+
+.pt-safe {
+  padding-top: max(0.5rem, env(safe-area-inset-top, 0px));
+}
+
+.bottom-safe {
+  bottom: max(0.5rem, env(safe-area-inset-bottom, 0px));
+}
+
+.touch-manipulation {
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}

@@ -21,6 +21,7 @@ import { useI18n } from '@/lib/i18n'
 import { ThemeToggleButton } from '@/components/common/theme-toggle-button'
 import { LanguageSwitcher } from '@/components/common/language-switcher'
 import { AdminSidebar } from '@/components/common/admin-sidebar'
+import { MobileHeader } from '@/components/mobile/mobile-header'
 import {
   SidebarProvider,
   SidebarInset,
@@ -137,8 +138,11 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       <SidebarProvider>
         <AdminSidebar />
         <SidebarInset>
-          {/* Header with Parity to Merchant UI */}
-          <header className="sticky top-0 z-40 flex h-12 md:h-14 lg:h-16 shrink-0 items-center gap-2 px-2 sm:px-4 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 border-b">
+          {/* Mobile Top Bar with 1-Tap Scene Switcher (<md) */}
+          <MobileHeader scene="admin" />
+
+          {/* Header with Parity to Merchant UI (md+) */}
+          <header className="sticky top-0 z-40 hidden md:flex h-12 md:h-14 lg:h-16 shrink-0 items-center gap-2 px-2 sm:px-4 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 border-b">
             <div className="flex flex-1 items-center gap-1 sm:gap-2 min-w-0">
               <SidebarTrigger className="-ms-1 shrink-0" />
               <Separator

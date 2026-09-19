@@ -49,7 +49,8 @@ import {
 
 import { QRScanner } from '@/components/qr-scanner'
 import { AppleWalletPass } from '@/components/common/apple-wallet-card'
-import { CustomerBottomNav } from '@/components/common/customer-bottom-nav'
+import { CustomerBottomNav, CustomerTab } from '@/components/common/customer-bottom-nav'
+import { MobileHeader } from '@/components/mobile/mobile-header'
 import { FidelyLogo } from '@/components/common/fidely-logo'
 import { BRAND_NAME } from '@/lib/brand'
 import { useUserStore } from '@/store/user-store'
@@ -87,7 +88,7 @@ export default function CustomerOverviewPage() {
   // Phone setup prompt state
   const [phoneInput, setPhoneInput] = useState('')
   const [isSavingPhone, setIsSavingPhone] = useState(false)
-  const [mobileTab, setMobileTab] = useState<'pass' | 'rewards' | 'stores'>('pass')
+  const [mobileTab, setMobileTab] = useState<CustomerTab>('pass')
 
   const handleSavePhone = async () => {
     if (!phoneInput.trim()) return
@@ -234,9 +235,17 @@ export default function CustomerOverviewPage() {
     : []
 
   return (
-    <div className="min-h-screen bg-background text-foreground flex flex-col">
-      {/* ── Top Customer Navigation Bar ── */}
-      <header className="sticky top-0 z-40 flex h-11 sm:h-14 lg:h-16 shrink-0 items-center justify-between border-b border-border/60 bg-background/95 px-3 sm:px-8 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+    <div className="min-h-screen bg-background text-foreground flex flex-col" dir={dir}>
+      {/* ── Mobile Top App Bar with Scene Switcher (<md) ── */}
+      <MobileHeader
+        scene="customer"
+        storeName={activeMembership?.storeName}
+        storeColor={activeMembership?.primaryColor}
+        onLogout={handleLogout}
+      />
+
+      {/* ── Desktop Customer Navigation Bar (md+) ── */}
+      <header className="sticky top-0 z-40 hidden md:flex h-14 lg:h-16 shrink-0 items-center justify-between border-b border-border/60 bg-background/95 px-4 sm:px-8 backdrop-blur supports-[backdrop-filter]:bg-background/60">
         <div className="flex items-center gap-2 sm:gap-3">
           <Link href="/" className="flex items-center gap-1.5 sm:gap-2.5 font-bold text-foreground group">
             <FidelyLogo size="sm" variant="subtle" className="transition-transform group-hover:scale-105" />
@@ -275,7 +284,7 @@ export default function CustomerOverviewPage() {
       </header>
 
       {/* ── Main Content Area ── */}
-      <main className="flex-1 max-w-5xl w-full mx-auto p-4 sm:p-6 lg:p-8 space-y-6">
+      <main className="flex-1 max-w-5xl w-full mx-auto p-3 sm:p-6 lg:p-8 space-y-4 sm:space-y-6 pb-24 md:pb-8">
         {loading && memberships.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-24 space-y-4">
             <Loader2 className="h-8 w-8 animate-spin text-primary" />
@@ -385,8 +394,8 @@ export default function CustomerOverviewPage() {
           </div>
         ) : (
           <>
-            {/* ── Store Switcher / Loyalty Cards Carousel Header ── */}
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 text-start">
+            {/* ── Store Switcher / Loyalty Cards Carousel Header (Desktop only) ── */}
+            <div className="hidden md:flex flex-col sm:flex-row sm:items-center justify-between gap-4 text-start">
               <div>
                 <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">{t('customer_my_cards')}</h1>
                 <p className="text-sm text-muted-foreground mt-1">
@@ -489,9 +498,9 @@ export default function CustomerOverviewPage() {
               </div>
             )}
 
-            {/* ── Active Loyalty Card & QR Section ── */}
+            {/* ── Active Loyalty Card & QR Section (Desktop 12-col Grid) ── */}
             {activeMembership && (
-              <div className="grid gap-6 lg:grid-cols-12 items-start">
+              <div className="hidden md:grid gap-6 lg:grid-cols-12 items-start">
                 {/* Left: Authentic Apple Wallet Loyalty Pass (5 cols) */}
                 <div className="lg:col-span-5 space-y-4">
                   <AppleWalletPass
@@ -729,6 +738,338 @@ export default function CustomerOverviewPage() {
                 </div>
               </div>
             )}
+
+            {/* ── Mobile-Only Dedicated Scenes (<md) ── */}
+            {activeMembership && (
+              <div className="md:hidden space-y-4 animate-in fade-in duration-200">
+                {/* Scene 1: My Pass */}
+                {mobileTab === 'pass' && (
+                  <div className="space-y-4">
+                    <AppleWalletPass
+                      storeName={activeMembership.storeName}
+                      logoUrl={activeMembership.logoUrl}
+                      primaryColor={activeMembership.primaryColor || '#D97706'}
+                      pointsBalance={activeMembership.pointsBalance}
+                      pointsPerTnd={activeMembership.pointsPerTnd}
+                      qrCodeToken={activeMembership.qrCodeToken}
+                      memberName={profile?.full_name || 'Loyalty Member'}
+                      memberSince={activeMembership.joinedAt ? format(new Date(activeMembership.joinedAt), 'MMM yyyy') : 'Active'}
+                      rewardsCount={reachableRewards.length}
+                      nextRewardName={nextReward?.name}
+                      nextRewardCost={nextReward?.pointsCost}
+                      showQr={true}
+                      interactive={true}
+                      onRefreshQr={() => handleRefreshQr(activeMembership.id)}
+                    />
+                    <p className="text-center text-[11px] text-muted-foreground">
+                      {t('customer_show_code')}
+                    </p>
+
+                    {/* Quick claim banner if rewards are reachable */}
+                    {reachableRewards.length > 0 && (
+                      <button
+                        type="button"
+                        onClick={() => setMobileTab('rewards')}
+                        className="w-full flex items-center justify-between p-3.5 rounded-2xl border border-emerald-500/30 bg-emerald-500/10 text-start active:scale-[0.98] transition-transform"
+                      >
+                        <div className="flex items-center gap-2.5">
+                          <Gift className="w-5 h-5 text-emerald-600 dark:text-emerald-400" />
+                          <div>
+                            <p className="text-xs font-bold text-emerald-800 dark:text-emerald-300">
+                              {reachableRewards.length} {t('customer_bottom_nav_perks')} ready to redeem!
+                            </p>
+                            <p className="text-[11px] text-emerald-600/80 dark:text-emerald-400/80">
+                              Tap to claim your perks
+                            </p>
+                          </div>
+                        </div>
+                        <ChevronRight className="w-4 h-4 text-emerald-600 dark:text-emerald-400 rtl:rotate-180" />
+                      </button>
+                    )}
+                  </div>
+                )}
+
+                {/* Scene 2: Rewards & Vouchers */}
+                {mobileTab === 'rewards' && (
+                  <div className="space-y-4">
+                    <Tabs defaultValue="rewards" dir={dir} className="w-full">
+                      <TabsList className="grid grid-cols-2 w-full bg-muted/60 p-1 rounded-2xl">
+                        <TabsTrigger value="rewards" className="rounded-xl text-xs gap-1">
+                          <Gift className="h-3.5 w-3.5" /> {t('customer_bottom_nav_perks')}
+                        </TabsTrigger>
+                        <TabsTrigger value="vouchers" className="rounded-xl text-xs gap-1">
+                          <Ticket className="h-3.5 w-3.5" /> {t('customer_tab_rewards')} ({activeMembership.vouchers.length})
+                        </TabsTrigger>
+                      </TabsList>
+
+                      <TabsContent value="rewards" className="mt-4 space-y-3">
+                        <div className="rounded-2xl border border-border/70 bg-card p-4 shadow-sm text-start space-y-3">
+                          <div>
+                            <h3 className="font-bold text-sm">{t('rewards_title')}</h3>
+                            <p className="text-xs text-muted-foreground">{t('rewards_subtitle')}</p>
+                          </div>
+
+                          {activeMembership.rewards.length === 0 ? (
+                            <div className="p-6 text-center text-xs text-muted-foreground">
+                              {t('customizer_no_rewards_title')}
+                            </div>
+                          ) : (
+                            <div className="space-y-2.5">
+                              {activeMembership.rewards.map((reward) => {
+                                const canAfford = activeMembership.pointsBalance >= reward.pointsCost
+                                return (
+                                  <div
+                                    key={reward.id}
+                                    className={`p-3 rounded-2xl border transition flex items-center justify-between ${
+                                      canAfford ? 'border-emerald-500/30 bg-emerald-500/5' : 'border-border/60 bg-muted/20'
+                                    }`}
+                                  >
+                                    <div className="space-y-0.5 text-start">
+                                      <p className="font-semibold text-sm text-foreground">{reward.name}</p>
+                                      {reward.description && (
+                                        <p className="text-xs text-muted-foreground">{reward.description}</p>
+                                      )}
+                                      <span className="inline-block text-xs font-bold text-primary">
+                                        {reward.pointsCost} {t('pts')}
+                                      </span>
+                                    </div>
+
+                                    <Badge
+                                      variant={canAfford ? 'default' : 'secondary'}
+                                      className={`text-[11px] ${
+                                        canAfford
+                                          ? 'bg-emerald-600 hover:bg-emerald-600 text-white'
+                                          : 'text-muted-foreground'
+                                      }`}
+                                    >
+                                      {canAfford ? t('customizer_reward_active') : `${reward.pointsCost - activeMembership.pointsBalance} ${t('pts')} left`}
+                                    </Badge>
+                                  </div>
+                                )
+                              })}
+                            </div>
+                          )}
+                        </div>
+                      </TabsContent>
+
+                      <TabsContent value="vouchers" className="mt-4 space-y-3">
+                        <div className="rounded-2xl border border-border/70 bg-card p-4 shadow-sm text-start space-y-3">
+                          <div>
+                            <h3 className="font-bold text-sm">{t('rewards_voucher_code')}</h3>
+                            <p className="text-xs text-muted-foreground">{t('rewards_voucher_instruction')}</p>
+                          </div>
+
+                          {activeMembership.vouchers.length === 0 ? (
+                            <div className="p-8 text-center space-y-2">
+                              <Ticket className="h-8 w-8 text-muted-foreground/40 mx-auto" />
+                              <p className="text-xs text-muted-foreground">{t('rewards_voucher_instruction')}</p>
+                            </div>
+                          ) : (
+                            <div className="space-y-2.5">
+                              {activeMembership.vouchers.map((voucher) => (
+                                <div
+                                  key={voucher.id}
+                                  className="p-3.5 rounded-2xl border border-border/60 bg-muted/20 flex flex-col justify-between gap-2"
+                                >
+                                  <div className="space-y-1 text-start">
+                                    <div className="flex items-center gap-2">
+                                      <p className="font-semibold text-sm">{voucher.rewardName}</p>
+                                      <span className="text-[11px] text-muted-foreground font-mono">
+                                        ({voucher.pointsCost} {t('pts')})
+                                      </span>
+                                    </div>
+                                    <div className="flex items-center gap-2">
+                                      <code className="text-xs bg-muted px-2 py-0.5 rounded font-mono font-bold text-foreground" dir="ltr">
+                                        {voucher.code}
+                                      </code>
+                                    </div>
+                                  </div>
+                                  <Badge
+                                    variant={voucher.status === 'used' ? 'secondary' : 'default'}
+                                    className="self-start text-[11px]"
+                                  >
+                                    {voucher.status === 'used' ? 'CLAIMED' : 'ACTIVE'}
+                                  </Badge>
+                                </div>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                      </TabsContent>
+                    </Tabs>
+                  </div>
+                )}
+
+                {/* Scene 3: Scan QR Stand */}
+                {mobileTab === 'scan' && (
+                  <div className="space-y-4">
+                    <div className="rounded-3xl border border-border/70 bg-card p-5 shadow-xl space-y-4 text-center">
+                      <div className="space-y-1">
+                        <h3 className="font-bold text-base">{t('customer_scan_qr_stand')}</h3>
+                        <p className="text-xs text-muted-foreground">
+                          Point your camera at the Fidely counter stand at any partner store
+                        </p>
+                      </div>
+
+                      <div className="rounded-2xl overflow-hidden border border-border/60">
+                        <QRScanner containerId="customer-mobile-scene-qr-scanner" onScanSuccess={handleQrScanSuccess} />
+                      </div>
+
+                      {/* Manual store code input fallback */}
+                      <div className="pt-3 border-t border-border/40 text-start">
+                        <form onSubmit={handleJoinBySlug} className="space-y-2">
+                          <Label htmlFor="mobile-slug-input" className="text-xs font-semibold text-foreground">
+                            {t('customer_join_by_slug_label')}
+                          </Label>
+                          <div className="flex items-center gap-2">
+                            <div className="flex flex-1 items-center rounded-xl border bg-background px-3 py-1.5 text-xs text-muted-foreground">
+                              <span className="font-mono text-muted-foreground/80 select-none" dir="ltr">fidely.app/store/</span>
+                              <input
+                                id="mobile-slug-input"
+                                type="text"
+                                dir="ltr"
+                                className="w-full bg-transparent px-1 py-0.5 text-foreground font-mono font-medium outline-none text-xs"
+                                placeholder="artisan-cafe"
+                                value={slugInput}
+                                onChange={(e) => {
+                                  setSlugInput(e.target.value)
+                                  setJoinSlugError(null)
+                                }}
+                              />
+                            </div>
+                            <Button type="submit" size="sm" disabled={isJoiningSlug || !slugInput.trim()} className="h-9 px-3 text-xs rounded-xl">
+                              {isJoiningSlug ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : t('customer_join_slug_btn')}
+                            </Button>
+                          </div>
+                        </form>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* Scene 4: Stores & Partners */}
+                {mobileTab === 'stores' && (
+                  <div className="space-y-4 text-start">
+                    <div className="flex items-center justify-between">
+                      <h3 className="text-sm font-bold">{t('store_switcher_my_stores')}</h3>
+                      <Badge variant="outline" className="text-[10px]">
+                        {availableStores.length} Available
+                      </Badge>
+                    </div>
+
+                    {availableStores.length === 0 ? (
+                      <div className="p-8 text-center bg-card rounded-2xl border border-border/60 text-xs text-muted-foreground">
+                        No additional partner stores found.
+                      </div>
+                    ) : (
+                      <div className="grid gap-2">
+                        {availableStores.map((store) => (
+                          <div
+                            key={store.id}
+                            className="flex items-center justify-between p-3.5 rounded-2xl border border-border/60 bg-card hover:bg-muted/40 transition"
+                          >
+                            <div className="flex items-center gap-3">
+                              <div className="h-10 w-10 rounded-xl bg-primary/15 text-primary flex items-center justify-center font-bold overflow-hidden border border-border/40 shrink-0">
+                                {store.logoUrl ? (
+                                  <img src={store.logoUrl} alt={store.name} className="h-full w-full object-cover" />
+                                ) : (
+                                  <Coffee className="h-5 w-5" />
+                                )}
+                              </div>
+                              <div className="text-start">
+                                <p className="font-semibold text-sm">{store.name}</p>
+                                <p className="text-xs text-muted-foreground font-mono">
+                                  fidely.app/{store.slug}
+                                </p>
+                              </div>
+                            </div>
+                            <Button
+                              size="sm"
+                              onClick={() => handleJoinStore(store.id)}
+                              disabled={joiningStoreId === store.id}
+                              className="rounded-xl text-xs h-8"
+                            >
+                              {joiningStoreId === store.id ? (
+                                <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                              ) : (
+                                t('customer_add_coffee_card')
+                              )}
+                            </Button>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {/* Scene 5: Activity History */}
+                {mobileTab === 'history' && (
+                  <div className="rounded-2xl border border-border/70 bg-card p-4 shadow-sm text-start space-y-3">
+                    <div className="flex items-center gap-2">
+                      <History className="w-4 h-4 text-primary" />
+                      <h3 className="font-bold text-sm">{t('customer_history_title')}</h3>
+                    </div>
+
+                    {activeMembership.transactions.length === 0 ? (
+                      <div className="py-8 text-center text-xs text-muted-foreground">
+                        {t('customer_no_history')}
+                      </div>
+                    ) : (
+                      <div className="space-y-2">
+                        {activeMembership.transactions.map((tItem) => {
+                          const isEarn = tItem.type === 'earn'
+                          return (
+                            <div
+                              key={tItem.id}
+                              className="p-3 rounded-2xl border border-border/40 bg-muted/20 flex items-center justify-between"
+                            >
+                              <div className="flex items-center gap-2.5">
+                                <div
+                                  className={`h-8 w-8 rounded-xl flex items-center justify-center shrink-0 ${
+                                    isEarn ? 'bg-emerald-500/10 text-emerald-600' : 'bg-primary/10 text-primary'
+                                  }`}
+                                >
+                                  {isEarn ? <TrendingUp className="h-4 w-4" /> : <Gift className="h-4 w-4" />}
+                                </div>
+                                <div className="text-start">
+                                  <p className="font-semibold text-xs text-foreground">
+                                    {isEarn ? t('pos_points_to_award') : t('pos_redeem_reward_tab')}
+                                  </p>
+                                  <p className="text-[10px] text-muted-foreground">
+                                    {new Date(tItem.createdAt).toLocaleDateString(undefined, {
+                                      month: 'short',
+                                      day: 'numeric',
+                                      hour: '2-digit',
+                                      minute: '2-digit',
+                                    })}
+                                  </p>
+                                </div>
+                              </div>
+
+                              <div className="text-end">
+                                <span
+                                  className={`text-xs font-bold ${
+                                    isEarn ? 'text-emerald-600 dark:text-emerald-400' : 'text-foreground'
+                                  }`}
+                                >
+                                  {isEarn ? `+${tItem.pointsAffected}` : tItem.pointsAffected} {t('pts')}
+                                </span>
+                                {tItem.amountTnd !== null && (
+                                  <p className="text-[10px] text-muted-foreground font-mono">
+                                    {tItem.amountTnd.toFixed(2)} TND
+                                  </p>
+                                )}
+                              </div>
+                            </div>
+                          )
+                        })}
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+            )}
+
           </>
         )}
 
@@ -882,20 +1223,11 @@ export default function CustomerOverviewPage() {
           activeTab={mobileTab}
           onSelectTab={(tab) => {
             setMobileTab(tab)
-            if (tab === 'pass') {
-              window.scrollTo({ top: 0, behavior: 'smooth' })
-            } else if (tab === 'rewards') {
-              const el = document.getElementById('rewards-tabs-section')
-              if (el) el.scrollIntoView({ behavior: 'smooth' })
-            } else if (tab === 'stores') {
-              setActiveJoinTab('explore')
-              setJoinModalOpen(true)
+            if (tab === 'scan') {
+              setActiveJoinTab('scan')
             }
           }}
-          onOpenQrPass={() => {
-            setActiveJoinTab('scan')
-            setJoinModalOpen(true)
-          }}
+          onOpenQrPass={() => setMobileTab('pass')}
           unlockedRewardsCount={reachableRewards.length}
         />
       </main>
