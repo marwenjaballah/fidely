@@ -138,21 +138,21 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         <AdminSidebar />
         <SidebarInset>
           {/* Header with Parity to Merchant UI */}
-          <header className="sticky top-0 z-40 flex h-16 shrink-0 items-center gap-2 px-4 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 border-b">
-            <div className="flex flex-1 items-center gap-2">
-              <SidebarTrigger className="-ms-1" />
+          <header className="sticky top-0 z-40 flex h-12 md:h-14 lg:h-16 shrink-0 items-center gap-2 px-2 sm:px-4 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 border-b">
+            <div className="flex flex-1 items-center gap-1 sm:gap-2 min-w-0">
+              <SidebarTrigger className="-ms-1 shrink-0" />
               <Separator
                 orientation="vertical"
-                className="me-2 data-[orientation=vertical]:h-4"
+                className="me-1 sm:me-2 data-[orientation=vertical]:h-4 shrink-0"
               />
-              <Breadcrumb>
-                <BreadcrumbList>
+              <Breadcrumb className="min-w-0">
+                <BreadcrumbList className="flex-nowrap">
                   {breadcrumbs.map((crumb, index) => (
                     <div key={`${crumb.href}-${index}`} className="flex items-center">
                       {index > 0 && <BreadcrumbSeparator className="hidden md:block" />}
-                      <BreadcrumbItem className={index === 0 ? 'hidden md:block' : ''}>
+                      <BreadcrumbItem className={index === 0 ? 'hidden md:block' : 'max-w-[120px] sm:max-w-none truncate'}>
                         {crumb.isLast ? (
-                          <BreadcrumbPage>{crumb.title}</BreadcrumbPage>
+                          <BreadcrumbPage className="truncate text-xs sm:text-sm">{crumb.title}</BreadcrumbPage>
                         ) : (
                           <BreadcrumbLink asChild>
                             <Link href={crumb.href}>{crumb.title}</Link>
@@ -166,7 +166,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
             </div>
 
             {/* Quick Header Controls */}
-            <div className="ms-auto flex items-center gap-2">
+            <div className="ms-auto flex items-center gap-1 sm:gap-2 shrink-0">
               <Badge
                 variant="outline"
                 className="hidden sm:flex items-center gap-1.5 border-primary/30 text-primary bg-primary/5 py-1 px-2.5 text-xs font-semibold"
@@ -174,7 +174,9 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                 <Sparkles className="h-3.5 w-3.5" />
                 <span>{t('admin_global_admin_mode')}</span>
               </Badge>
-              <LanguageSwitcher />
+              <div className="hidden md:block">
+                <LanguageSwitcher />
+              </div>
               <ThemeToggleButton />
             </div>
           </header>

@@ -27,27 +27,30 @@ export function DashboardHeader() {
 
   return (
     <header className="sticky top-0 z-40 border-b from-background/95 to-background/80 backdrop-blur-lg border-border/30 shadow-sm">
-      <div className="flex h-16 items-center justify-between px-6 lg:px-8 gap-4">
-        <div className="flex items-center gap-3 min-w-0">
+      <div className="flex h-12 sm:h-14 lg:h-16 items-center justify-between px-3 sm:px-6 lg:px-8 gap-2 sm:gap-4">
+        <div className="flex items-center gap-2 sm:gap-3 min-w-0">
           <Badge
             variant="secondary"
-            className="from-primary/10 to-primary/5 text-primary font-semibold px-3 py-1 whitespace-nowrap"
+            className="from-primary/10 to-primary/5 text-primary font-semibold px-2 sm:px-3 py-1 whitespace-nowrap text-xs"
           >
             {profile.role}
           </Badge>
         </div>
 
-        <div className="flex items-center gap-2 lg:gap-3 ml-auto">
-          <LanguageSwitcher />
+        <div className="flex items-center gap-1 sm:gap-2 lg:gap-3 ml-auto">
+          <div className="hidden sm:block">
+            <LanguageSwitcher />
+          </div>
           <ThemeSwitcher />
 
           <Button
             variant="ghost"
+            size="sm"
             onClick={handleLogout}
-            className="hover:bg-destructive/10 hover:text-destructive transition-all duration-200 text-foreground/70"
+            className="hover:bg-destructive/10 hover:text-destructive transition-all duration-200 text-foreground/70 h-8 sm:h-9 px-2 sm:px-3"
           >
             <span className="hidden sm:inline">{t('logout')}</span>
-            <LogOut className="w-5 h-5 ml-2 shrink-0" />
+            <LogOut className="w-4 h-4 sm:ml-2 shrink-0" />
           </Button>
         </div>
       </div>

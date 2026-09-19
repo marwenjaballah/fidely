@@ -159,23 +159,23 @@ export default function DashboardLayout({
             <SidebarProvider>
                 <AppSidebar />
                 <SidebarInset>
-                    <header className="sticky top-0 z-40 flex h-16 shrink-0 items-center gap-2 px-4 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 border-b">
-                        <div className="flex flex-1 items-center gap-2">
-                            <SidebarTrigger className="-ms-1" />
+                    <header className="sticky top-0 z-40 flex h-12 md:h-14 lg:h-16 shrink-0 items-center gap-2 px-2 sm:px-4 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 border-b">
+                        <div className="flex flex-1 items-center gap-1 sm:gap-2 min-w-0">
+                            <SidebarTrigger className="-ms-1 shrink-0" />
                             <Separator
                                 orientation="vertical"
-                                className="me-2 data-[orientation=vertical]:h-4"
+                                className="me-1 sm:me-2 data-[orientation=vertical]:h-4 shrink-0"
                             />
-                            <Breadcrumb>
-                                <BreadcrumbList>
+                            <Breadcrumb className="min-w-0">
+                                <BreadcrumbList className="flex-nowrap">
                                     {breadcrumbs.map((crumb, index) => (
                                         <div key={`${crumb.href}-${index}`} className="flex items-center">
                                             {index > 0 && (
                                                 <BreadcrumbSeparator className="hidden md:block" />
                                             )}
-                                            <BreadcrumbItem className={index === 0 ? 'hidden md:block' : ''}>
+                                            <BreadcrumbItem className={index === 0 ? 'hidden md:block' : 'max-w-[120px] sm:max-w-none truncate'}>
                                                 {crumb.isLast ? (
-                                                    <BreadcrumbPage>{crumb.title}</BreadcrumbPage>
+                                                    <BreadcrumbPage className="truncate text-xs sm:text-sm">{crumb.title}</BreadcrumbPage>
                                                 ) : (
                                                     <BreadcrumbLink asChild>
                                                         <Link href={crumb.href}>{crumb.title}</Link>
@@ -187,13 +187,19 @@ export default function DashboardLayout({
                                 </BreadcrumbList>
                             </Breadcrumb>
                         </div>
-                        <div className="ms-auto flex items-center gap-2">
-                            <StoreSwitcher variant="header" />
-                            <LanguageSwitcher />
+                        <div className="ms-auto flex items-center gap-1 sm:gap-2 shrink-0">
+                            {/* StoreSwitcher: hidden on mobile to save space */}
+                            <div className="hidden sm:block">
+                                <StoreSwitcher variant="header" />
+                            </div>
+                            {/* Language switcher: hidden on small phones */}
+                            <div className="hidden md:block">
+                                <LanguageSwitcher />
+                            </div>
                             <ThemeToggleButton />
-                            <Button variant="outline" size="icon" asChild aria-label={t('nav_merchant_settings')}>
+                            <Button variant="outline" size="icon" asChild aria-label={t('nav_merchant_settings')} className="h-8 w-8 sm:h-9 sm:w-9">
                                 <Link href="/merchant/settings/account">
-                                    <Settings className="h-4 w-4" />
+                                    <Settings className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
                                 </Link>
                             </Button>
                         </div>

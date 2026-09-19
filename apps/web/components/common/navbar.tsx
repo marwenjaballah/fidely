@@ -60,16 +60,16 @@ export function Navbar() {
 
   return (
     <header className="sticky top-0 z-50 w-full border-b border-border/60 bg-background/90 shadow-sm backdrop-blur-md supports-[backdrop-filter]:bg-background/75">
-      <div className="container mx-auto max-w-7xl px-4 lg:px-8">
-        <div className="flex h-16 items-center justify-between gap-4">
-          <div className="flex min-w-0 flex-1 items-center gap-8">
+      <div className="container mx-auto max-w-7xl px-3 sm:px-4 lg:px-8">
+        <div className="flex h-12 sm:h-14 lg:h-16 items-center justify-between gap-2 sm:gap-4">
+          <div className="flex min-w-0 flex-1 items-center gap-4 sm:gap-8">
             <Link
               href="/"
-              className="group flex shrink-0 items-center gap-2.5 rounded-lg outline-none ring-offset-background focus-visible:ring-2 focus-visible:ring-ring"
+              className="group flex shrink-0 items-center gap-1.5 sm:gap-2.5 rounded-lg outline-none ring-offset-background focus-visible:ring-2 focus-visible:ring-ring"
               aria-label={t('app_name')}
             >
               <FidelyLogo size="md" variant="subtle" className="group-hover:bg-primary/20" />
-              <span className="hidden font-bold tracking-tight text-foreground sm:inline truncate max-w-[10rem] md:max-w-none text-lg">
+              <span className="hidden font-bold tracking-tight text-foreground sm:inline truncate max-w-[8rem] md:max-w-none text-base sm:text-lg">
                 {t('app_name')}
               </span>
             </Link>
@@ -177,12 +177,12 @@ export function Navbar() {
 
             <button
               type="button"
-              className="lg:hidden inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-md border border-border/80 bg-background text-foreground hover:bg-muted/50"
+              className="lg:hidden inline-flex h-8 w-8 sm:h-10 sm:w-10 shrink-0 items-center justify-center rounded-md border border-border/80 bg-background text-foreground hover:bg-muted/50"
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
               aria-expanded={mobileMenuOpen}
               aria-label="Toggle menu"
             >
-              <Menu className="h-5 w-5" />
+              <Menu className="h-4 w-4 sm:h-5 sm:w-5" />
             </button>
           </div>
         </div>
