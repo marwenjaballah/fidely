@@ -5,6 +5,7 @@ import { Analytics } from '@vercel/analytics/next'
 import { ThemeProvider } from "@/components/common/theme-provider"
 import { Toaster } from "@/components/ui/toaster"
 import { strings } from '@/lib/strings'
+import { BRAND_LOGO_SRC } from '@/lib/brand'
 
 function metadataBaseUrl(): URL {
   const explicit = process.env.NEXT_PUBLIC_APP_URL?.trim()
@@ -43,6 +44,15 @@ export const metadata: Metadata = {
   description: siteDescription,
   applicationName: strings.app_name,
   manifest: '/manifest.json',
+  icons: {
+    icon: [
+      { url: BRAND_LOGO_SRC, type: 'image/png' },
+      { url: '/icon.svg', type: 'image/svg+xml' },
+    ],
+    apple: [
+      { url: BRAND_LOGO_SRC, type: 'image/png' },
+    ],
+  },
   alternates: {
     canonical: '/',
   },

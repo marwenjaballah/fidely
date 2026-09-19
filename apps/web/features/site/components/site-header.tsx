@@ -4,9 +4,7 @@ import React, { useState, useEffect } from "react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import {
-  Coffee,
   ArrowRight,
-  Sparkles,
   LayoutDashboard,
   Menu,
   X,
@@ -16,6 +14,7 @@ import {
   ShieldCheck,
   Store,
 } from "lucide-react"
+import { FidelyLogo } from "@/components/common/fidely-logo"
 import { Button } from "@/components/ui/button"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import {
@@ -62,9 +61,7 @@ export function SiteHeader() {
       <div className="container mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
         {/* Brand Logo */}
         <Link href="/" className="flex items-center gap-2.5 group transition-opacity hover:opacity-90">
-          <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary text-primary-foreground shadow-md shadow-primary/25 transition-transform duration-200 group-hover:scale-105">
-            <Sparkles className="h-5 w-5" />
-          </div>
+          <FidelyLogo size="md" variant="solid" className="transition-transform duration-200 group-hover:scale-105" />
           <div className="flex flex-col">
             <div className="flex items-center gap-1.5">
               <span className="text-lg font-black tracking-tight text-foreground">{t('app_name')}</span>

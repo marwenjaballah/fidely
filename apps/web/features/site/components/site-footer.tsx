@@ -1,7 +1,7 @@
 "use client"
 
 import Link from "next/link"
-import { Sparkles } from "lucide-react"
+import { FidelyLogo } from "@/components/common/fidely-logo"
 import { useI18n } from "@/lib/i18n"
 import { LanguageSwitcher } from "@/components/common/language-switcher"
 
@@ -15,9 +15,7 @@ export function SiteFooter() {
           {/* Col 1: Brand */}
           <div className="space-y-4 md:col-span-2">
             <Link href="/" className="flex items-center gap-2.5">
-              <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary text-primary-foreground shadow-sm">
-                <Sparkles className="h-5 w-5" />
-              </div>
+              <FidelyLogo size="sm" variant="solid" />
               <span className="text-lg font-black tracking-tight">{t('app_name')}</span>
             </Link>
             <p className="text-xs sm:text-sm text-muted-foreground max-w-sm leading-relaxed">

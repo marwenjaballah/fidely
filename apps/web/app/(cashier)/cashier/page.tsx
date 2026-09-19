@@ -19,6 +19,7 @@ import {
 } from '@/components/ui/select';
 import { ThemeToggleButton } from '@/components/common/theme-toggle-button';
 import { LanguageSwitcher } from '@/components/common/language-switcher';
+import { FidelyLogo } from '@/components/common/fidely-logo';
 import {
   LogOut,
   Coffee,
@@ -319,9 +320,7 @@ export default function CashierPage() {
       {/* CASHIER TOP BAR */}
       <header className="sticky top-0 z-40 flex h-16 shrink-0 items-center justify-between border-b border-border/60 bg-background/95 px-3 sm:px-8 backdrop-blur supports-[backdrop-filter]:bg-background/60">
         <div className="flex items-center gap-2 sm:gap-3 shrink-0">
-          <div className="flex h-9 w-9 sm:h-10 sm:w-10 items-center justify-center rounded-xl bg-primary/10 text-primary shadow-sm shrink-0">
-            <Store className="h-4 w-4 sm:h-5 sm:w-5" />
-          </div>
+          <FidelyLogo size="sm" variant="subtle" />
           <div>
             <div className="flex items-center gap-1.5 sm:gap-2">
               <span className="font-extrabold text-xs sm:text-base tracking-tight">Fidely POS</span>

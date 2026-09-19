@@ -16,6 +16,7 @@ import { Eye, EyeOff, Loader2, Sparkles, Store } from "lucide-react"
 import { Separator } from "@/components/ui/separator"
 import { Navbar } from "@/components/common/navbar"
 import { Footer } from "@/components/common/footer"
+import { FidelyLogo } from "@/components/common/fidely-logo"
 
 import { useI18n } from "@/lib/i18n"
 import { LanguageSwitcher } from "@/components/common/language-switcher"
@@ -138,9 +139,7 @@ function LoginForm() {
           {/* Logo & Lang */}
           <div className="flex items-center justify-between gap-2 mb-6 lg:mb-8">
             <Link href="/" className="flex items-center gap-2.5 group">
-              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary text-primary-foreground shadow-md shadow-primary/20 transition-transform group-hover:scale-105">
-                <Sparkles className="h-5 w-5" />
-              </div>
+              <FidelyLogo size="md" variant="solid" className="transition-transform group-hover:scale-105" />
               <span className="font-extrabold text-xl tracking-tight text-foreground">
                 {t('app_name')}
               </span>
@@ -314,10 +313,18 @@ function LoginForm() {
         </div>
         </div>
 
-        {/* Right Side - Decorative */}
-        <div className="hidden xl:flex flex-1 bg-muted/50 items-center justify-center p-12">
-          <div className="flex h-48 w-48 items-center justify-center rounded-2xl bg-primary/10 text-primary">
-            <Sparkles className="h-24 w-24" />
+        {/* Right Side - Decorative Brand Showcase */}
+        <div className="hidden xl:flex flex-1 bg-muted/40 border-s border-border/60 flex-col items-center justify-center p-12 text-center relative overflow-hidden">
+          <div className="absolute -top-24 -end-24 w-96 h-96 bg-primary/10 rounded-full blur-3xl pointer-events-none" />
+          <div className="absolute -bottom-24 -start-24 w-96 h-96 bg-primary/5 rounded-full blur-3xl pointer-events-none" />
+          <div className="relative z-10 flex flex-col items-center max-w-sm space-y-6">
+            <FidelyLogo size="2xl" variant="subtle" className="shadow-2xl ring-1 ring-primary/25" />
+            <div className="space-y-2">
+              <h3 className="text-2xl font-black tracking-tight text-foreground">{t('app_name')}</h3>
+              <p className="text-sm text-muted-foreground leading-relaxed">
+                Universal digital loyalty passes for Apple Wallet & browser. Scan, earn, and reward effortlessly.
+              </p>
+            </div>
           </div>
         </div>
       </div>

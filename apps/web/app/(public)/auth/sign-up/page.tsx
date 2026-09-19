@@ -28,6 +28,7 @@ import {
 } from "lucide-react"
 import type { UserRole } from "@/lib/db-types"
 import { ApiError } from "@/features/auth/services/auth-service"
+import { FidelyLogo } from "@/components/common/fidely-logo"
 import { useAuth } from "@/features/auth/hooks/use-auth"
 import { useI18n } from "@/lib/i18n"
 import { LanguageSwitcher } from "@/components/common/language-switcher"
@@ -229,9 +230,7 @@ function SignUpForm() {
           {/* Top Navbar */}
           <div className="flex items-center justify-between mb-6 lg:mb-8">
             <Link href="/" className="flex items-center gap-2.5 group">
-              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary text-primary-foreground shadow-md shadow-primary/20 transition-transform group-hover:scale-105">
-                <Sparkles className="h-5 w-5" />
-              </div>
+              <FidelyLogo size="md" variant="solid" className="transition-transform group-hover:scale-105" />
               <span className="font-extrabold text-xl tracking-tight text-foreground">
                 {t('app_name')}
               </span>

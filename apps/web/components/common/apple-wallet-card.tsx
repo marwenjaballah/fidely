@@ -23,6 +23,8 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog'
 import { useI18n } from '@/lib/i18n'
+import { FidelyLogo } from '@/components/common/fidely-logo'
+import { BRAND_NAME } from '@/lib/brand'
 
 export interface AppleWalletPassProps {
   storeName: string
@@ -426,8 +428,11 @@ export function AppleWalletPass({
           </div>
 
           {/* Back Footer */}
-          <div className="pt-3 border-t border-white/10 flex items-center justify-between text-[11px] text-white/60">
-            <span>{t('card_powered_by')} Fidely</span>
+          <div className="pt-3 border-t border-white/10 flex items-center justify-between text-[11px] text-white/70">
+            <span className="flex items-center gap-1.5 font-medium">
+              <FidelyLogo size="xs" variant="ghost" className="h-4 w-4 rounded-sm" />
+              {t('card_powered_by')} {BRAND_NAME}
+            </span>
             <button
               type="button"
               onClick={() => setIsFlipped(false)}

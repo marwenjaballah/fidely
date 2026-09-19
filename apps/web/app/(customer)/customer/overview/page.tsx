@@ -50,6 +50,8 @@ import {
 import { QRScanner } from '@/components/qr-scanner'
 import { AppleWalletPass } from '@/components/common/apple-wallet-card'
 import { CustomerBottomNav } from '@/components/common/customer-bottom-nav'
+import { FidelyLogo } from '@/components/common/fidely-logo'
+import { BRAND_NAME } from '@/lib/brand'
 import { useUserStore } from '@/store/user-store'
 import { useI18n } from '@/lib/i18n'
 import { format } from 'date-fns'
@@ -236,11 +238,9 @@ export default function CustomerOverviewPage() {
       {/* ── Top Customer Navigation Bar ── */}
       <header className="sticky top-0 z-40 flex h-16 shrink-0 items-center justify-between border-b border-border/60 bg-background/95 px-4 backdrop-blur supports-[backdrop-filter]:bg-background/60 sm:px-8">
         <div className="flex items-center gap-3">
-          <Link href="/" className="flex items-center gap-2 font-bold text-foreground">
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10 text-primary">
-              <Coffee className="h-5 w-5" />
-            </div>
-            <span className="text-lg font-bold tracking-tight">Fidely</span>
+          <Link href="/" className="flex items-center gap-2.5 font-bold text-foreground group">
+            <FidelyLogo size="md" variant="subtle" className="transition-transform group-hover:scale-105" />
+            <span className="text-lg font-bold tracking-tight">{BRAND_NAME}</span>
           </Link>
           <span className="hidden sm:inline text-xs text-muted-foreground bg-muted px-2.5 py-1 rounded-full font-medium">
             {t('nav_customer')}
@@ -282,9 +282,7 @@ export default function CustomerOverviewPage() {
         ) : memberships.length === 0 ? (
           /* ── Empty State: No Loyalty Passes Enrolled Yet ── */
           <div className="rounded-3xl border border-border/70 bg-card p-8 sm:p-12 text-center max-w-xl mx-auto space-y-6 shadow-xl">
-            <div className="h-20 w-20 rounded-3xl bg-primary/10 text-primary flex items-center justify-center mx-auto">
-              <Sparkles className="h-10 w-10" />
-            </div>
+            <FidelyLogo size="xl" variant="subtle" className="mx-auto" />
             <div className="space-y-2 text-center">
               <h2 className="text-2xl font-bold tracking-tight">{t('customer_empty_cards_title')}</h2>
               <p className="text-muted-foreground text-sm leading-relaxed">
