@@ -43,14 +43,15 @@ export const metadata: Metadata = {
   },
   description: siteDescription,
   applicationName: strings.app_name,
-  manifest: '/manifest.json',
+  manifest: '/manifest.webmanifest',
   icons: {
     icon: [
-      { url: BRAND_LOGO_SRC, type: 'image/png' },
       { url: '/icon.svg', type: 'image/svg+xml' },
+      { url: '/icon-192.png', sizes: '192x192', type: 'image/png' },
+      { url: '/icon-512.png', sizes: '512x512', type: 'image/png' },
     ],
     apple: [
-      { url: BRAND_LOGO_SRC, type: 'image/png' },
+      { url: '/apple-touch-icon.png', sizes: '180x180', type: 'image/png' },
     ],
   },
   alternates: {
