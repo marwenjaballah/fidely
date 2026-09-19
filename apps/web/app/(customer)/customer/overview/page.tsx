@@ -236,22 +236,24 @@ export default function CustomerOverviewPage() {
   return (
     <div className="min-h-screen bg-background text-foreground flex flex-col">
       {/* ── Top Customer Navigation Bar ── */}
-      <header className="sticky top-0 z-40 flex h-16 shrink-0 items-center justify-between border-b border-border/60 bg-background/95 px-4 backdrop-blur supports-[backdrop-filter]:bg-background/60 sm:px-8">
-        <div className="flex items-center gap-3">
-          <Link href="/" className="flex items-center gap-2.5 font-bold text-foreground group">
-            <FidelyLogo size="md" variant="subtle" className="transition-transform group-hover:scale-105" />
-            <span className="text-lg font-bold tracking-tight">{BRAND_NAME}</span>
+      <header className="sticky top-0 z-40 flex h-11 sm:h-14 lg:h-16 shrink-0 items-center justify-between border-b border-border/60 bg-background/95 px-3 sm:px-8 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+        <div className="flex items-center gap-2 sm:gap-3">
+          <Link href="/" className="flex items-center gap-1.5 sm:gap-2.5 font-bold text-foreground group">
+            <FidelyLogo size="sm" variant="subtle" className="transition-transform group-hover:scale-105" />
+            <span className="text-sm sm:text-lg font-bold tracking-tight">{BRAND_NAME}</span>
           </Link>
           <span className="hidden sm:inline text-xs text-muted-foreground bg-muted px-2.5 py-1 rounded-full font-medium">
             {t('nav_customer')}
           </span>
         </div>
 
-        <div className="flex items-center gap-2 sm:gap-3">
-          <LanguageSwitcher />
+        <div className="flex items-center gap-1 sm:gap-2 sm:gap-3">
+          <div className="hidden sm:block">
+            <LanguageSwitcher />
+          </div>
           <ThemeToggleButton />
 
-          <div className="flex items-center gap-2 border-s border-border/60 ps-3">
+          <div className="flex items-center gap-1 sm:gap-2 border-s border-border/60 ps-2 sm:ps-3">
             <div className="hidden md:flex flex-col text-start">
               <span className="text-xs font-semibold leading-tight text-foreground">
                 {profile?.email?.split('@')[0] || 'Customer'}
@@ -263,9 +265,9 @@ export default function CustomerOverviewPage() {
               variant="ghost"
               size="sm"
               onClick={handleLogout}
-              className="text-muted-foreground hover:text-destructive gap-1.5"
+              className="text-muted-foreground hover:text-destructive gap-1 h-7 sm:h-9 px-1.5 sm:px-2"
             >
-              <LogOut className="h-4 w-4 rtl:rotate-180" />
+              <LogOut className="h-3.5 w-3.5 sm:h-4 sm:w-4 rtl:rotate-180" />
               <span className="hidden sm:inline text-xs">{t('logout')}</span>
             </Button>
           </div>

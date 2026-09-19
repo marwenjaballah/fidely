@@ -318,13 +318,13 @@ export default function CashierPage() {
   return (
     <div className="min-h-screen bg-background flex flex-col text-foreground" dir={dir}>
       {/* CASHIER TOP BAR */}
-      <header className="sticky top-0 z-40 flex h-16 shrink-0 items-center justify-between border-b border-border/60 bg-background/95 px-3 sm:px-8 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-        <div className="flex items-center gap-2 sm:gap-3 shrink-0">
+      <header className="sticky top-0 z-40 flex h-11 sm:h-14 lg:h-16 shrink-0 items-center justify-between border-b border-border/60 bg-background/95 px-3 sm:px-8 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+        <div className="flex items-center gap-1.5 sm:gap-3 shrink-0">
           <FidelyLogo size="sm" variant="subtle" />
           <div>
-            <div className="flex items-center gap-1.5 sm:gap-2">
+            <div className="flex items-center gap-1 sm:gap-2">
               <span className="font-extrabold text-xs sm:text-base tracking-tight">Fidely POS</span>
-              <Badge variant="outline" className="bg-primary/10 text-primary border-primary/20 text-[9px] sm:text-[10px] font-bold px-1.5 sm:px-2 py-0.5">
+              <Badge variant="outline" className="bg-primary/10 text-primary border-primary/20 text-[9px] sm:text-[10px] font-bold px-1 sm:px-2 py-0.5">
                 {t('cashier_live_badge')}
               </Badge>
             </div>
@@ -332,12 +332,12 @@ export default function CashierPage() {
         </div>
 
         {/* Store Selector & Controls */}
-        <div className="flex items-center gap-1.5 sm:gap-3">
+        <div className="flex items-center gap-1 sm:gap-3">
           {stores.length > 1 ? (
-            <div className="flex items-center gap-1.5">
+            <div className="flex items-center gap-1">
               <Store className="h-4 w-4 text-muted-foreground hidden sm:inline" />
               <Select value={activeStore?.id || ''} onValueChange={handleSelectStore} dir={dir}>
-                <SelectTrigger className="h-8 sm:h-9 text-xs font-semibold w-[120px] sm:w-[200px] rounded-xl">
+                <SelectTrigger className="h-7 sm:h-9 text-xs font-semibold w-[100px] sm:w-[200px] rounded-xl">
                   <SelectValue placeholder={t('store_switcher_select_store')} />
                 </SelectTrigger>
                 <SelectContent dir={dir}>
@@ -350,9 +350,9 @@ export default function CashierPage() {
               </Select>
             </div>
           ) : activeStore ? (
-            <div className="flex items-center gap-1.5 px-2.5 py-1 sm:px-3 sm:py-1.5 rounded-xl bg-muted border border-border/60 text-xs font-bold truncate max-w-[140px] sm:max-w-none">
+            <div className="flex items-center gap-1.5 px-2 py-1 sm:px-3 sm:py-1.5 rounded-xl bg-muted border border-border/60 text-xs font-bold truncate max-w-[90px] sm:max-w-none">
               <span
-                className="w-2.5 h-2.5 rounded-full shrink-0"
+                className="w-2 h-2 sm:w-2.5 sm:h-2.5 rounded-full shrink-0"
                 style={{ backgroundColor: activeStore.primaryColor || '#10b981' }}
               />
               <span className="truncate">{activeStore.name}</span>
@@ -370,15 +370,17 @@ export default function CashierPage() {
             </div>
           )}
 
-          <LanguageSwitcher />
+          <div className="hidden sm:block">
+            <LanguageSwitcher />
+          </div>
           <ThemeToggleButton />
           <Button
             variant="ghost"
             size="sm"
             onClick={handleLogout}
-            className="gap-1.5 text-xs text-muted-foreground hover:text-foreground h-9 rounded-xl"
+            className="gap-1 text-xs text-muted-foreground hover:text-foreground h-7 sm:h-9 rounded-xl px-1.5 sm:px-3"
           >
-            <LogOut className="h-4 w-4 rtl:rotate-180" />
+            <LogOut className="h-3.5 w-3.5 sm:h-4 sm:w-4 rtl:rotate-180" />
             <span className="hidden sm:inline">{t('logout')}</span>
           </Button>
         </div>
