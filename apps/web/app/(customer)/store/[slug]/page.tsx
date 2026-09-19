@@ -212,8 +212,8 @@ export default function CustomerStorePage({ params }: { params: Promise<{ slug: 
           pointsBalance={0}
           pointsPerTnd={store.pointsPerTnd}
           qrCodeToken={`JOIN:${store.slug}`}
-          memberName={isAuthenticated ? 'Loyalty Member' : 'New Member'}
-          memberSince="Available Now"
+          memberName={isAuthenticated ? t('card_member') : t('card_fallback_customer')}
+          memberSince={t('card_available_now')}
           rewardsCount={store.rewards.length}
           nextRewardName={store.rewards[0]?.name}
           nextRewardCost={store.rewards[0]?.pointsCost}

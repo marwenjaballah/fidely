@@ -574,10 +574,10 @@ export function StoreQRStandCard({ store }: StoreQRStandCardProps) {
               {/* Tagline & Steps */}
               <div className="space-y-1 pb-2">
                 <span className="text-xs font-bold uppercase tracking-wider text-slate-200">
-                  Scan to Join & Earn Perks
+                  {t('card_scan_to_join_perks')}
                 </span>
                 <p className="text-[10px] text-slate-400">
-                  1 TND = {pointsPerTnd} {t('points')} • Fidely Wallet Ready
+                  1 TND = {pointsPerTnd} {t('points')} • {t('card_wallet_ready')}
                 </p>
               </div>
 

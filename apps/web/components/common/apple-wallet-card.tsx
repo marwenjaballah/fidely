@@ -9,11 +9,8 @@ import {
   RotateCcw,
   Check,
   Copy,
-  Maximize2,
   Gift,
   ShieldCheck,
-  ArrowRight,
-  ExternalLink,
   RefreshCw,
 } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
@@ -24,8 +21,8 @@ import {
   DialogDescription,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from '@/components/ui/dialog'
+import { useI18n } from '@/lib/i18n'
 
 export interface AppleWalletPassProps {
   storeName: string
@@ -62,6 +59,7 @@ export function AppleWalletPass({
   className = '',
   onRefreshQr,
 }: AppleWalletPassProps) {
+  const { t, dir } = useI18n()
   const [isFlipped, setIsFlipped] = useState(false)
   const [copiedToken, setCopiedToken] = useState(false)
   const [qrModalOpen, setQrModalOpen] = useState(false)
@@ -93,7 +91,11 @@ export function AppleWalletPass({
       : 100
 
   return (
-    <div className={`relative w-full max-w-[400px] mx-auto select-none ${className}`} style={{ perspective: '1200px' }}>
+    <div
+      dir={dir}
+      className={`relative w-full max-w-[400px] mx-auto select-none ${className}`}
+      style={{ perspective: '1200px' }}
+    >
       {/* 3D Card Flipper Container */}
       <div
         className="relative w-full transition-transform duration-700 ease-out"
@@ -118,7 +120,7 @@ export function AppleWalletPass({
         >
           {/* Top Apple Wallet Card Header */}
           <div className="p-4 sm:p-5 pb-3 flex items-center justify-between border-b border-white/10">
-            <div className="flex items-center gap-2.5 sm:gap-3">
+            <div className="flex items-center gap-2.5 sm:gap-3 text-start min-w-0">
               <div className="h-10 w-10 sm:h-11 sm:w-11 rounded-2xl bg-white/15 backdrop-blur-md flex items-center justify-center font-bold text-xl overflow-hidden border border-white/25 shrink-0 shadow-xs">
                 {logoUrl ? (
                   <img src={logoUrl} alt={storeName} className="h-full w-full object-cover" />
@@ -128,26 +130,30 @@ export function AppleWalletPass({
               </div>
               <div className="min-w-0">
                 <p className="text-[9px] sm:text-[10px] font-bold tracking-widest uppercase text-white/70 leading-none">
-                  Loyalty Pass
+                  {t('card_loyalty_pass')}
                 </p>
                 <h3 className="text-sm sm:text-base font-extrabold tracking-tight truncate leading-tight mt-1 text-white">
-                  {storeName || 'Coffee Shop'}
+                  {storeName || t('card_fallback_store')}
                 </h3>
               </div>
             </div>
 
             {/* Top Right Header Field */}
-            <div className="flex items-center gap-1.5">
-              <div className="text-right">
-                <p className="text-[8px] sm:text-[9px] font-bold uppercase tracking-wider text-white/70">Rate</p>
-                <p className="text-[11px] sm:text-xs font-bold text-white leading-tight">{pointsPerTnd} pts/TND</p>
+            <div className="flex items-center gap-1.5 shrink-0 text-end">
+              <div>
+                <p className="text-[8px] sm:text-[9px] font-bold uppercase tracking-wider text-white/70">
+                  {t('card_rate')}
+                </p>
+                <p className="text-[11px] sm:text-xs font-bold text-white leading-tight">
+                  {t('card_pts_per_tnd', { rate: pointsPerTnd })}
+                </p>
               </div>
               {interactive && (
                 <button
                   type="button"
                   onClick={() => setIsFlipped(true)}
-                  className="h-7 w-7 rounded-full bg-white/15 hover:bg-white/25 transition flex items-center justify-center text-white/90 ml-1.5"
-                  title="Pass Details"
+                  className="h-7 w-7 rounded-full bg-white/15 hover:bg-white/25 transition flex items-center justify-center text-white/90 ms-1.5"
+                  title={t('card_pass_details')}
                 >
                   <Info className="h-3.5 w-3.5" />
                 </button>
@@ -156,47 +162,55 @@ export function AppleWalletPass({
           </div>
 
           {/* Primary Hero Section: Big Points Balance */}
-          <div className="px-4 sm:px-6 py-4 sm:py-5 flex items-baseline justify-between">
+          <div className="px-4 sm:px-6 py-4 sm:py-5 flex items-baseline justify-between text-start">
             <div>
               <p className="text-[9px] sm:text-[10px] font-bold uppercase tracking-widest text-white/75">
-                Current Points
+                {t('card_current_points')}
               </p>
               <div className="flex items-baseline gap-2 mt-0.5">
-                <span className="text-3xl sm:text-5xl font-black tracking-tight text-white drop-shadow-xs">
+                <span className="text-3xl sm:text-5xl font-black tracking-tight text-white drop-shadow-xs font-mono">
                   {pointsBalance.toLocaleString()}
                 </span>
-                <span className="text-xs sm:text-sm font-semibold uppercase tracking-wider text-white/80">PTS</span>
+                <span className="text-xs sm:text-sm font-semibold uppercase tracking-wider text-white/80">
+                  {t('pts')}
+                </span>
               </div>
             </div>
 
             {rewardsCount > 0 && (
-              <div className="flex flex-col items-end">
+              <div className="flex flex-col items-end ms-auto">
                 <Badge className="bg-emerald-500/90 text-white border-0 text-[9px] sm:text-[10px] font-bold shadow-xs px-2 sm:px-2.5 py-0.5 gap-1 backdrop-blur-xs">
                   <Gift className="h-3 w-3" />
-                  {rewardsCount} Ready
+                  {rewardsCount} {t('card_ready')}
                 </Badge>
               </div>
             )}
           </div>
 
           {/* Auxiliary Info Grid (Classic Apple Wallet 3-column metadata) */}
-          <div className="px-4 sm:px-6 py-2.5 sm:py-3 grid grid-cols-3 gap-2 bg-black/15 backdrop-blur-xs border-y border-white/10 text-left">
-            <div>
-              <p className="text-[9px] font-bold uppercase tracking-wider text-white/60">Member</p>
+          <div className="px-4 sm:px-6 py-2.5 sm:py-3 grid grid-cols-3 gap-2 bg-black/15 backdrop-blur-xs border-y border-white/10">
+            <div className="text-start min-w-0">
+              <p className="text-[9px] font-bold uppercase tracking-wider text-white/60">
+                {t('card_member')}
+              </p>
               <p className="text-xs font-bold text-white truncate mt-0.5">
-                {memberName || 'Customer'}
+                {memberName || t('card_fallback_customer')}
               </p>
             </div>
-            <div>
-              <p className="text-[9px] font-bold uppercase tracking-wider text-white/60">Status</p>
+            <div className="text-start min-w-0">
+              <p className="text-[9px] font-bold uppercase tracking-wider text-white/60">
+                {t('card_status')}
+              </p>
               <p className="text-xs font-bold text-white truncate mt-0.5 flex items-center gap-1">
-                <Sparkles className="h-3 w-3 text-amber-300" /> Active
+                <Sparkles className="h-3 w-3 text-amber-300 shrink-0" /> {t('card_status_active')}
               </p>
             </div>
-            <div className="text-right">
-              <p className="text-[9px] font-bold uppercase tracking-wider text-white/60">Joined</p>
+            <div className="text-end min-w-0">
+              <p className="text-[9px] font-bold uppercase tracking-wider text-white/60">
+                {t('card_joined')}
+              </p>
               <p className="text-xs font-bold text-white truncate mt-0.5">
-                {memberSince || 'Active'}
+                {memberSince || t('card_member_since_active')}
               </p>
             </div>
           </div>
@@ -205,9 +219,11 @@ export function AppleWalletPass({
           {nextRewardName && (
             <div className="px-6 py-2.5 bg-black/10 text-xs text-white/90 border-b border-white/10">
               <div className="flex items-center justify-between text-[11px] mb-1">
-                <span className="font-semibold truncate">Target: {nextRewardName}</span>
-                <span className="font-bold shrink-0 ml-2">
-                  {nextRewardCost ? Math.max(0, nextRewardCost - pointsBalance) : 0} pts left
+                <span className="font-semibold truncate text-start">
+                  {t('card_target')}: {nextRewardName}
+                </span>
+                <span className="font-bold shrink-0 ms-2 text-end font-mono">
+                  {nextRewardCost ? Math.max(0, nextRewardCost - pointsBalance) : 0} {t('card_pts_left')}
                 </span>
               </div>
               <div className="w-full bg-white/20 h-1.5 rounded-full overflow-hidden">
@@ -222,11 +238,11 @@ export function AppleWalletPass({
           {/* Perforated Tear Notch Line (Apple Wallet Signature) */}
           <div className="relative h-4 flex items-center justify-between">
             {/* Left circular cutout notch */}
-            <div className="h-4 w-2 rounded-r-full bg-background border-r border-border/60 -ml-[1px]" />
+            <div className="h-4 w-2 rounded-r-full bg-background border-r border-border/60 -ms-[1px]" />
             {/* Dashed perforated line */}
             <div className="flex-1 border-b border-dashed border-white/25 mx-2" />
             {/* Right circular cutout notch */}
-            <div className="h-4 w-2 rounded-l-full bg-background border-l border-border/60 -mr-[1px]" />
+            <div className="h-4 w-2 rounded-l-full bg-background border-l border-border/60 -me-[1px]" />
           </div>
 
           {/* QR Code Barcode Presentation Zone */}
@@ -235,7 +251,7 @@ export function AppleWalletPass({
               <div
                 onClick={() => setQrModalOpen(true)}
                 className="p-3 bg-white rounded-2xl shadow-lg border border-white/40 cursor-pointer hover:scale-[1.02] active:scale-[0.98] transition-transform group"
-                title="Tap for full brightness pass"
+                title={t('card_tap_brightness')}
               >
                 <QRCodeSVG
                   value={qrCodeToken}
@@ -244,20 +260,20 @@ export function AppleWalletPass({
                   includeMargin={false}
                 />
                 <p className="text-[9px] font-bold text-slate-800 tracking-wider uppercase mt-1.5 opacity-80 group-hover:opacity-100">
-                  Tap to Enlarge
+                  {t('card_tap_enlarge')}
                 </p>
               </div>
 
               <div className="flex items-center justify-center gap-1.5 mt-3">
                 <p className="text-[11px] text-white/80 font-medium">
-                  Hold near scanner at barista checkout
+                  {t('card_scanner_hint')}
                 </p>
                 {onRefreshQr && (
                   <button
                     type="button"
                     onClick={handleRefreshClick}
                     disabled={isRefreshing}
-                    title="Refresh QR Code Security Pass"
+                    title={t('card_refresh_security_pass')}
                     className="inline-flex items-center justify-center p-1 rounded-full bg-white/15 hover:bg-white/25 active:scale-90 text-white transition-all disabled:opacity-50"
                   >
                     <RefreshCw className={`h-3 w-3 ${isRefreshing ? 'animate-spin' : ''}`} />
@@ -267,7 +283,10 @@ export function AppleWalletPass({
 
               {/* Premium Fullscreen Apple Wallet QR Modal */}
               <Dialog open={qrModalOpen} onOpenChange={setQrModalOpen}>
-                <DialogContent className="sm:max-w-sm text-center p-7 rounded-[32px] bg-background/95 backdrop-blur-2xl border border-border/80 shadow-2xl overflow-hidden">
+                <DialogContent
+                  dir={dir}
+                  className="sm:max-w-sm text-center p-7 rounded-[32px] bg-background/95 backdrop-blur-2xl border border-border/80 shadow-2xl overflow-hidden"
+                >
                   {/* Ambient Store Glow */}
                   <div
                     className="absolute -top-24 left-1/2 -translate-x-1/2 w-48 h-48 rounded-full blur-3xl opacity-20 pointer-events-none"
@@ -275,13 +294,18 @@ export function AppleWalletPass({
                   />
 
                   <DialogHeader className="space-y-1.5 pt-2">
-                    <div className="mx-auto flex h-11 w-11 items-center justify-center rounded-2xl shadow-sm text-white mb-2" style={{ backgroundColor: primaryColor }}>
+                    <div
+                      className="mx-auto flex h-11 w-11 items-center justify-center rounded-2xl shadow-sm text-white mb-2"
+                      style={{ backgroundColor: primaryColor }}
+                    >
                       <Coffee className="h-6 w-6" />
                     </div>
-                    <DialogTitle className="text-center text-lg font-bold tracking-tight">{storeName}</DialogTitle>
+                    <DialogTitle className="text-center text-lg font-bold tracking-tight">
+                      {storeName}
+                    </DialogTitle>
                     <DialogDescription className="text-center text-xs text-muted-foreground flex items-center justify-center gap-1.5">
                       <ShieldCheck className="h-3.5 w-3.5 text-emerald-500" />
-                      Dynamic Security Barcode Pass
+                      {t('card_dynamic_security_barcode')}
                     </DialogDescription>
                   </DialogHeader>
 
@@ -291,7 +315,7 @@ export function AppleWalletPass({
                     </div>
 
                     <p className="text-[11px] text-muted-foreground font-medium mt-3.5 bg-muted/60 px-3 py-1 rounded-full">
-                      Maximum screen brightness recommended at checkout
+                      {t('card_brightness_recommended')}
                     </p>
 
                     <div className="flex items-center gap-2 mt-5 w-full">
@@ -304,7 +328,7 @@ export function AppleWalletPass({
                           className="flex-1 rounded-xl h-10 gap-2 text-xs font-semibold border-border/80 hover:bg-muted/80"
                         >
                           <RefreshCw className={`h-3.5 w-3.5 ${isRefreshing ? 'animate-spin' : ''}`} />
-                          {isRefreshing ? 'Generating...' : 'Refresh Pass'}
+                          {isRefreshing ? t('card_generating') : t('card_refresh_pass')}
                         </Button>
                       )}
                       <Button
@@ -314,7 +338,7 @@ export function AppleWalletPass({
                         className="flex-1 rounded-xl h-10 gap-2 text-xs font-semibold"
                       >
                         {copiedToken ? <Check className="h-3.5 w-3.5 text-emerald-500" /> : <Copy className="h-3.5 w-3.5" />}
-                        {copiedToken ? 'Pass ID Copied' : 'Copy Pass ID'}
+                        {copiedToken ? t('card_pass_id_copied') : t('card_copy_pass_id')}
                       </Button>
                     </div>
                   </div>
@@ -325,13 +349,14 @@ export function AppleWalletPass({
 
           {!showQr && (
             <div className="p-5 text-center text-xs text-white/75 font-medium">
-              Present your phone at checkout to collect loyalty points automatically.
+              {t('card_no_qr_hint')}
             </div>
           )}
         </div>
 
         {/* ── BACK OF PASS ── */}
         <div
+          dir={dir}
           className="absolute inset-0 w-full rounded-[28px] text-white shadow-2xl p-6 flex flex-col justify-between border border-white/20"
           style={{
             backgroundColor: '#18181B',
@@ -345,62 +370,70 @@ export function AppleWalletPass({
         >
           {/* Back Header */}
           <div className="flex items-center justify-between border-b border-white/10 pb-3">
-            <div className="flex items-center gap-2">
-              <ShieldCheck className="h-4 w-4 text-emerald-400" />
+            <div className="flex items-center gap-2 text-start">
+              <ShieldCheck className="h-4 w-4 text-emerald-400 shrink-0" />
               <span className="text-xs font-bold uppercase tracking-wider text-white/80">
-                Pass Information
+                {t('card_pass_information')}
               </span>
             </div>
             <Button
               size="sm"
               variant="ghost"
               onClick={() => setIsFlipped(false)}
-              className="h-7 px-2.5 text-xs text-white hover:bg-white/10 gap-1"
+              className="h-7 px-2.5 text-xs text-white hover:bg-white/10 gap-1 ms-auto"
             >
-              <RotateCcw className="h-3 w-3" /> Done
+              <RotateCcw className="h-3 w-3" /> {t('card_done')}
             </Button>
           </div>
 
           {/* Pass Details Body */}
-          <div className="space-y-4 text-xs text-white/80 py-4 flex-1 overflow-y-auto">
+          <div className="space-y-4 text-xs text-white/80 py-4 flex-1 overflow-y-auto text-start">
             <div className="space-y-1">
-              <p className="text-[10px] uppercase font-bold text-white/50 tracking-wider">Business</p>
+              <p className="text-[10px] uppercase font-bold text-white/50 tracking-wider">
+                {t('card_business')}
+              </p>
               <p className="font-semibold text-white">{storeName}</p>
             </div>
 
             <div className="space-y-1">
-              <p className="text-[10px] uppercase font-bold text-white/50 tracking-wider">Loyalty Policy</p>
+              <p className="text-[10px] uppercase font-bold text-white/50 tracking-wider">
+                {t('card_loyalty_policy')}
+              </p>
               <p className="text-white/80 leading-relaxed">
-                Earn {pointsPerTnd} points for every 1 TND spent. Points can be redeemed for exclusive beverages and perks at any partner location.
+                {t('card_loyalty_policy_desc', { rate: pointsPerTnd })}
               </p>
             </div>
 
             {qrCodeToken && (
               <div className="space-y-1">
-                <p className="text-[10px] uppercase font-bold text-white/50 tracking-wider">Card ID Token</p>
-                <p className="font-mono text-[11px] text-white/90 bg-white/5 p-2 rounded-lg break-all">
+                <p className="text-[10px] uppercase font-bold text-white/50 tracking-wider">
+                  {t('card_id_token')}
+                </p>
+                <p dir="ltr" className="font-mono text-[11px] text-white/90 bg-white/5 p-2 rounded-lg break-all text-start">
                   {qrCodeToken}
                 </p>
               </div>
             )}
 
             <div className="space-y-1">
-              <p className="text-[10px] uppercase font-bold text-white/50 tracking-wider">Automatic Updates</p>
+              <p className="text-[10px] uppercase font-bold text-white/50 tracking-wider">
+                {t('card_auto_updates')}
+              </p>
               <p className="text-emerald-400 font-medium flex items-center gap-1">
-                <Check className="h-3.5 w-3.5" /> Real-time balance synchronization enabled
+                <Check className="h-3.5 w-3.5 shrink-0" /> {t('card_realtime_sync')}
               </p>
             </div>
           </div>
 
           {/* Back Footer */}
           <div className="pt-3 border-t border-white/10 flex items-center justify-between text-[11px] text-white/60">
-            <span>Powered by Fidely</span>
+            <span>{t('card_powered_by')} Fidely</span>
             <button
               type="button"
               onClick={() => setIsFlipped(false)}
-              className="text-white font-semibold hover:underline"
+              className="text-white font-semibold hover:underline ms-auto"
             >
-              Flip back to pass
+              {t('card_flip_back')}
             </button>
           </div>
         </div>
@@ -408,3 +441,4 @@ export function AppleWalletPass({
     </div>
   )
 }
+

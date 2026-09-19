@@ -143,18 +143,18 @@ export function Navbar() {
                         {profile?.role === 'SUPER_ADMIN' && (
                           <DropdownMenuItem asChild>
                             <Link href="/admin/overview" className="font-semibold text-primary">
-                              Super Admin Panel
+                              {strings.nav_super_admin_panel}
                             </Link>
                           </DropdownMenuItem>
                         )}
                         {profile?.role === 'CASHIER' && (
                           <DropdownMenuItem asChild>
-                            <Link href="/cashier">Cashier Terminal</Link>
+                            <Link href="/cashier">{strings.nav_cashier_terminal}</Link>
                           </DropdownMenuItem>
                         )}
                         {profile?.role === 'CUSTOMER' && (
                           <DropdownMenuItem asChild>
-                            <Link href="/customer/overview">My Loyalty Cards</Link>
+                            <Link href="/customer/overview">{strings.customer_my_cards}</Link>
                           </DropdownMenuItem>
                         )}
                         {(profile?.role === 'MERCHANT' || profile?.role === 'SUPER_ADMIN') && (
@@ -260,21 +260,21 @@ export function Navbar() {
                       {profile?.role === 'SUPER_ADMIN' && (
                         <DropdownMenuItem asChild>
                           <Link href="/admin/overview" onClick={closeMobile} className="font-semibold text-primary">
-                            Super Admin Panel
+                            {strings.nav_super_admin_panel}
                           </Link>
                         </DropdownMenuItem>
                       )}
                       {profile?.role === 'CASHIER' && (
                         <DropdownMenuItem asChild>
                           <Link href="/cashier" onClick={closeMobile}>
-                            Cashier Terminal
+                            {strings.nav_cashier_terminal}
                           </Link>
                         </DropdownMenuItem>
                       )}
                       {profile?.role === 'CUSTOMER' && (
                         <DropdownMenuItem asChild>
                           <Link href="/customer/overview" onClick={closeMobile}>
-                            My Loyalty Cards
+                            {strings.customer_my_cards}
                           </Link>
                         </DropdownMenuItem>
                       )}

@@ -139,7 +139,7 @@ export function SiteHeader() {
                     <DropdownMenuItem asChild className="rounded-xl font-semibold text-primary">
                       <Link href="/admin/overview">
                         <ShieldCheck className="w-4 h-4 me-2" />
-                        Super Admin Panel
+                        {t('nav_super_admin_panel')}
                       </Link>
                     </DropdownMenuItem>
                   )}
@@ -148,7 +148,7 @@ export function SiteHeader() {
                     <DropdownMenuItem asChild className="rounded-xl">
                       <Link href="/cashier">
                         <Store className="w-4 h-4 me-2" />
-                        Cashier Terminal
+                        {t('nav_cashier_terminal')}
                       </Link>
                     </DropdownMenuItem>
                   )}
@@ -157,7 +157,7 @@ export function SiteHeader() {
                     <DropdownMenuItem asChild className="rounded-xl">
                       <Link href="/customer/overview">
                         <User className="w-4 h-4 me-2" />
-                        My Loyalty Cards
+                        {t('customer_my_cards')}
                       </Link>
                     </DropdownMenuItem>
                   )}
@@ -167,11 +167,11 @@ export function SiteHeader() {
                       <DropdownMenuItem asChild className="rounded-xl font-medium">
                         <Link href="/merchant/overview">
                           <Store className="w-4 h-4 me-2" />
-                          Merchant Dashboard
+                          {t('nav_merchant_dashboard')}
                         </Link>
                       </DropdownMenuItem>
                       <DropdownMenuItem asChild className="rounded-xl">
-                        <Link href="/merchant/settings/account">Account Settings</Link>
+                        <Link href="/merchant/settings/account">{t('nav_account_settings')}</Link>
                       </DropdownMenuItem>
                     </>
                   )}
@@ -179,44 +179,36 @@ export function SiteHeader() {
                   <DropdownMenuSeparator />
                   <DropdownMenuItem onClick={handleLogout} className="rounded-xl text-rose-500 focus:text-rose-500">
                     <LogOut className="w-4 h-4 me-2 rtl:rotate-180" />
-                    Sign Out
+                    {t('logout')}
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
             </div>
           ) : (
             <div className="hidden sm:flex items-center gap-2">
-              <Button
-                asChild
-                variant="ghost"
-                size="sm"
-                className="h-9 px-3.5 text-xs font-semibold text-muted-foreground hover:text-foreground hover:bg-muted/80 rounded-xl"
-              >
-                <Link href="/auth/login">Sign In</Link>
+              <Button asChild variant="ghost" size="sm" className="rounded-xl text-xs font-semibold">
+                <Link href="/auth/login">{t('nav_login')}</Link>
               </Button>
-
               <Button
                 asChild
                 size="sm"
-                className="h-9 rounded-xl bg-primary px-3.5 text-xs font-bold text-primary-foreground shadow-md shadow-primary/20 transition-transform active:scale-95 gap-1.5"
+                className="rounded-xl text-xs font-bold bg-primary text-primary-foreground shadow-sm shadow-primary/20 gap-1.5"
               >
                 <Link href="/auth/sign-up">
-                  <Sparkles className="h-3.5 w-3.5" />
-                  <span>Start Free</span>
+                  <span>{t('nav_get_started')}</span>
+                  <ArrowRight className="w-3.5 h-3.5 rtl:rotate-180" />
                 </Link>
               </Button>
             </div>
           )}
 
-          {/* Mobile Hamburger Menu Toggle */}
+          {/* Mobile Menu Trigger */}
           <button
-            type="button"
-            className="md:hidden inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-border/80 bg-background text-foreground hover:bg-muted/50"
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-            aria-expanded={mobileMenuOpen}
-            aria-label="Toggle menu"
+            className="md:hidden flex items-center justify-center w-10 h-10 rounded-xl bg-muted/60 text-foreground"
+            aria-label="Toggle Navigation"
           >
-            {mobileMenuOpen ? <X className="h-4 w-4" /> : <Menu className="h-4 w-4" />}
+            {mobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
           </button>
         </div>
       </div>
@@ -230,28 +222,28 @@ export function SiteHeader() {
               onClick={closeMobile}
               className="rounded-xl px-3 py-2 text-muted-foreground hover:bg-muted hover:text-foreground"
             >
-              Live Simulator
+              {t('nav_intro')}
             </a>
             <a
               href="/#features"
               onClick={closeMobile}
               className="rounded-xl px-3 py-2 text-muted-foreground hover:bg-muted hover:text-foreground"
             >
-              Capabilities
+              {t('nav_features')}
             </a>
             <a
               href="/#how-it-works"
               onClick={closeMobile}
               className="rounded-xl px-3 py-2 text-muted-foreground hover:bg-muted hover:text-foreground"
             >
-              How It Works
+              {t('nav_use_cases')}
             </a>
             <a
               href="/#reviews"
               onClick={closeMobile}
               className="rounded-xl px-3 py-2 text-muted-foreground hover:bg-muted hover:text-foreground"
             >
-              Reviews
+              {t('footer_reviews')}
             </a>
             <a
               href="/#faq"
@@ -266,12 +258,12 @@ export function SiteHeader() {
               className="rounded-xl px-3 py-2 text-muted-foreground hover:bg-muted hover:text-foreground flex items-center gap-2"
             >
               <BookOpen className="w-4 h-4" />
-              <span>Documentation</span>
+              <span>{t('nav_docs')}</span>
             </Link>
           </nav>
 
           <div className="flex items-center justify-between pt-2 border-t border-border/40">
-            <span className="text-xs text-muted-foreground font-medium">Language & Theme</span>
+            <span className="text-xs text-muted-foreground font-medium">{t('theme')}</span>
             <div className="flex items-center gap-2">
               <LanguageSwitcher />
               <ThemeToggleButton />
@@ -282,12 +274,12 @@ export function SiteHeader() {
             <div className="flex flex-col gap-2 pt-1">
               <Button asChild variant="outline" className="w-full rounded-xl h-10 text-xs font-semibold">
                 <Link href="/auth/login" onClick={closeMobile}>
-                  Sign In
+                  {t('nav_login')}
                 </Link>
               </Button>
               <Button asChild className="w-full rounded-xl h-10 text-xs font-bold bg-primary text-primary-foreground">
                 <Link href="/auth/sign-up" onClick={closeMobile}>
-                  Launch Your Store Free
+                  {t('nav_get_started')}
                 </Link>
               </Button>
             </div>
