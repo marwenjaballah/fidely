@@ -5,6 +5,8 @@ import { CheckCircle2, XCircle, Sparkles, Gift, Copy, Check, ArrowRight, X } fro
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 
+import { useI18n } from '@/lib/i18n';
+
 export type FeedbackState = 'idle' | 'success' | 'error';
 
 export interface FeedbackData {
@@ -26,6 +28,7 @@ interface FeedbackOverlayProps {
 }
 
 export function FeedbackOverlay({ data, onDismiss }: FeedbackOverlayProps) {
+  const { t, dir } = useI18n();
   const [copied, setCopied] = useState(false);
   const [progress, setProgress] = useState(100);
   const [remainingSecs, setRemainingSecs] = useState(3);
@@ -66,7 +69,7 @@ export function FeedbackOverlay({ data, onDismiss }: FeedbackOverlayProps) {
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200" dir={dir}>
       <div
         className={`relative w-full max-w-md overflow-hidden rounded-3xl border p-6 sm:p-8 shadow-2xl transition-all duration-300 animate-in zoom-in-95 ${
           isSuccess
@@ -75,7 +78,7 @@ export function FeedbackOverlay({ data, onDismiss }: FeedbackOverlayProps) {
         }`}
       >
         {/* Countdown Progress Bar */}
-        <div className="absolute top-0 left-0 right-0 h-1.5 bg-muted overflow-hidden">
+        <div className="absolute top-0 start-0 end-0 h-1.5 bg-muted overflow-hidden">
           <div
             className={`h-full transition-all duration-75 ease-linear ${
               isSuccess ? 'bg-primary' : 'bg-destructive'
@@ -86,7 +89,7 @@ export function FeedbackOverlay({ data, onDismiss }: FeedbackOverlayProps) {
 
         {/* Ambient Top Glow */}
         <div
-          className={`absolute -top-24 left-1/2 -translate-x-1/2 w-48 h-48 rounded-full blur-3xl opacity-30 pointer-events-none ${
+          className={`absolute -top-24 start-1/2 -translate-x-1/2 w-48 h-48 rounded-full blur-3xl opacity-30 pointer-events-none ${
             isSuccess ? 'bg-primary' : 'bg-destructive'
           }`}
         />
@@ -94,8 +97,8 @@ export function FeedbackOverlay({ data, onDismiss }: FeedbackOverlayProps) {
         {/* Close Button */}
         <button
           onClick={onDismiss}
-          className="absolute top-4 right-4 p-2 rounded-full text-muted-foreground hover:text-foreground hover:bg-muted/80 transition-colors"
-          aria-label="Dismiss"
+          className="absolute top-4 end-4 p-2 rounded-full text-muted-foreground hover:text-foreground hover:bg-muted/80 transition-colors"
+          aria-label={t('close')}
         >
           <X className="w-5 h-5" />
         </button>
@@ -123,7 +126,7 @@ export function FeedbackOverlay({ data, onDismiss }: FeedbackOverlayProps) {
           {/* Heading & Subtitle */}
           <div className="space-y-1">
             <h2 className="text-2xl font-black tracking-tight">
-              {data.title || (isSuccess ? 'Transaction Completed!' : 'Scan Issue')}
+              {data.title || (isSuccess ? t('cashier_tx_completed') : t('cashier_tx_declined'))}
             </h2>
             {data.message && (
               <p className="text-sm text-muted-foreground leading-relaxed max-w-sm">
@@ -134,18 +137,18 @@ export function FeedbackOverlay({ data, onDismiss }: FeedbackOverlayProps) {
 
           {/* Transaction Summary Card */}
           {isSuccess && (
-            <div className="w-full bg-muted/60 border border-border/60 rounded-2xl p-4 space-y-3 text-left">
+            <div className="w-full bg-muted/60 border border-border/60 rounded-2xl p-4 space-y-3 text-start">
               {data.customerName && (
                 <div className="flex justify-between items-center text-xs pb-2 border-b border-border/40">
-                  <span className="text-muted-foreground">Customer</span>
+                  <span className="text-muted-foreground">{t('cashier_customer_label')}</span>
                   <span className="font-semibold text-foreground">{data.customerName}</span>
                 </div>
               )}
 
               {data.type === 'issue' && data.points !== undefined && (
                 <div className="flex justify-between items-center text-sm py-1">
-                  <span className="font-medium text-muted-foreground">Points Issued</span>
-                  <Badge className="bg-primary text-primary-foreground font-mono text-sm px-2.5 py-0.5">
+                  <span className="font-medium text-muted-foreground">{t('cashier_points_issued_label')}</span>
+                  <Badge className="bg-primary text-primary-foreground font-mono text-sm px-2.5 py-0.5" dir="ltr">
                     +{data.points} pts
                   </Badge>
                 </div>
@@ -154,17 +157,17 @@ export function FeedbackOverlay({ data, onDismiss }: FeedbackOverlayProps) {
               {data.type === 'redeem' && data.rewardName && (
                 <div className="space-y-2 py-1">
                   <div className="flex justify-between items-center text-xs">
-                    <span className="text-muted-foreground">Claimed Perk</span>
+                    <span className="text-muted-foreground">{t('cashier_claimed_perk')}</span>
                     <span className="font-bold text-foreground">{data.rewardName}</span>
                   </div>
 
                   {data.voucherCode && (
                     <div className="flex items-center justify-between bg-background border border-border rounded-xl px-3 py-2">
-                      <div className="flex flex-col">
+                      <div className="flex flex-col text-start">
                         <span className="text-[10px] text-muted-foreground font-medium uppercase tracking-wider">
-                          Voucher Code
+                          {t('cashier_voucher_code')}
                         </span>
-                        <span className="font-mono font-bold text-sm text-primary tracking-wider">
+                        <span className="font-mono font-bold text-sm text-primary tracking-wider" dir="ltr">
                           {data.voucherCode}
                         </span>
                       </div>
@@ -176,7 +179,7 @@ export function FeedbackOverlay({ data, onDismiss }: FeedbackOverlayProps) {
                         className="h-8 px-2 text-xs gap-1 text-muted-foreground hover:text-foreground"
                       >
                         {copied ? <Check className="w-3.5 h-3.5 text-primary" /> : <Copy className="w-3.5 h-3.5" />}
-                        {copied ? 'Copied' : 'Copy'}
+                        {copied ? t('copied') : t('copy')}
                       </Button>
                     </div>
                   )}
@@ -185,8 +188,8 @@ export function FeedbackOverlay({ data, onDismiss }: FeedbackOverlayProps) {
 
               {data.newBalance !== undefined && (
                 <div className="flex justify-between items-center text-xs pt-2 border-t border-border/40">
-                  <span className="text-muted-foreground">Updated Balance</span>
-                  <span className="font-mono font-semibold text-foreground">{data.newBalance} pts</span>
+                  <span className="text-muted-foreground">{t('cashier_updated_balance')}</span>
+                  <span className="font-mono font-semibold text-foreground" dir="ltr">{data.newBalance} pts</span>
                 </div>
               )}
             </div>
@@ -202,11 +205,11 @@ export function FeedbackOverlay({ data, onDismiss }: FeedbackOverlayProps) {
                   : 'bg-destructive hover:bg-destructive/90 text-white shadow-destructive/20'
               }`}
             >
-              <span>{isSuccess ? 'Next Customer (Instant)' : 'Dismiss & Try Again'}</span>
-              <ArrowRight className="w-4 h-4" />
+              <span>{isSuccess ? t('cashier_next_customer') : t('cashier_dismiss_try_again')}</span>
+              <ArrowRight className="w-4 h-4 rtl:rotate-180" />
             </Button>
             <p className="text-[11px] text-muted-foreground font-medium">
-              Auto-resetting in <span className="font-mono font-bold text-foreground">{remainingSecs}s</span>
+              {t('cashier_auto_reset', { secs: remainingSecs })}
             </p>
           </div>
         </div>
@@ -214,3 +217,4 @@ export function FeedbackOverlay({ data, onDismiss }: FeedbackOverlayProps) {
     </div>
   );
 }
+

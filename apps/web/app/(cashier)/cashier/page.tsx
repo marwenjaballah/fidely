@@ -39,6 +39,8 @@ import {
 import { createCookieAuthApiClient, refreshAuthSession, ApiError } from '@/lib/api-client';
 import { AUTH_ROUTES } from '@/features/auth/services/auth-service';
 
+import { useI18n } from '@/lib/i18n';
+
 interface CashierStoreInfo {
   id: string;
   name: string;
@@ -81,6 +83,7 @@ function getCashierApiClient() {
 
 export default function CashierPage() {
   const { profile, signOut, isAuthenticated, hasHydrated } = useAuth();
+  const { t, dir } = useI18n();
   const router = useRouter();
 
   const [stores, setStores] = useState<CashierStoreInfo[]>([]);
@@ -184,8 +187,8 @@ export default function CashierPage() {
       posHaptics.error();
       setFeedback({
         state: 'error',
-        title: 'Store Not Selected',
-        message: 'Please select an active store on your cashier terminal first.',
+        title: t('cashier_no_assignment_title'),
+        message: t('cashier_no_assignment_desc'),
       });
       return;
     }
@@ -210,10 +213,10 @@ export default function CashierPage() {
         setFeedback({
           state: 'success',
           type: 'issue',
-          title: 'Points Awarded!',
-          message: `Successfully issued +${data.pointsIssued} points for ${value} TND.`,
+          title: t('cashier_tx_issue_title'),
+          message: `${t('pos_points_awarded_feedback', { points: data.pointsIssued, name: data.customerName || t('cashier_customer_label') })}`,
           points: data.pointsIssued,
-          customerName: data.customerName || 'Customer',
+          customerName: data.customerName || t('cashier_customer_label'),
           newBalance: data.newBalance,
           storeName: data.storeName,
         });
@@ -236,8 +239,8 @@ export default function CashierPage() {
         setFeedback({
           state: 'success',
           type: 'redeem',
-          title: 'Reward Redeemed!',
-          message: `Claimed '${data.rewardName}' voucher successfully.`,
+          title: t('cashier_tx_redeem_title'),
+          message: t('pos_voucher_redeemed_feedback', { title: data.rewardName }),
           rewardName: data.rewardName,
           voucherCode: data.voucherCode,
           newBalance: data.newBalance,
@@ -252,11 +255,11 @@ export default function CashierPage() {
       const message =
         err instanceof ApiError
           ? err.message
-          : err.response?.data?.error || err.message || 'Transaction failed.';
+          : err.response?.data?.error || err.message || t('pos_transaction_error');
 
       setFeedback({
         state: 'error',
-        title: 'Transaction Declined',
+        title: t('cashier_tx_declined'),
         message,
       });
     }
@@ -312,7 +315,7 @@ export default function CashierPage() {
     .reduce((acc, t) => acc + (t.pointsAffected || 0), 0);
 
   return (
-    <div className="min-h-screen bg-background flex flex-col text-foreground">
+    <div className="min-h-screen bg-background flex flex-col text-foreground" dir={dir}>
       {/* CASHIER TOP BAR */}
       <header className="sticky top-0 z-40 flex h-16 shrink-0 items-center justify-between border-b border-border/60 bg-background/95 px-3 sm:px-8 backdrop-blur supports-[backdrop-filter]:bg-background/60">
         <div className="flex items-center gap-2 sm:gap-3 shrink-0">
@@ -323,7 +326,7 @@ export default function CashierPage() {
             <div className="flex items-center gap-1.5 sm:gap-2">
               <span className="font-extrabold text-xs sm:text-base tracking-tight">Fidely POS</span>
               <Badge variant="outline" className="bg-primary/10 text-primary border-primary/20 text-[9px] sm:text-[10px] font-bold px-1.5 sm:px-2 py-0.5">
-                ● Live
+                {t('cashier_live_badge')}
               </Badge>
             </div>
           </div>
@@ -334,11 +337,11 @@ export default function CashierPage() {
           {stores.length > 1 ? (
             <div className="flex items-center gap-1.5">
               <Store className="h-4 w-4 text-muted-foreground hidden sm:inline" />
-              <Select value={activeStore?.id || ''} onValueChange={handleSelectStore}>
+              <Select value={activeStore?.id || ''} onValueChange={handleSelectStore} dir={dir}>
                 <SelectTrigger className="h-8 sm:h-9 text-xs font-semibold w-[120px] sm:w-[200px] rounded-xl">
-                  <SelectValue placeholder="Select Store" />
+                  <SelectValue placeholder={t('store_switcher_select_store')} />
                 </SelectTrigger>
-                <SelectContent>
+                <SelectContent dir={dir}>
                   {stores.map((s) => (
                     <SelectItem key={s.id} value={s.id} className="text-xs font-medium">
                       {s.name}
@@ -358,11 +361,11 @@ export default function CashierPage() {
           ) : null}
 
           {profile && (
-            <div className="hidden lg:flex flex-col text-right pr-2">
+            <div className="hidden lg:flex flex-col text-end pe-2">
               <span className="text-xs font-bold text-foreground">
                 {profile.full_name || profile.email.split('@')[0]}
               </span>
-              <span className="text-[10px] text-muted-foreground font-mono">
+              <span className="text-[10px] text-muted-foreground font-mono" dir="ltr">
                 {profile.email}
               </span>
             </div>
@@ -376,8 +379,8 @@ export default function CashierPage() {
             onClick={handleLogout}
             className="gap-1.5 text-xs text-muted-foreground hover:text-foreground h-9 rounded-xl"
           >
-            <LogOut className="h-4 w-4" />
-            <span className="hidden sm:inline">Log out</span>
+            <LogOut className="h-4 w-4 rtl:rotate-180" />
+            <span className="hidden sm:inline">{t('logout')}</span>
           </Button>
         </div>
       </header>
@@ -389,13 +392,13 @@ export default function CashierPage() {
           <div className="w-full flex flex-col sm:flex-row items-center justify-between gap-3 p-4 rounded-3xl bg-muted/40 border border-border/60">
             <div className="flex items-center gap-3">
               <div
-                className="w-3 h-10 rounded-full"
+                className="w-3 h-10 rounded-full shrink-0"
                 style={{ backgroundColor: activeStore.primaryColor || '#10b981' }}
               />
-              <div>
-                <h2 className="text-base font-black tracking-tight">{activeStore.name} Terminal</h2>
+              <div className="text-start">
+                <h2 className="text-base font-black tracking-tight">{activeStore.name} {t('cashier_pos_title')}</h2>
                 <p className="text-xs text-muted-foreground">
-                  Earning Multiplier: <strong className="text-foreground">1 TND = {activeStore.pointsPerTnd} points</strong>
+                  {t('cashier_earning_multiplier', { points: activeStore.pointsPerTnd })}
                 </p>
               </div>
             </div>
@@ -403,9 +406,7 @@ export default function CashierPage() {
             <div className="flex items-center gap-4 text-xs">
               <div className="flex items-center gap-1.5 bg-background border border-border/60 px-3 py-1.5 rounded-xl shadow-xs">
                 <TrendingUp className="w-3.5 h-3.5 text-emerald-500" />
-                <span className="text-muted-foreground">Shift:</span>
-                <span className="font-bold text-foreground">{totalEarnTxs} txns</span>
-                <span className="text-muted-foreground font-mono">({totalPointsIssued} pts)</span>
+                <span className="text-muted-foreground">{t('cashier_shift_stats', { txns: totalEarnTxs, pts: totalPointsIssued })}</span>
               </div>
 
               <Button
@@ -415,7 +416,7 @@ export default function CashierPage() {
                 className="h-8 text-xs font-semibold rounded-xl gap-1.5 bg-background"
               >
                 <History className="w-3.5 h-3.5" />
-                <span>Shift History ({recentTxs.length})</span>
+                <span>{t('cashier_shift_history_btn', { count: recentTxs.length })}</span>
               </Button>
             </div>
           </div>
@@ -436,12 +437,15 @@ export default function CashierPage() {
                 <div className="space-y-4 bg-card border border-border/80 rounded-3xl p-6 shadow-xl animate-in zoom-in-95 duration-200">
                   <div className="bg-primary/10 border border-primary/20 text-primary p-3.5 rounded-2xl text-center space-y-1">
                     <span className="text-xs font-medium uppercase tracking-wider block opacity-80">
-                      Awaiting Customer Loyalty Pass
+                      {t('cashier_awaiting_qr')}
                     </span>
                     <h3 className="font-bold text-base">
                       {scanMode.type === 'issue'
-                        ? `Award points for ${scanMode.value} TND (+${Math.round(Number(scanMode.value) * activeStore.pointsPerTnd)} pts)`
-                        : `Redeem Perk: ${scanMode.rewardName || 'Reward'}`}
+                        ? t('cashier_award_points_heading', {
+                            amount: scanMode.value,
+                            points: Math.round(Number(scanMode.value) * activeStore.pointsPerTnd),
+                          })
+                        : t('cashier_redeem_perk_heading', { name: scanMode.rewardName || 'Reward' })}
                     </h3>
                   </div>
 
@@ -452,7 +456,7 @@ export default function CashierPage() {
                     onClick={() => setScanMode({ active: false, type: null, value: null })}
                     className="w-full h-12 rounded-2xl text-sm font-semibold hover:bg-destructive/10 hover:text-destructive hover:border-destructive/30"
                   >
-                    Cancel Scan
+                    {t('cashier_cancel_scan')}
                   </Button>
                 </div>
               )}
@@ -461,20 +465,20 @@ export default function CashierPage() {
             <div className="text-center p-8 bg-card border border-destructive/30 rounded-3xl space-y-4 shadow-sm">
               <ShieldAlert className="h-12 w-12 text-destructive mx-auto" />
               <div className="space-y-1">
-                <h2 className="text-lg font-bold text-foreground">No Store Assignment</h2>
+                <h2 className="text-lg font-bold text-foreground">{t('cashier_no_assignment_title')}</h2>
                 <p className="text-xs text-muted-foreground max-w-sm mx-auto">
-                  Your account is not assigned to any active store. Please contact your store manager or owner to invite your email as a cashier.
+                  {t('cashier_no_assignment_desc')}
                 </p>
               </div>
               <Button onClick={() => fetchStores()} variant="outline" size="sm" className="rounded-xl text-xs gap-1.5">
                 <RefreshCw className="w-3.5 h-3.5" />
-                Retry Connection
+                {t('cashier_retry_connection')}
               </Button>
             </div>
           ) : (
             <div className="text-center p-12 space-y-3">
               <RefreshCw className="w-8 h-8 animate-spin text-primary mx-auto" />
-              <h2 className="text-base font-bold text-muted-foreground">Initializing POS Terminal...</h2>
+              <h2 className="text-base font-bold text-muted-foreground">{t('cashier_initializing')}</h2>
             </div>
           )}
 
@@ -484,14 +488,14 @@ export default function CashierPage() {
               <div className="flex items-center justify-between px-1">
                 <span className="text-xs font-bold text-muted-foreground uppercase tracking-wider flex items-center gap-1.5">
                   <Clock className="w-3.5 h-3.5" />
-                  Recent Activity
+                  {t('cashier_recent_activity_title')}
                 </span>
                 <button
                   onClick={() => setShowHistoryModal(true)}
                   className="text-xs font-semibold text-primary hover:underline flex items-center gap-0.5"
                 >
-                  View All ({recentTxs.length})
-                  <ChevronRight className="w-3.5 h-3.5" />
+                  {t('cashier_view_all', { count: recentTxs.length })}
+                  <ChevronRight className="w-3.5 h-3.5 rtl:rotate-180" />
                 </button>
               </div>
 
@@ -510,14 +514,14 @@ export default function CashierPage() {
                         }`}
                       >
                         {tx.type === 'earn' ? (
-                          <ArrowUpRight className="w-4 h-4" />
+                          <ArrowUpRight className="w-4 h-4 rtl:rotate-180" />
                         ) : (
-                          <ArrowDownLeft className="w-4 h-4" />
+                          <ArrowDownLeft className="w-4 h-4 rtl:rotate-180" />
                         )}
                       </div>
-                      <div>
+                      <div className="text-start">
                         <span className="text-xs font-bold block">{tx.customerName}</span>
-                        <span className="text-[10px] text-muted-foreground">
+                        <span className="text-[10px] text-muted-foreground font-mono">
                           {new Date(tx.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                           {tx.amountTnd ? ` • ${tx.amountTnd} TND` : ''}
                         </span>
@@ -530,6 +534,7 @@ export default function CashierPage() {
                           ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20'
                           : 'bg-primary/10 text-primary border-primary/20'
                       }`}
+                      dir="ltr"
                     >
                       {tx.type === 'earn' ? `+${tx.pointsAffected}` : `${tx.pointsAffected}`} pts
                     </Badge>
@@ -543,12 +548,12 @@ export default function CashierPage() {
 
       {/* SHIFT HISTORY FULL DRAWER / MODAL */}
       {showHistoryModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200" dir={dir}>
           <div className="w-full max-w-lg bg-card border border-border/80 rounded-3xl p-6 shadow-2xl space-y-4 max-h-[85vh] flex flex-col">
             <div className="flex items-center justify-between pb-3 border-b border-border/60">
               <div className="flex items-center gap-2">
                 <History className="w-5 h-5 text-primary" />
-                <h3 className="text-lg font-black tracking-tight">Shift Transaction Log</h3>
+                <h3 className="text-lg font-black tracking-tight">{t('cashier_shift_log_title')}</h3>
               </div>
               <Button
                 variant="ghost"
@@ -560,10 +565,10 @@ export default function CashierPage() {
               </Button>
             </div>
 
-            <div className="flex-1 overflow-y-auto space-y-2 pr-1">
+            <div className="flex-1 overflow-y-auto space-y-2 pe-1">
               {recentTxs.length === 0 ? (
                 <div className="p-8 text-center text-xs text-muted-foreground">
-                  No transactions processed during this shift yet.
+                  {t('cashier_no_shift_txns')}
                 </div>
               ) : (
                 recentTxs.map((tx) => (
@@ -581,15 +586,15 @@ export default function CashierPage() {
                       >
                         {tx.type === 'earn' ? <Coins className="w-4 h-4" /> : <Gift className="w-4 h-4" />}
                       </div>
-                      <div>
+                      <div className="text-start">
                         <div className="text-xs font-bold">{tx.customerName}</div>
-                        <div className="text-[10px] text-muted-foreground">
+                        <div className="text-[10px] text-muted-foreground font-mono">
                           {new Date(tx.createdAt).toLocaleTimeString([], {
                             hour: '2-digit',
                             minute: '2-digit',
                             second: '2-digit',
                           })}
-                          {tx.amountTnd ? ` • Spent ${tx.amountTnd} TND` : ' • Reward Redemption'}
+                          {tx.amountTnd ? ` • ${tx.amountTnd} TND` : ` • ${t('cashier_claimed_perk')}`}
                         </div>
                       </div>
                     </div>
@@ -601,6 +606,7 @@ export default function CashierPage() {
                           ? 'bg-emerald-500/10 text-emerald-600 border-emerald-500/30'
                           : 'bg-primary/10 text-primary border-primary/30'
                       }`}
+                      dir="ltr"
                     >
                       {tx.type === 'earn' ? `+${tx.pointsAffected} pts` : `${tx.pointsAffected} pts`}
                     </Badge>
@@ -613,7 +619,7 @@ export default function CashierPage() {
               onClick={() => setShowHistoryModal(false)}
               className="w-full rounded-2xl font-bold"
             >
-              Close Log
+              {t('cashier_close_log')}
             </Button>
           </div>
         </div>
@@ -627,3 +633,4 @@ export default function CashierPage() {
     </div>
   );
 }
+

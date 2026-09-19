@@ -79,7 +79,7 @@ export function TransactionPanel({
   pointsPerTnd = 10,
   onProcess,
 }: TransactionPanelProps) {
-  const { t } = useI18n();
+  const { t, dir } = useI18n();
   const [activeTab, setActiveTab] = useState<'issue' | 'redeem'>('issue');
   const [spendAmount, setSpendAmount] = useState('');
   const [showNumpad, setShowNumpad] = useState(false);
@@ -144,7 +144,7 @@ export function TransactionPanel({
       posHaptics.scan();
     } catch (err: any) {
       setMatchedCustomer(null);
-      setPhoneSearchError(err?.message || 'Customer not found with this phone number.');
+      setPhoneSearchError(err?.message || t('cashier_customer_not_found'));
       posHaptics.error();
     } finally {
       setIsSearchingPhone(false);
@@ -205,7 +205,7 @@ export function TransactionPanel({
   const handleRedeemSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     const targetId = isManualRewardMode ? customRewardId : selectedReward?.id;
-    const targetName = isManualRewardMode ? 'Custom Reward' : selectedReward?.name;
+    const targetName = isManualRewardMode ? t('cashier_custom_reward_label') : selectedReward?.name;
 
     if (!targetId) return;
     posAudio.playClick();
@@ -218,7 +218,7 @@ export function TransactionPanel({
   };
 
   return (
-    <div className="w-full bg-card border border-border/80 rounded-3xl shadow-xl overflow-hidden transition-all">
+    <div className="w-full bg-card border border-border/80 rounded-3xl shadow-xl overflow-hidden transition-all" dir={dir}>
       {/* PHONE LOOKUP DOCK / DRAWER */}
       <div className="border-b border-border/40 bg-muted/40 p-3 sm:p-4">
         {!showPhoneLookup && !matchedCustomer ? (
@@ -232,7 +232,7 @@ export function TransactionPanel({
           >
             <div className="flex items-center gap-2">
               <Phone className="w-4 h-4 text-primary" />
-              <span>Customer Forgot Phone? Lookup by Phone Number</span>
+              <span>{t('cashier_forgot_phone_prompt')}</span>
             </div>
             <Search className="w-3.5 h-3.5 text-muted-foreground" />
           </button>
@@ -241,7 +241,7 @@ export function TransactionPanel({
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <Phone className="w-4 h-4 text-primary" />
-                <span className="text-xs font-bold uppercase tracking-wider">Search Customer by Phone</span>
+                <span className="text-xs font-bold uppercase tracking-wider">{t('cashier_phone_lookup_title')}</span>
               </div>
               <Button
                 variant="ghost"
@@ -263,16 +263,17 @@ export function TransactionPanel({
               <div className="relative flex-1">
                 <Input
                   type="tel"
-                  placeholder="Digits only (e.g. 21698123456)"
+                  placeholder={t('cashier_digits_only_placeholder')}
                   value={phoneQuery}
                   onChange={(e) => {
                     // Strictly numbers only
                     const digits = e.target.value.replace(/\D/g, '');
                     setPhoneQuery(digits);
                   }}
-                  className="h-10 text-xs rounded-xl font-mono tracking-wider pl-8"
+                  className="h-10 text-xs rounded-xl font-mono tracking-wider ps-8"
+                  dir="ltr"
                 />
-                <Phone className="w-3.5 h-3.5 text-muted-foreground absolute left-3 top-1/2 -translate-y-1/2" />
+                <Phone className="w-3.5 h-3.5 text-muted-foreground absolute start-3 top-1/2 -translate-y-1/2" />
               </div>
               <Button
                 type="submit"
@@ -281,7 +282,7 @@ export function TransactionPanel({
                 className="h-10 px-4 rounded-xl text-xs font-bold gap-1.5"
               >
                 {isSearchingPhone ? <RefreshCw className="w-3.5 h-3.5 animate-spin" /> : <Search className="w-3.5 h-3.5" />}
-                Find
+                {t('cashier_find_btn')}
               </Button>
             </form>
 
@@ -295,15 +296,15 @@ export function TransactionPanel({
                   <div className="w-8 h-8 rounded-full bg-primary/20 text-primary flex items-center justify-center">
                     <UserCheck className="w-4 h-4" />
                   </div>
-                  <div>
+                  <div className="text-start">
                     <div className="text-xs font-bold text-foreground">{matchedCustomer.fullName}</div>
-                    <div className="text-[10px] text-muted-foreground font-mono">
+                    <div className="text-[10px] text-muted-foreground font-mono" dir="ltr">
                       {matchedCustomer.phone} • <strong className="text-primary">{matchedCustomer.pointsBalance} pts</strong>
                     </div>
                   </div>
                 </div>
                 <Badge className="bg-primary text-primary-foreground text-[10px] font-bold">
-                  Active
+                  {t('cashier_active_customer_badge')}
                 </Badge>
               </div>
             )}
@@ -319,6 +320,7 @@ export function TransactionPanel({
           setActiveTab(val as 'issue' | 'redeem');
         }}
         className="w-full"
+        dir={dir}
       >
         <div className="p-4 sm:p-6 pb-2 border-b border-border/40 bg-muted/20">
           <TabsList className="grid w-full grid-cols-2 h-12 p-1 bg-muted rounded-2xl">
@@ -327,14 +329,14 @@ export function TransactionPanel({
               className="rounded-xl font-bold text-xs sm:text-sm data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm flex items-center gap-2"
             >
               <Coins className="w-4 h-4 text-primary" />
-              <span>Issue Points</span>
+              <span>{t('pos_award_points_tab')}</span>
             </TabsTrigger>
             <TabsTrigger
               value="redeem"
               className="rounded-xl font-bold text-xs sm:text-sm data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm flex items-center gap-2"
             >
               <Gift className="w-4 h-4 text-primary" />
-              <span>Redeem Reward</span>
+              <span>{t('pos_redeem_reward_tab')}</span>
             </TabsTrigger>
           </TabsList>
         </div>
@@ -346,7 +348,7 @@ export function TransactionPanel({
             <div className="space-y-2">
               <div className="flex items-center justify-between">
                 <Label htmlFor="spend" className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
-                  Transaction Amount (TND)
+                  {t('cashier_spend_amount_label')}
                 </Label>
                 <button
                   type="button"
@@ -357,7 +359,7 @@ export function TransactionPanel({
                   className="text-xs font-semibold text-primary hover:underline flex items-center gap-1"
                 >
                   <Calculator className="w-3.5 h-3.5" />
-                  {showNumpad ? 'Hide Keypad' : 'Show Keypad'}
+                  {showNumpad ? t('cashier_keypad_hide') : t('cashier_keypad_show')}
                 </button>
               </div>
 
@@ -369,10 +371,11 @@ export function TransactionPanel({
                   placeholder="0.00"
                   value={spendAmount}
                   onChange={(e) => setSpendAmount(e.target.value)}
-                  className="text-2xl sm:text-3xl font-black tracking-tight text-center h-16 rounded-2xl bg-muted/40 border-border/70 pr-16"
+                  className="text-2xl sm:text-3xl font-black tracking-tight text-center h-16 rounded-2xl bg-muted/40 border-border/70 pe-16 font-mono"
+                  dir="ltr"
                   required
                 />
-                <span className="absolute right-4 top-1/2 -translate-y-1/2 text-sm font-bold text-muted-foreground">
+                <span className="absolute end-4 top-1/2 -translate-y-1/2 text-sm font-bold text-muted-foreground">
                   TND
                 </span>
               </div>
@@ -383,12 +386,12 @@ export function TransactionPanel({
               <div className="flex items-center gap-2">
                 <Sparkles className="w-4 h-4 text-primary shrink-0" />
                 <span className="text-xs font-medium text-foreground">
-                  Rate: 1 TND = {pointsPerTnd} pts
+                  {t('cashier_earning_multiplier', { points: pointsPerTnd })}
                 </span>
               </div>
-              <div className="text-right">
-                <span className="text-xs text-muted-foreground mr-1.5">Customer earns:</span>
-                <span className="font-mono font-black text-primary text-base">
+              <div className="text-end">
+                <span className="text-xs text-muted-foreground me-1.5">{t('overview_kpi_points_issued')}:</span>
+                <span className="font-mono font-black text-primary text-base" dir="ltr">
                   +{estimatedPoints} pts
                 </span>
               </div>
@@ -397,14 +400,14 @@ export function TransactionPanel({
             {/* Quick Preset Chips */}
             <div className="space-y-1.5">
               <div className="flex items-center justify-between text-[11px] text-muted-foreground font-semibold">
-                <span>Quick Add TND</span>
+                <span>{t('cashier_quick_add_title')}</span>
                 {spendAmount && (
                   <button
                     type="button"
                     onClick={handleClear}
                     className="text-destructive hover:underline font-bold"
                   >
-                    Clear
+                    {t('cashier_clear_btn')}
                   </button>
                 )}
               </div>
@@ -416,7 +419,8 @@ export function TransactionPanel({
                     variant="outline"
                     size="sm"
                     onClick={() => handleQuickAdd(amt)}
-                    className="h-10 rounded-xl font-bold text-xs hover:bg-primary/10 hover:text-primary hover:border-primary/30"
+                    className="h-10 rounded-xl font-bold text-xs hover:bg-primary/10 hover:text-primary hover:border-primary/30 font-mono"
+                    dir="ltr"
                   >
                     +{amt}
                   </Button>
@@ -430,9 +434,9 @@ export function TransactionPanel({
                     variant="outline"
                     size="sm"
                     onClick={() => handleSetExact(amt)}
-                    className="h-9 rounded-xl font-medium text-xs bg-muted/40"
+                    className="h-9 rounded-xl font-medium text-xs bg-muted/40 font-mono"
                   >
-                    Set {amt} TND
+                    {t('cashier_set_exact_btn', { amount: amt })}
                   </Button>
                 ))}
               </div>
@@ -440,20 +444,20 @@ export function TransactionPanel({
 
             {/* Optional Touch Screen Numpad */}
             {showNumpad && (
-              <div className="grid grid-cols-3 gap-2 pt-2 border-t border-border/40 animate-in fade-in duration-200">
+              <div className="grid grid-cols-3 gap-2 pt-2 border-t border-border/40 animate-in fade-in duration-200" dir="ltr">
                 {['1', '2', '3', '4', '5', '6', '7', '8', '9', '.', '0', 'DEL'].map((key) => (
                   <Button
                     key={key}
                     type="button"
                     variant="outline"
                     onClick={() => handleNumpadTap(key)}
-                    className={`h-12 rounded-xl text-lg font-bold ${
+                    className={`h-12 rounded-xl text-lg font-bold font-mono ${
                       key === 'DEL'
                         ? 'bg-destructive/10 text-destructive hover:bg-destructive/20 border-destructive/20'
                         : 'bg-muted/40 hover:bg-muted'
                     }`}
                   >
-                    {key === 'DEL' ? <Delete className="w-5 h-5" /> : key}
+                    {key === 'DEL' ? <Delete className="w-5 h-5 rtl:rotate-180" /> : key}
                   </Button>
                 ))}
               </div>
@@ -468,12 +472,16 @@ export function TransactionPanel({
               {matchedCustomer ? (
                 <>
                   <UserCheck className="w-5 h-5" />
-                  Award +{estimatedPoints} pts to {matchedCustomer.fullName.split(' ')[0]} ({parsedSpend} TND)
+                  {t('cashier_award_to_customer', {
+                    points: estimatedPoints,
+                    name: matchedCustomer.fullName.split(' ')[0],
+                    amount: parsedSpend,
+                  })}
                 </>
               ) : (
                 <>
                   <QrCode className="w-5 h-5" />
-                  Scan Customer Pass ({parsedSpend > 0 ? `${parsedSpend} TND` : '0 TND'})
+                  {t('cashier_scan_pass_action', { amount: parsedSpend > 0 ? `${parsedSpend} TND` : '0 TND' })}
                 </>
               )}
             </Button>
@@ -485,7 +493,7 @@ export function TransactionPanel({
           <form onSubmit={handleRedeemSubmit} className="space-y-5">
             <div className="flex items-center justify-between">
               <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
-                Select Store Reward
+                {t('cashier_select_perk_prompt')}
               </Label>
               <button
                 type="button"
@@ -495,7 +503,7 @@ export function TransactionPanel({
                 }}
                 className="text-xs font-semibold text-primary hover:underline"
               >
-                {isManualRewardMode ? 'Choose from Catalog' : 'Enter Reward ID'}
+                {isManualRewardMode ? t('cashier_choose_catalog') : t('cashier_enter_reward_id')}
               </button>
             </div>
 
@@ -503,14 +511,14 @@ export function TransactionPanel({
               <div className="space-y-3">
                 {isLoadingRewards ? (
                   <div className="flex items-center justify-center p-8 bg-muted/30 rounded-2xl text-xs text-muted-foreground">
-                    <RefreshCw className="w-4 h-4 animate-spin mr-2" />
-                    Loading available store perks...
+                    <RefreshCw className="w-4 h-4 animate-spin me-2" />
+                    {t('cashier_loading_rewards')}
                   </div>
                 ) : rewards.length === 0 ? (
                   <div className="p-6 bg-muted/30 rounded-2xl text-center space-y-2 border border-dashed border-border">
                     <AlertCircle className="w-6 h-6 text-muted-foreground mx-auto" />
                     <p className="text-xs font-medium text-muted-foreground">
-                      No active rewards configured for this store yet.
+                      {t('cashier_no_rewards_configured')}
                     </p>
                     <Button
                       type="button"
@@ -519,11 +527,11 @@ export function TransactionPanel({
                       onClick={() => setIsManualRewardMode(true)}
                       className="text-xs mt-2"
                     >
-                      Enter Custom Reward Code
+                      {t('cashier_custom_reward_code_btn')}
                     </Button>
                   </div>
                 ) : (
-                  <div className="space-y-2 max-h-[260px] overflow-y-auto pr-1">
+                  <div className="space-y-2 max-h-[260px] overflow-y-auto pe-1">
                     {rewards.map((r) => {
                       const isSelected = selectedReward?.id === r.id;
                       return (
@@ -542,13 +550,13 @@ export function TransactionPanel({
                         >
                           <div className="flex items-center gap-3">
                             <div
-                              className={`w-9 h-9 rounded-xl flex items-center justify-center ${
+                              className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 ${
                                 isSelected ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground'
                               }`}
                             >
                               <Gift className="w-4 h-4" />
                             </div>
-                            <div className="text-left">
+                            <div className="text-start">
                               <h4 className="text-sm font-bold leading-tight">{r.name}</h4>
                               {r.description && (
                                 <p className="text-[11px] text-muted-foreground line-clamp-1 mt-0.5">
@@ -562,6 +570,7 @@ export function TransactionPanel({
                             <Badge
                               variant={isSelected ? 'default' : 'secondary'}
                               className="font-mono text-xs font-bold"
+                              dir="ltr"
                             >
                               {r.pointsCost} pts
                             </Badge>
@@ -580,7 +589,7 @@ export function TransactionPanel({
             ) : (
               <div className="space-y-2">
                 <Label htmlFor="reward-code" className="text-xs text-muted-foreground font-medium">
-                  Custom Reward ID
+                  {t('cashier_custom_reward_label')}
                 </Label>
                 <Input
                   id="reward-code"
@@ -588,7 +597,8 @@ export function TransactionPanel({
                   placeholder="Paste reward UUID or voucher code"
                   value={customRewardId}
                   onChange={(e) => setCustomRewardId(e.target.value)}
-                  className="h-12 rounded-xl"
+                  className="h-12 rounded-xl font-mono"
+                  dir="ltr"
                   required
                 />
               </div>
@@ -603,12 +613,17 @@ export function TransactionPanel({
               {matchedCustomer ? (
                 <>
                   <UserCheck className="w-5 h-5" />
-                  Redeem {selectedReward?.name || 'Perk'} for {matchedCustomer.fullName.split(' ')[0]}
+                  {t('cashier_redeem_for_customer', {
+                    reward: selectedReward?.name || 'Perk',
+                    name: matchedCustomer.fullName.split(' ')[0],
+                  })}
                 </>
               ) : (
                 <>
                   <QrCode className="w-5 h-5" />
-                  Scan Pass to Redeem {selectedReward ? `(${selectedReward.pointsCost} pts)` : ''}
+                  {t('cashier_scan_to_redeem', {
+                    pts: selectedReward ? `(${selectedReward.pointsCost} pts)` : '',
+                  })}
                 </>
               )}
             </Button>
@@ -618,3 +633,4 @@ export function TransactionPanel({
     </div>
   );
 }
+
