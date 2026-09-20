@@ -51,8 +51,9 @@ export default function CashierPage() {
     value: null,
   });
 
-  // Modal feedback state
+  // Modal feedback state & in-flight transaction verification state
   const [feedback, setFeedback] = useState<FeedbackData>({ state: 'idle' });
+  const [isProcessing, setIsProcessing] = useState(false);
 
   const fetchStores = useCallback(async () => {
     setIsLoadingStores(true);
@@ -125,7 +126,7 @@ export default function CashierPage() {
     value: any,
     qrToken: string,
     rewardName?: string
-  ) => {
+  ): Promise<boolean> => {
     if (!activeStore) {
       posAudio.playError();
       posHaptics.error();
@@ -134,9 +135,10 @@ export default function CashierPage() {
         title: t('cashier_no_assignment_title') || 'No Store Assigned',
         message: t('cashier_no_assignment_desc') || 'Please select an active store register.',
       });
-      return;
+      return false;
     }
 
+    setIsProcessing(true);
     try {
       const client = getCashierApiClient();
 
@@ -166,6 +168,7 @@ export default function CashierPage() {
         });
 
         fetchRecentTransactions(activeStore.id);
+        return true;
       } else if (type === 'redeem') {
         const { data } = await client.post<{
           newBalance: number;
@@ -192,7 +195,9 @@ export default function CashierPage() {
         });
 
         fetchRecentTransactions(activeStore.id);
+        return true;
       }
+      return false;
     } catch (err: any) {
       posAudio.playError();
       posHaptics.error();
@@ -201,19 +206,22 @@ export default function CashierPage() {
         title: (t as any)('cashier_tx_failed_title') || 'Transaction Failed',
         message: err.message || t('auth_generic_error') || 'Could not complete transaction',
       });
+      return false;
+    } finally {
+      setIsProcessing(false);
     }
   };
 
-  const handleProcess = (
+  const handleProcess = async (
     type: 'issue' | 'redeem',
     amount: number,
     rewardId?: string,
     rewardName?: string,
     customerQrToken?: string,
     customerName?: string
-  ) => {
+  ): Promise<boolean> => {
     if (customerQrToken) {
-      executeTransaction(type, type === 'issue' ? amount : rewardId, customerQrToken, rewardName);
+      return await executeTransaction(type, type === 'issue' ? amount : rewardId, customerQrToken, rewardName);
     } else {
       setScanMode({
         active: true,
@@ -221,13 +229,15 @@ export default function CashierPage() {
         value: type === 'issue' ? amount : rewardId,
         rewardName,
       });
+      return false;
     }
   };
 
-  const handleScanSuccess = (decodedToken: string) => {
+  const handleScanSuccess = async (decodedToken: string) => {
     if (!scanMode.type || !scanMode.value) return;
-    executeTransaction(scanMode.type, scanMode.value, decodedToken, scanMode.rewardName);
+    const { type, value, rewardName } = scanMode;
     setScanMode({ active: false, type: null, value: null });
+    await executeTransaction(type, value, decodedToken, rewardName);
   };
 
   return (
@@ -245,6 +255,8 @@ export default function CashierPage() {
         onScanSuccess={handleScanSuccess}
         onCancelScan={() => setScanMode({ active: false, type: null, value: null })}
         apiClient={getCashierApiClient()}
+        isProcessing={isProcessing}
+        isFeedbackOpen={feedback.state !== 'idle'}
       />
 
       <FeedbackOverlay

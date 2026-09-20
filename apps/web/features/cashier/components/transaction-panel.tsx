@@ -56,7 +56,7 @@ interface TransactionPanelProps {
     rewardName?: string,
     customerQrToken?: string,
     customerName?: string
-  ) => void;
+  ) => Promise<boolean>;
 }
 
 const PRESET_AMOUNTS = [5, 10, 15, 20, 30, 50, 100];
@@ -200,19 +200,23 @@ export function TransactionPanel({
     }
   };
 
-  const handleIssueSubmit = (e: React.FormEvent) => {
+  const handleIssueSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!spendAmount || isNaN(Number(spendAmount)) || Number(spendAmount) <= 0) return;
     posAudio.playClick();
     posHaptics.tap();
     if (matchedCustomer) {
-      onProcess('issue', Number(spendAmount), undefined, undefined, matchedCustomer.qrToken, matchedCustomer.fullName);
+      const success = await onProcess('issue', Number(spendAmount), undefined, undefined, matchedCustomer.qrToken, matchedCustomer.fullName);
+      if (success) {
+        setSpendAmount('');
+        setMatchedCustomer(null);
+      }
     } else {
-      onProcess('issue', Number(spendAmount));
+      await onProcess('issue', Number(spendAmount));
     }
   };
 
-  const handleRedeemSubmit = (e: React.FormEvent) => {
+  const handleRedeemSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     const targetId = isManualRewardMode ? customRewardId : selectedReward?.id;
     const targetName = isManualRewardMode ? t('cashier_custom_reward_label') : selectedReward?.name;
@@ -221,9 +225,13 @@ export function TransactionPanel({
     posAudio.playClick();
     posHaptics.tap();
     if (matchedCustomer) {
-      onProcess('redeem', 0, targetId, targetName, matchedCustomer.qrToken, matchedCustomer.fullName);
+      const success = await onProcess('redeem', 0, targetId, targetName, matchedCustomer.qrToken, matchedCustomer.fullName);
+      if (success) {
+        setMatchedCustomer(null);
+        setSelectedReward(null);
+      }
     } else {
-      onProcess('redeem', 0, targetId, targetName);
+      await onProcess('redeem', 0, targetId, targetName);
     }
   };
 

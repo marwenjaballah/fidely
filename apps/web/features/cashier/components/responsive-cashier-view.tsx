@@ -16,7 +16,7 @@ interface ResponsiveCashierViewProps {
     rewardName?: string,
     customerQrToken?: string,
     customerName?: string
-  ) => void
+  ) => Promise<boolean>
   recentTxs: RecentTx[]
   isLoadingRecent: boolean
   onLogout: () => void
@@ -30,6 +30,8 @@ interface ResponsiveCashierViewProps {
   onScanSuccess: (decodedToken: string) => void
   onCancelScan: () => void
   apiClient: any
+  isProcessing?: boolean
+  isFeedbackOpen?: boolean
 }
 
 export function ResponsiveCashierView(props: ResponsiveCashierViewProps) {
@@ -46,6 +48,8 @@ export function ResponsiveCashierView(props: ResponsiveCashierViewProps) {
           onLogout={props.onLogout}
           cashierEmail={props.cashierEmail}
           apiClient={props.apiClient}
+          isProcessing={props.isProcessing}
+          isFeedbackOpen={props.isFeedbackOpen}
         />
       }
       desktop={<CashierDesktopView {...props} />}

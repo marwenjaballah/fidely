@@ -60,12 +60,14 @@ interface CashierMobileViewProps {
     rewardName?: string,
     customerQrToken?: string,
     customerName?: string
-  ) => void
+  ) => Promise<boolean>
   recentTxs: RecentTx[]
   isLoadingRecent: boolean
   onLogout: () => void
   cashierEmail?: string
   apiClient: any
+  isProcessing?: boolean
+  isFeedbackOpen?: boolean
 }
 
 export function CashierMobileView({
@@ -78,6 +80,8 @@ export function CashierMobileView({
   onLogout,
   cashierEmail,
   apiClient,
+  isProcessing: externalProcessing = false,
+  isFeedbackOpen = false,
 }: CashierMobileViewProps) {
   const { t, dir } = useI18n()
   const [mobileTab, setMobileTab] = useState<CashierTab>('award')
@@ -97,6 +101,7 @@ export function CashierMobileView({
   const pointsPerTnd = activeStore?.pointsPerTnd || 10
   const parsedSpend = parseFloat(spendAmount) || 0
   const estimatedPoints = Math.max(0, Math.round(parsedSpend * pointsPerTnd))
+  const isBusy = isProcessing || externalProcessing || isFeedbackOpen
 
   // Fetch store rewards when activeStore or tab changes
   React.useEffect(() => {
@@ -110,6 +115,7 @@ export function CashierMobileView({
 
   // Handle QR scan success
   const handleScanSuccess = (decodedToken: string) => {
+    if (isBusy) return
     posAudio.playClick()
     posHaptics.scan()
     setScannedCustomer({
@@ -141,6 +147,7 @@ export function CashierMobileView({
   }
 
   const handleKeypadTap = (val: string) => {
+    if (isBusy) return
     posAudio.playClick()
     posHaptics.tap()
     if (val === 'DEL') {
@@ -155,28 +162,55 @@ export function CashierMobileView({
   }
 
   const handleQuickAdd = (amt: number) => {
+    if (isBusy) return
     posAudio.playClick()
     posHaptics.tap()
     const cur = parseFloat(spendAmount) || 0
     setSpendAmount((cur + amt).toString())
   }
 
-  const handleConfirmAward = () => {
-    if (!scannedCustomer || parsedSpend <= 0) return
+  const handleConfirmAward = async () => {
+    if (!scannedCustomer || parsedSpend <= 0 || isBusy) return
     setIsProcessing(true)
-    onProcess('issue', parsedSpend, undefined, undefined, scannedCustomer.token, scannedCustomer.name)
-    setScannedCustomer(null)
-    setSpendAmount('')
-    setIsProcessing(false)
+    try {
+      const success = await onProcess(
+        'issue',
+        parsedSpend,
+        undefined,
+        undefined,
+        scannedCustomer.token,
+        scannedCustomer.name
+      )
+      if (success) {
+        setScannedCustomer(null)
+        setSpendAmount('')
+      }
+    } finally {
+      setIsProcessing(false)
+    }
   }
 
-  const handleConfirmRedeem = (rewardId: string, rewardName: string) => {
-    if (!scannedCustomer) return
+  const handleConfirmRedeem = async (rewardId: string, rewardName: string) => {
+    if (!scannedCustomer || isBusy) return
+    setSelectedRewardId(rewardId)
     setIsProcessing(true)
-    onProcess('redeem', 0, rewardId, rewardName, scannedCustomer.token, scannedCustomer.name)
-    setScannedCustomer(null)
-    setSelectedRewardId(null)
-    setIsProcessing(false)
+    try {
+      const success = await onProcess(
+        'redeem',
+        0,
+        rewardId,
+        rewardName,
+        scannedCustomer.token,
+        scannedCustomer.name
+      )
+      if (success) {
+        setScannedCustomer(null)
+        setSelectedRewardId(null)
+      }
+    } finally {
+      setIsProcessing(false)
+      setSelectedRewardId(null)
+    }
   }
 
   return (
@@ -208,25 +242,42 @@ export function CashierMobileView({
         {mobileTab === 'award' && (
           <div className="space-y-4">
             {!scannedCustomer ? (
-              /* Ready Viewfinder */
+              /* Ready Viewfinder or Verification Resting State */
               <div className="space-y-3">
                 <div className="rounded-3xl border border-border/70 bg-card p-3 shadow-xl text-center space-y-2">
-                  <div className="rounded-2xl overflow-hidden bg-black/95 p-1 relative">
-                    <QRScanner
-                      containerId="cashier-mobile-viewfinder"
-                      onScanSuccess={handleScanSuccess}
-                    />
+                  <div className="rounded-2xl overflow-hidden bg-black/95 p-1 relative min-h-[260px] flex items-center justify-center">
+                    {isBusy ? (
+                      <div className="p-6 text-center space-y-3">
+                        <Loader2 className="w-8 h-8 text-primary animate-spin mx-auto" />
+                        <p className="text-xs font-bold text-white">
+                          {isProcessing || externalProcessing
+                            ? 'Verifying transaction with server...'
+                            : 'Transaction complete'}
+                        </p>
+                        <p className="text-[11px] text-white/70">
+                          Camera will reactivate once verified
+                        </p>
+                      </div>
+                    ) : (
+                      <QRScanner
+                        containerId="cashier-mobile-viewfinder"
+                        onScanSuccess={handleScanSuccess}
+                      />
+                    )}
                   </div>
                   <p className="text-[11px] text-muted-foreground font-medium py-1">
-                    Point camera at customer&apos;s digital pass
+                    {isBusy
+                      ? 'Waiting for verification to finish...'
+                      : "Point camera at customer's digital pass"}
                   </p>
                 </div>
 
                 {/* Quick Phone Lookup Prompt */}
                 <button
                   type="button"
+                  disabled={isBusy}
                   onClick={() => setPhoneLookupOpen(true)}
-                  className="w-full flex items-center justify-between p-3.5 rounded-2xl border border-border/60 bg-card hover:bg-muted/30 text-start active:scale-[0.98] transition-all shadow-2xs"
+                  className="w-full flex items-center justify-between p-3.5 rounded-2xl border border-border/60 bg-card hover:bg-muted/30 text-start active:scale-[0.98] transition-all shadow-2xs disabled:opacity-50"
                 >
                   <div className="flex items-center gap-2.5">
                     <div className="w-8 h-8 rounded-xl bg-primary/15 text-primary flex items-center justify-center font-bold">
@@ -263,11 +314,12 @@ export function CashierMobileView({
                   <Button
                     variant="ghost"
                     size="icon"
+                    disabled={isBusy}
                     onClick={() => {
                       setScannedCustomer(null)
                       setSpendAmount('')
                     }}
-                    className="h-8 w-8 rounded-full"
+                    className="h-8 w-8 rounded-full disabled:opacity-50"
                   >
                     <X className="h-4 w-4" />
                   </Button>
@@ -296,8 +348,9 @@ export function CashierMobileView({
                       <button
                         key={amt}
                         type="button"
+                        disabled={isBusy}
                         onClick={() => handleQuickAdd(amt)}
-                        className="py-1.5 rounded-xl border border-border/60 bg-card text-xs font-bold font-mono hover:bg-muted active:scale-95 transition-all shadow-2xs"
+                        className="py-1.5 rounded-xl border border-border/60 bg-card text-xs font-bold font-mono hover:bg-muted active:scale-95 transition-all shadow-2xs disabled:opacity-50"
                       >
                         +{amt}
                       </button>
@@ -310,8 +363,9 @@ export function CashierMobileView({
                       <button
                         key={k}
                         type="button"
+                        disabled={isBusy}
                         onClick={() => handleKeypadTap(k)}
-                        className={`h-11 rounded-2xl border border-border/50 text-base font-bold font-mono active:scale-95 transition-all shadow-2xs ${
+                        className={`h-11 rounded-2xl border border-border/50 text-base font-bold font-mono active:scale-95 transition-all shadow-2xs disabled:opacity-50 ${
                           k === 'DEL'
                             ? 'bg-muted/60 text-muted-foreground'
                             : 'bg-card text-foreground hover:bg-muted/40'
@@ -325,15 +379,20 @@ export function CashierMobileView({
                   {/* Confirm Action */}
                   <Button
                     onClick={handleConfirmAward}
-                    disabled={isProcessing || parsedSpend <= 0}
+                    disabled={isBusy || parsedSpend <= 0}
                     className="w-full h-13 rounded-2xl text-xs font-bold gap-2 shadow-lg bg-primary text-primary-foreground"
                   >
-                    {isProcessing ? (
-                      <Loader2 className="h-4 w-4 animate-spin" />
+                    {isBusy ? (
+                      <>
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                        <span>Verifying transaction...</span>
+                      </>
                     ) : (
-                      <Coins className="h-4 w-4" />
+                      <>
+                        <Coins className="h-4 w-4" />
+                        <span>Award {estimatedPoints > 0 ? `+${estimatedPoints} Points` : 'Points'}</span>
+                      </>
                     )}
-                    <span>Award {estimatedPoints > 0 ? `+${estimatedPoints} Points` : 'Points'}</span>
                   </Button>
                 </div>
               </div>
@@ -347,21 +406,38 @@ export function CashierMobileView({
             {!scannedCustomer ? (
               <div className="space-y-3">
                 <div className="rounded-3xl border border-border/70 bg-card p-3 shadow-xl text-center space-y-2">
-                  <div className="rounded-2xl overflow-hidden bg-black/95 p-1 relative">
-                    <QRScanner
-                      containerId="cashier-redeem-viewfinder"
-                      onScanSuccess={handleScanSuccess}
-                    />
+                  <div className="rounded-2xl overflow-hidden bg-black/95 p-1 relative min-h-[260px] flex items-center justify-center">
+                    {isBusy ? (
+                      <div className="p-6 text-center space-y-3">
+                        <Loader2 className="w-8 h-8 text-primary animate-spin mx-auto" />
+                        <p className="text-xs font-bold text-white">
+                          {isProcessing || externalProcessing
+                            ? 'Verifying redemption with server...'
+                            : 'Reward redeemed successfully'}
+                        </p>
+                        <p className="text-[11px] text-white/70">
+                          Camera will reactivate once verified
+                        </p>
+                      </div>
+                    ) : (
+                      <QRScanner
+                        containerId="cashier-redeem-viewfinder"
+                        onScanSuccess={handleScanSuccess}
+                      />
+                    )}
                   </div>
                   <p className="text-[11px] text-muted-foreground font-medium py-1">
-                    Scan customer pass to unlock rewards
+                    {isBusy
+                      ? 'Waiting for verification to finish...'
+                      : 'Scan customer pass to unlock rewards'}
                   </p>
                 </div>
 
                 <button
                   type="button"
+                  disabled={isBusy}
                   onClick={() => setPhoneLookupOpen(true)}
-                  className="w-full flex items-center justify-between p-3.5 rounded-2xl border border-border/60 bg-card hover:bg-muted/30 text-start active:scale-[0.98] transition-all shadow-2xs"
+                  className="w-full flex items-center justify-between p-3.5 rounded-2xl border border-border/60 bg-card hover:bg-muted/30 text-start active:scale-[0.98] transition-all shadow-2xs disabled:opacity-50"
                 >
                   <div className="flex items-center gap-2.5">
                     <div className="w-8 h-8 rounded-xl bg-primary/15 text-primary flex items-center justify-center font-bold">
@@ -397,11 +473,12 @@ export function CashierMobileView({
                   <Button
                     variant="ghost"
                     size="icon"
+                    disabled={isBusy}
                     onClick={() => {
                       setScannedCustomer(null)
                       setSelectedRewardId(null)
                     }}
-                    className="h-8 w-8 rounded-full"
+                    className="h-8 w-8 rounded-full disabled:opacity-50"
                   >
                     <X className="h-4 w-4" />
                   </Button>
@@ -421,6 +498,7 @@ export function CashierMobileView({
                       const cost = r.pointsCost || 0
                       const canAfford =
                         typeof scannedCustomer.balance !== 'number' || scannedCustomer.balance >= cost
+                      const isThisRewardProcessing = isBusy && selectedRewardId === r.id
                       return (
                         <div
                           key={r.id}
@@ -434,11 +512,11 @@ export function CashierMobileView({
                           </div>
                           <Button
                             size="sm"
-                            disabled={isProcessing || !canAfford}
+                            disabled={isBusy || !canAfford}
                             onClick={() => handleConfirmRedeem(r.id, r.name)}
                             className="h-8 rounded-xl text-xs font-bold px-3 shadow-xs"
                           >
-                            {isProcessing ? (
+                            {isThisRewardProcessing ? (
                               <Loader2 className="h-3.5 w-3.5 animate-spin" />
                             ) : canAfford ? (
                               'Redeem'

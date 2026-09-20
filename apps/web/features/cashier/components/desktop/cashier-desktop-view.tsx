@@ -26,6 +26,7 @@ import {
   Gift,
   Coins,
   RefreshCw,
+  Loader2,
 } from 'lucide-react'
 import { useI18n } from '@/lib/i18n'
 import { CashierStoreInfo, RecentTx } from '../mobile/cashier-mobile-view'
@@ -41,7 +42,7 @@ interface CashierDesktopViewProps {
     rewardName?: string,
     customerQrToken?: string,
     customerName?: string
-  ) => void
+  ) => Promise<boolean>
   recentTxs: RecentTx[]
   isLoadingRecent: boolean
   onLogout: () => void
@@ -54,6 +55,8 @@ interface CashierDesktopViewProps {
   }
   onScanSuccess: (decodedToken: string) => void
   onCancelScan: () => void
+  isProcessing?: boolean
+  isFeedbackOpen?: boolean
 }
 
 export function CashierDesktopView({
@@ -68,8 +71,11 @@ export function CashierDesktopView({
   scanMode,
   onScanSuccess,
   onCancelScan,
+  isProcessing = false,
+  isFeedbackOpen = false,
 }: CashierDesktopViewProps) {
   const { t, dir } = useI18n()
+  const isBusy = isProcessing || isFeedbackOpen
 
   return (
     <div className="hidden md:flex flex-col min-h-screen bg-background text-foreground" dir={dir}>
@@ -144,14 +150,28 @@ export function CashierDesktopView({
                 )}
               </div>
 
-              <div className="rounded-2xl overflow-hidden bg-black/95 p-1 relative">
-                <QRScanner
-                  containerId="desktop-cashier-scanner"
-                  onScanSuccess={onScanSuccess}
-                />
+              <div className="rounded-2xl overflow-hidden bg-black/95 p-1 relative min-h-[220px] flex items-center justify-center">
+                {isBusy ? (
+                  <div className="p-6 text-center space-y-3">
+                    <Loader2 className="w-8 h-8 text-primary animate-spin mx-auto" />
+                    <p className="text-xs font-bold text-white">
+                      {isProcessing ? 'Verifying transaction...' : 'Transaction complete'}
+                    </p>
+                    <p className="text-[11px] text-white/70">
+                      Scanner will reactivate for next customer
+                    </p>
+                  </div>
+                ) : (
+                  <QRScanner
+                    containerId="desktop-cashier-scanner"
+                    onScanSuccess={onScanSuccess}
+                  />
+                )}
               </div>
               <p className="text-xs text-muted-foreground text-center">
-                Point barcode or pass QR code at camera to execute transaction
+                {isBusy
+                  ? 'Waiting for transaction verification to finish...'
+                  : 'Point barcode or pass QR code at camera to execute transaction'}
               </p>
             </div>
 
