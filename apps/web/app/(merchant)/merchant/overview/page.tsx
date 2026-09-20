@@ -12,6 +12,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { useToast } from '@/hooks/use-toast'
 import Link from 'next/link'
+import { MerchantMobileOverview } from '@/features/merchant/components/mobile/merchant-mobile-overview'
 
 export default function OverviewPage() {
   const { profile } = useAuth()
@@ -67,7 +68,18 @@ export default function OverviewPage() {
 
   return (
     <div className="flex flex-1 flex-col gap-6 p-4 md:gap-8 md:p-8 overflow-x-hidden">
-      {/* Header */}
+      {/* ── MOBILE POCKET PULSE VIEW (<md) ── */}
+      <div className="block md:hidden">
+        <MerchantMobileOverview
+          activeStore={activeStore}
+          analytics={analytics}
+          onCreateStoreClick={() => setIsCreating(true)}
+        />
+      </div>
+
+      {/* ── DESKTOP OVERVIEW (md+) ── */}
+      <div className="hidden md:flex flex-1 flex-col gap-6 md:gap-8">
+        {/* Header */}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">{t('dashboard_overview')}</h1>
@@ -398,6 +410,7 @@ export default function OverviewPage() {
           </div>
         </>
       )}
+      </div>
     </div>
   )
 }
