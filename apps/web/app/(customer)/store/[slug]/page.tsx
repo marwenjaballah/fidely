@@ -3,44 +3,12 @@
 import React, { useEffect, useState, use } from 'react'
 import Link from 'next/link'
 import { useRouter, useSearchParams } from 'next/navigation'
-import { PWAInstallPrompt } from '@/components/pwa-install-prompt'
-import { AppleWalletPass } from '@/components/common/apple-wallet-card'
 import { Button } from '@/components/ui/button'
-import { Badge } from '@/components/ui/badge'
-import { Card, CardContent } from '@/components/ui/card'
-import {
-  Sparkles,
-  Gift,
-  ArrowRight,
-  CheckCircle2,
-  Loader2,
-  Store as StoreIcon,
-  QrCode,
-} from 'lucide-react'
+import { Loader2, Store as StoreIcon } from 'lucide-react'
 import { useAuth } from '@/features/auth/hooks/use-auth'
 import { useCustomerStore } from '@/store/customer-store'
-import { useI18n } from '@/lib/i18n'
-import { LanguageSwitcher } from '@/components/common/language-switcher'
-import { ThemeToggleButton } from '@/components/common/theme-toggle-button'
-
-interface StoreReward {
-  id: string
-  name: string
-  description?: string | null
-  pointsCost: number
-  active: boolean
-}
-
-interface StorePublicData {
-  id: string
-  name: string
-  slug: string
-  primaryColor: string
-  pointsPerTnd: number
-  welcomePoints?: number
-  logoUrl?: string | null
-  rewards: StoreReward[]
-}
+import { ResponsiveStoreView } from '@/features/store/components/responsive-store-view'
+import { StorePublicData } from '@/features/store/components/mobile/store-mobile-view'
 
 const apiBase = (process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3000').replace(/\/$/, '')
 
@@ -49,9 +17,8 @@ export default function CustomerStorePage({ params }: { params: Promise<{ slug: 
   const router = useRouter()
   const searchParams = useSearchParams()
   const referralStoreId = searchParams.get('ref')
-  const { isAuthenticated, hasHydrated } = useAuth()
+  const { isAuthenticated } = useAuth()
   const { joinStore } = useCustomerStore()
-  const { t } = useI18n()
 
   const [store, setStore] = useState<StorePublicData | null>(null)
   const [loading, setLoading] = useState(true)
@@ -64,11 +31,9 @@ export default function CustomerStorePage({ params }: { params: Promise<{ slug: 
         setLoading(true)
         setError(null)
         const targetSlug = decodeURIComponent(slug).trim()
-        
-        // 1. Try fetching by slug
+
         let res = await fetch(`${apiBase}/api/v1/customer/store/${encodeURIComponent(targetSlug)}`)
-        
-        // 2. Fallback to referral ID if slug not found and ref parameter exists
+
         if (!res.ok && referralStoreId && referralStoreId !== targetSlug) {
           res = await fetch(`${apiBase}/api/v1/customer/store/${encodeURIComponent(referralStoreId)}`)
         }
@@ -100,7 +65,6 @@ export default function CustomerStorePage({ params }: { params: Promise<{ slug: 
     }
 
     if (!isAuthenticated) {
-      // Direct unauthenticated user to sign up with store referral
       router.push(`/auth/sign-up?ref=${encodeURIComponent(store.slug || store.id)}&joinStore=${encodeURIComponent(store.slug || store.id)}`)
       return
     }
@@ -121,9 +85,9 @@ export default function CustomerStorePage({ params }: { params: Promise<{ slug: 
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-slate-50 dark:bg-zinc-950 flex flex-col items-center justify-center p-6">
+      <div className="min-h-screen bg-slate-50 dark:bg-zinc-950 flex flex-col items-center justify-center p-6 space-y-3">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
-        <p className="text-sm text-muted-foreground mt-3">Loading coffee shop pass...</p>
+        <p className="text-sm text-muted-foreground">Loading loyalty pass...</p>
       </div>
     )
   }
@@ -136,9 +100,9 @@ export default function CustomerStorePage({ params }: { params: Promise<{ slug: 
         </div>
         <h1 className="text-xl font-bold">Store Not Found</h1>
         <p className="text-sm text-muted-foreground mt-1 max-w-sm">
-          We couldn&apos;t find a loyalty program for &quot;{decodeURIComponent(slug)}&quot;. It may have been moved or renamed.
+          We couldn&apos;t find a loyalty program for &quot;{decodeURIComponent(slug)}&quot;.
         </p>
-        <div className="flex flex-col sm:flex-row items-center gap-3 mt-6">
+        <div className="flex items-center gap-3 mt-6">
           <Button variant="outline" onClick={() => window.location.reload()}>
             Try Again
           </Button>
@@ -150,143 +114,12 @@ export default function CustomerStorePage({ params }: { params: Promise<{ slug: 
     )
   }
 
-  const hasWelcomeBonus = Boolean(store.welcomePoints && store.welcomePoints > 0)
-
   return (
-    <div className="min-h-screen bg-slate-50 dark:bg-zinc-950 flex flex-col items-center p-4 sm:p-6 pb-24">
-      <div className="w-full max-w-md space-y-5">
-        {/* Top Header Controls */}
-        <div className="flex items-center justify-between pt-2">
-          <Link href={isAuthenticated ? "/customer/overview" : "/"} className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-xl bg-primary/15 text-primary flex items-center justify-center font-bold">
-              <Sparkles className="w-4 h-4" />
-            </div>
-            <span className="font-bold text-sm tracking-tight text-foreground">Fidely</span>
-          </Link>
-          <div className="flex items-center gap-2">
-            <LanguageSwitcher />
-            <ThemeToggleButton />
-          </div>
-        </div>
-
-        {/* Referral Invitation Banner */}
-        <div className="bg-primary/10 border border-primary/20 rounded-2xl p-3.5 flex items-center gap-3">
-          <div className="w-9 h-9 rounded-xl bg-primary text-primary-foreground flex items-center justify-center shrink-0">
-            <QrCode className="w-5 h-5" />
-          </div>
-          <div>
-            <h3 className="font-bold text-xs text-foreground">In-Store Loyalty Pass</h3>
-            <p className="text-[11px] text-muted-foreground">
-              You scanned the counter QR stand for <strong className="text-foreground">{store.name}</strong>.
-            </p>
-          </div>
-        </div>
-
-        {/* Conditional Welcome Bonus Incentive Banner */}
-        {hasWelcomeBonus && (
-          <div className="bg-gradient-to-r from-primary/15 via-primary/10 to-indigo-500/15 border border-primary/30 rounded-2xl p-4 flex items-center justify-between shadow-xs animate-in zoom-in-95 duration-200">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-primary text-primary-foreground flex items-center justify-center font-bold shrink-0 shadow-xs">
-                <Sparkles className="w-5 h-5" />
-              </div>
-              <div>
-                <h4 className="font-bold text-sm text-foreground">
-                  Welcome Bonus Gift
-                </h4>
-                <p className="text-xs text-muted-foreground">
-                  Join now & receive instant bonus points
-                </p>
-              </div>
-            </div>
-            <Badge className="bg-primary text-primary-foreground font-mono font-bold text-xs px-2.5 py-1 shrink-0">
-              +{store.welcomePoints} pts
-            </Badge>
-          </div>
-        )}
-
-        {/* Apple Wallet Pass Graphic */}
-        <AppleWalletPass
-          storeName={store.name}
-          logoUrl={store.logoUrl}
-          primaryColor={store.primaryColor || '#D97706'}
-          pointsBalance={0}
-          pointsPerTnd={store.pointsPerTnd}
-          qrCodeToken={`JOIN:${store.slug}`}
-          memberName={isAuthenticated ? t('card_member') : t('card_fallback_customer')}
-          memberSince={t('card_available_now')}
-          rewardsCount={store.rewards.length}
-          nextRewardName={store.rewards[0]?.name}
-          nextRewardCost={store.rewards[0]?.pointsCost}
-          showQr={true}
-          interactive={true}
-        />
-
-        {/* Action Button */}
-        <div className="space-y-3 text-center">
-          <Button
-            size="lg"
-            onClick={handleJoinClick}
-            disabled={joining}
-            className="w-full text-base font-bold shadow-xl gap-2 h-14 rounded-2xl bg-primary text-primary-foreground"
-          >
-            {joining ? (
-              <>
-                <Loader2 className="h-5 w-5 animate-spin" /> {t('loading')}
-              </>
-            ) : isAuthenticated ? (
-              <>
-                {t('customer_add_coffee_card')} <ArrowRight className="h-4 w-4 rtl:rotate-180" />
-              </>
-            ) : (
-              <>
-                {t('auth_signup_button')} <ArrowRight className="h-4 w-4 rtl:rotate-180" />
-              </>
-            )}
-          </Button>
-          <p className="text-center text-xs text-muted-foreground">
-            {isAuthenticated
-              ? t('customer_cards_desc')
-              : t('landing_cta_description')}
-          </p>
-        </div>
-
-        {/* Perks & Rewards Catalog */}
-        {store.rewards.length > 0 && (
-          <div className="space-y-3 pt-2">
-            <div className="flex items-center gap-2 text-sm font-semibold text-foreground">
-              <Gift className="h-4 w-4 text-primary" />
-              Available Perks & Rewards
-            </div>
-
-            <div className="grid gap-2.5">
-              {store.rewards.map((reward) => (
-                <Card key={reward.id} className="border-border/60 bg-card/80 backdrop-blur-xs shadow-xs rounded-2xl">
-                  <CardContent className="p-4 flex items-center justify-between gap-3">
-                    <div className="flex items-center gap-3">
-                      <div className="h-9 w-9 rounded-xl bg-primary/10 text-primary flex items-center justify-center font-bold shrink-0">
-                        <CheckCircle2 className="h-5 w-5" />
-                      </div>
-                      <div>
-                        <p className="font-semibold text-sm leading-tight">{reward.name}</p>
-                        {reward.description && (
-                          <p className="text-xs text-muted-foreground mt-0.5 line-clamp-1">
-                            {reward.description}
-                          </p>
-                        )}
-                      </div>
-                    </div>
-                    <Badge variant="secondary" className="font-bold shrink-0 text-xs">
-                      {reward.pointsCost} pts
-                    </Badge>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-          </div>
-        )}
-      </div>
-
-      <PWAInstallPrompt />
-    </div>
+    <ResponsiveStoreView
+      store={store}
+      isAuthenticated={isAuthenticated}
+      joining={joining}
+      onJoinClick={handleJoinClick}
+    />
   )
 }
