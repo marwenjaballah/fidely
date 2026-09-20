@@ -7,7 +7,9 @@ import { fr } from './locales/fr'
 import { type Locale, type Direction, LOCALES, DEFAULT_LOCALE, type LocaleConfig } from './types'
 
 export * from './types'
-export { type TranslationKey } from './locales/en'
+export { en, type TranslationKey } from './locales/en'
+export { ar } from './locales/ar'
+export { fr } from './locales/fr'
 
 const dictionaries: Record<Locale, Record<TranslationKey, string>> = {
   en,
