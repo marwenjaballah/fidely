@@ -7,6 +7,7 @@ const withPWA = withPWAInit({
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  transpilePackages: ['@repo/i18n', '@repo/ui', '@repo/auth'],
   turbopack: {},
   images: {
     remotePatterns: [
