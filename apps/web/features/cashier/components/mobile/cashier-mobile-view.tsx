@@ -29,6 +29,7 @@ import { posHaptics } from '@/lib/haptics'
 import { posAudio } from '@/features/cashier/lib/pos-audio'
 import { LanguageSwitcher } from '@/components/common/language-switcher'
 import { ThemeToggleButton } from '@/components/common/theme-toggle-button'
+import { PwaInstallRow } from '@/components/pwa/pwa-install-row'
 import { SearchedCustomer } from '../transaction-panel'
 
 export interface CashierStoreInfo {
@@ -653,6 +654,11 @@ export function CashierMobileView({
                 </div>
                 <LanguageSwitcher />
               </div>
+
+              <div className="h-px bg-border/50" />
+
+              {/* PWA Add to Home Screen */}
+              <PwaInstallRow />
             </div>
 
             {/* Session Management */}

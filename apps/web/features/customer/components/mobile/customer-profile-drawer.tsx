@@ -27,6 +27,7 @@ import {
 } from 'lucide-react'
 import { ThemeToggleButton } from '@/components/common/theme-toggle-button'
 import { LanguageSwitcher } from '@/components/common/language-switcher'
+import { PwaInstallRow } from '@/components/pwa/pwa-install-row'
 import { useAuth } from '@/features/auth/hooks/use-auth'
 import { useUserStore } from '@/store/user-store'
 import { useCustomerStore } from '@/store/customer-store'
@@ -181,6 +182,10 @@ export function CustomerProfileDrawer({
                 <p className="text-[11px] text-muted-foreground">English, Français, العربية</p>
               </div>
               <LanguageSwitcher />
+            </div>
+
+            <div className="pt-2 border-t border-border/40">
+              <PwaInstallRow />
             </div>
           </div>
 

@@ -1,4 +1,4 @@
-import type { Metadata } from 'next'
+import type { Metadata, Viewport } from 'next'
 import { Geist, Noto_Serif, Fira_Code } from "next/font/google";
 import './globals.css'
 import { Analytics } from '@vercel/analytics/next'
@@ -6,6 +6,9 @@ import { ThemeProvider } from "@/components/common/theme-provider"
 import { Toaster } from "@/components/ui/toaster"
 import { strings } from '@/lib/strings'
 import { BRAND_LOGO_SRC } from '@/lib/brand'
+import { I18nProvider } from "@/lib/i18n"
+import { PwaRegister } from "@/components/pwa/pwa-register"
+import { PWAInstallPrompt } from "@/components/pwa/pwa-install-prompt"
 
 function metadataBaseUrl(): URL {
   const explicit = process.env.NEXT_PUBLIC_APP_URL?.trim()
@@ -34,6 +37,18 @@ const fontMono = Fira_Code({
 });
 
 const siteDescription = strings.landing_description
+
+export const viewport: Viewport = {
+  themeColor: [
+    { media: '(prefers-color-scheme: light)', color: '#ffffff' },
+    { media: '(prefers-color-scheme: dark)', color: '#09090b' },
+  ],
+  width: 'device-width',
+  initialScale: 1,
+  maximumScale: 1,
+  userScalable: false,
+  viewportFit: 'cover',
+}
 
 export const metadata: Metadata = {
   metadataBase: metadataBaseUrl(),
@@ -80,8 +95,6 @@ export const metadata: Metadata = {
   },
 }
 
-import { I18nProvider } from "@/lib/i18n"
-
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -94,7 +107,9 @@ export default function RootLayout({
       >
         <I18nProvider>
           <ThemeProvider>
+            <PwaRegister />
             {children}
+            <PWAInstallPrompt />
             <Toaster />
           </ThemeProvider>
         </I18nProvider>

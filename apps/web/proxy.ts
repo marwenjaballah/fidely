@@ -17,6 +17,6 @@ export const config = {
      * - favicon.ico (favicon file)
      * - public assets
      */
-    '/((?!api|_next/static|_next/image|favicon.ico|manifest.ts|icon.svg|opengraph-image|docs|auth|privacy|terms).*)',
+    '/((?!api|_next/static|_next/image|favicon.ico|manifest.ts|manifest.webmanifest|sw.js|icon.svg|icon-.*|apple-touch-icon.png|opengraph-image|docs|auth|privacy|terms).*)',
   ],
 };
