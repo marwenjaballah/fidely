@@ -22,10 +22,13 @@ import {
   Sparkles,
   Loader2,
   Delete,
+  LogOut,
 } from 'lucide-react'
 import { useI18n } from '@/lib/i18n'
 import { posHaptics } from '@/lib/haptics'
 import { posAudio } from '@/features/cashier/lib/pos-audio'
+import { LanguageSwitcher } from '@/components/common/language-switcher'
+import { ThemeToggleButton } from '@/components/common/theme-toggle-button'
 import { SearchedCustomer } from '../transaction-panel'
 
 export interface CashierStoreInfo {
@@ -61,6 +64,7 @@ interface CashierMobileViewProps {
   recentTxs: RecentTx[]
   isLoadingRecent: boolean
   onLogout: () => void
+  cashierEmail?: string
   apiClient: any
 }
 
@@ -72,6 +76,7 @@ export function CashierMobileView({
   recentTxs,
   isLoadingRecent,
   onLogout,
+  cashierEmail,
   apiClient,
 }: CashierMobileViewProps) {
   const { t, dir } = useI18n()
@@ -92,6 +97,16 @@ export function CashierMobileView({
   const pointsPerTnd = activeStore?.pointsPerTnd || 10
   const parsedSpend = parseFloat(spendAmount) || 0
   const estimatedPoints = Math.max(0, Math.round(parsedSpend * pointsPerTnd))
+
+  // Fetch store rewards when activeStore or tab changes
+  React.useEffect(() => {
+    if (activeStore?.id && (mobileTab === 'redeem' || scannedCustomer)) {
+      apiClient
+        .get('/api/v1/transactions/store-rewards', { params: { storeId: activeStore.id } })
+        .then((res: any) => setRewards(res.data || []))
+        .catch(() => {})
+    }
+  }, [activeStore?.id, mobileTab, scannedCustomer, apiClient])
 
   // Handle QR scan success
   const handleScanSuccess = (decodedToken: string) => {
@@ -117,6 +132,12 @@ export function CashierMobileView({
       name: customer.fullName || customer.phone,
       balance: customer.pointsBalance,
     })
+    if (activeStore?.id && rewards.length === 0) {
+      apiClient
+        .get('/api/v1/transactions/store-rewards', { params: { storeId: activeStore.id } })
+        .then((res: any) => setRewards(res.data || []))
+        .catch(() => {})
+    }
   }
 
   const handleKeypadTap = (val: string) => {
@@ -320,7 +341,122 @@ export function CashierMobileView({
           </div>
         )}
 
-        {/* ── TAB 2: SHIFT ACTIVITY ── */}
+        {/* ── TAB 2: REDEEM PERKS ── */}
+        {mobileTab === 'redeem' && (
+          <div className="space-y-4">
+            {!scannedCustomer ? (
+              <div className="space-y-3">
+                <div className="rounded-3xl border border-border/70 bg-card p-3 shadow-xl text-center space-y-2">
+                  <div className="rounded-2xl overflow-hidden bg-black/95 p-1 relative">
+                    <QRScanner
+                      containerId="cashier-redeem-viewfinder"
+                      onScanSuccess={handleScanSuccess}
+                    />
+                  </div>
+                  <p className="text-[11px] text-muted-foreground font-medium py-1">
+                    Scan customer pass to unlock rewards
+                  </p>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={() => setPhoneLookupOpen(true)}
+                  className="w-full flex items-center justify-between p-3.5 rounded-2xl border border-border/60 bg-card hover:bg-muted/30 text-start active:scale-[0.98] transition-all shadow-2xs"
+                >
+                  <div className="flex items-center gap-2.5">
+                    <div className="w-8 h-8 rounded-xl bg-primary/15 text-primary flex items-center justify-center font-bold">
+                      <Phone className="w-4 h-4" />
+                    </div>
+                    <div>
+                      <p className="text-xs font-bold text-foreground">Look up by phone</p>
+                      <p className="text-[11px] text-muted-foreground">Tap to search customer balance</p>
+                    </div>
+                  </div>
+                  <Badge variant="outline" className="text-[10px] font-bold">
+                    Search
+                  </Badge>
+                </button>
+              </div>
+            ) : (
+              <div className="rounded-3xl border border-primary/40 bg-card p-4 shadow-2xl space-y-4 animate-in zoom-in-95 duration-200">
+                {/* Customer Identity Bar */}
+                <div className="flex items-center justify-between border-b border-border/50 pb-3">
+                  <div className="flex items-center gap-2.5">
+                    <div className="w-10 h-10 rounded-2xl bg-primary/15 text-primary flex items-center justify-center font-bold shadow-2xs">
+                      <UserCheck className="w-5 h-5" />
+                    </div>
+                    <div>
+                      <p className="text-xs font-bold text-foreground">{scannedCustomer.name}</p>
+                      {typeof scannedCustomer.balance === 'number' && (
+                        <p className="text-[11px] font-mono text-emerald-600 dark:text-emerald-400 font-bold">
+                          Balance: {scannedCustomer.balance} pts
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => {
+                      setScannedCustomer(null)
+                      setSelectedRewardId(null)
+                    }}
+                    className="h-8 w-8 rounded-full"
+                  >
+                    <X className="h-4 w-4" />
+                  </Button>
+                </div>
+
+                {/* Rewards List */}
+                <div className="space-y-2">
+                  <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
+                    Available Store Rewards
+                  </p>
+                  {rewards.length === 0 ? (
+                    <p className="text-xs text-muted-foreground py-4 text-center">
+                      No rewards configured for this store.
+                    </p>
+                  ) : (
+                    rewards.map((r: any) => {
+                      const cost = r.pointsCost || 0
+                      const canAfford =
+                        typeof scannedCustomer.balance !== 'number' || scannedCustomer.balance >= cost
+                      return (
+                        <div
+                          key={r.id}
+                          className="p-3 rounded-2xl border border-border/50 bg-muted/20 flex items-center justify-between gap-3"
+                        >
+                          <div className="space-y-0.5">
+                            <p className="text-xs font-bold text-foreground">{r.name}</p>
+                            <p className="text-[11px] font-mono text-primary font-bold">
+                              {cost} pts
+                            </p>
+                          </div>
+                          <Button
+                            size="sm"
+                            disabled={isProcessing || !canAfford}
+                            onClick={() => handleConfirmRedeem(r.id, r.name)}
+                            className="h-8 rounded-xl text-xs font-bold px-3 shadow-xs"
+                          >
+                            {isProcessing ? (
+                              <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                            ) : canAfford ? (
+                              'Redeem'
+                            ) : (
+                              'Need Pts'
+                            )}
+                          </Button>
+                        </div>
+                      )
+                    })
+                  )}
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* ── TAB 3: SHIFT ACTIVITY ── */}
         {mobileTab === 'activity' && (
           <div className="rounded-3xl border border-border/70 bg-card p-4 shadow-sm text-start space-y-3">
             <div className="flex items-center justify-between">
@@ -389,25 +525,66 @@ export function CashierMobileView({
           </div>
         )}
 
-        {/* ── TAB 3: SETTINGS ── */}
+        {/* ── TAB 4: SETTINGS ── */}
         {mobileTab === 'settings' && (
-          <div className="space-y-3 text-start">
+          <div className="space-y-4 text-start">
+            {/* Active Register Info */}
             <div className="p-4 rounded-3xl bg-card border border-border/70 shadow-sm space-y-3">
-              <h3 className="font-bold text-xs uppercase tracking-wider text-muted-foreground">
-                Active Register Info
-              </h3>
+              <div className="flex items-center justify-between">
+                <h3 className="font-bold text-xs uppercase tracking-wider text-muted-foreground">
+                  Active Register Info
+                </h3>
+                <Badge variant="outline" className="text-[10px] font-mono font-semibold">
+                  Shift Active
+                </Badge>
+              </div>
               <div className="space-y-1">
-                <p className="text-sm font-bold text-foreground">{activeStore?.name}</p>
+                <p className="text-base font-bold text-foreground">{activeStore?.name || 'No Store Selected'}</p>
                 <p className="text-xs text-muted-foreground font-mono">Rate: {pointsPerTnd} pts / 1 TND</p>
+                {cashierEmail && (
+                  <p className="text-xs text-muted-foreground pt-1 flex items-center gap-1.5 font-mono">
+                    <span>Cashier:</span>
+                    <span className="text-foreground font-semibold">{cashierEmail}</span>
+                  </p>
+                )}
               </div>
             </div>
 
+            {/* Preferences (Theme & Language) */}
+            <div className="p-4 rounded-3xl bg-card border border-border/70 shadow-sm space-y-3.5">
+              <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
+                {t('nav_settings')}
+              </p>
+
+              {/* Theme Switcher */}
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-xs font-bold text-foreground">{t('theme_mode')}</p>
+                  <p className="text-[10px] text-muted-foreground">Toggle light or dark mode</p>
+                </div>
+                <ThemeToggleButton />
+              </div>
+
+              <div className="h-px bg-border/50" />
+
+              {/* Language Switcher */}
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-xs font-bold text-foreground">{t('language_selection')}</p>
+                  <p className="text-[10px] text-muted-foreground">English, Français, العربية</p>
+                </div>
+                <LanguageSwitcher />
+              </div>
+            </div>
+
+            {/* Session Management */}
             <Button
               variant="destructive"
               onClick={onLogout}
-              className="w-full h-11 rounded-2xl text-xs font-bold gap-2 shadow-xs"
+              className="w-full h-12 rounded-2xl text-xs font-bold gap-2 shadow-sm active:scale-[0.98] transition-all"
             >
-              <span>End Shift / Log Out</span>
+              <LogOut className="h-4 w-4 rtl:rotate-180" />
+              <span>{t('logout')}</span>
             </Button>
           </div>
         )}

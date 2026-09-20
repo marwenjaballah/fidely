@@ -44,6 +44,7 @@ export function ResponsiveCashierView(props: ResponsiveCashierViewProps) {
           recentTxs={props.recentTxs}
           isLoadingRecent={props.isLoadingRecent}
           onLogout={props.onLogout}
+          cashierEmail={props.cashierEmail}
           apiClient={props.apiClient}
         />
       }
