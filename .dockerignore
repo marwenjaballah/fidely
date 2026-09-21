@@ -1,0 +1,21 @@
+# Git
+.git
+.gitignore
+
+# Dependencies & Build artifacts
+node_modules
+.pnpm-store
+.next
+dist
+build
+.turbo
+
+# Environment & Local secrets
+.env*.local
+.env.local
+
+# IDE & OS files
+.DS_Store
+.idea
+.vscode
+*.log
