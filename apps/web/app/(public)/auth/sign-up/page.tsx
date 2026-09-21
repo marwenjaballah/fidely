@@ -32,6 +32,7 @@ import { FidelyLogo } from "@/components/common/fidely-logo"
 import { useAuth } from "@/features/auth/hooks/use-auth"
 import { useI18n } from "@/lib/i18n"
 import { LanguageSwitcher } from "@/components/common/language-switcher"
+import { getRoleRedirectUrl } from "@/lib/navigation"
 import {
   validateEmail,
   validatePassword,
@@ -89,22 +90,9 @@ function SignUpForm() {
 
   useEffect(() => {
     if (hasHydrated && isAuthenticated && profile) {
-      switch (profile.role) {
-        case 'SUPER_ADMIN':
-          router.replace('/admin/overview')
-          break
-        case 'CASHIER':
-          router.replace('/cashier')
-          break
-        case 'CUSTOMER':
-          router.replace('/customer/overview')
-          break
-        default:
-          router.replace('/merchant/overview')
-          break
-      }
+      window.location.href = getRoleRedirectUrl(profile.role)
     }
-  }, [hasHydrated, isAuthenticated, profile, router])
+  }, [hasHydrated, isAuthenticated, profile])
 
   // Sync and fetch store referral details if available
   useEffect(() => {

@@ -7,6 +7,7 @@ import { useAuth } from "@/features/auth/hooks/use-auth"
 import { useAuthStore } from "@/store/auth-store"
 import { ApiError } from "@/features/auth/services/auth-service"
 import { strings } from "@/lib/strings"
+import { getRoleRedirectUrl } from "@/lib/navigation"
 
 type CallbackState = "processing" | "success" | "error"
 
@@ -73,15 +74,7 @@ function CallbackContent() {
 
         const timeout = setTimeout(() => {
           const userRole = useAuthStore.getState().profile?.role
-          if (userRole === 'SUPER_ADMIN') {
-            handlersRef.current.router.push('/admin/overview')
-          } else if (userRole === 'CASHIER') {
-            handlersRef.current.router.push('/cashier')
-          } else if (userRole === 'CUSTOMER') {
-            handlersRef.current.router.push('/customer/overview')
-          } else {
-            handlersRef.current.router.push('/merchant/overview')
-          }
+          window.location.href = getRoleRedirectUrl(userRole)
         }, 1500)
 
         return () => clearTimeout(timeout)

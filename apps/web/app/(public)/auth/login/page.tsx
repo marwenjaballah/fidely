@@ -21,6 +21,7 @@ import { FidelyLogo } from "@/components/common/fidely-logo"
 import { useI18n } from "@/lib/i18n"
 import { LanguageSwitcher } from "@/components/common/language-switcher"
 import { useAuthStore } from "@/store/auth-store"
+import { getRoleRedirectUrl } from "@/lib/navigation"
 
 function LoginForm() {
   const searchParams = useSearchParams()
@@ -41,22 +42,9 @@ function LoginForm() {
 
   useEffect(() => {
     if (hasHydrated && isAuthenticated && profile) {
-      switch (profile.role) {
-        case 'SUPER_ADMIN':
-          router.replace('/admin/overview')
-          break
-        case 'CASHIER':
-          router.replace('/cashier')
-          break
-        case 'CUSTOMER':
-          router.replace('/customer/overview')
-          break
-        default:
-          router.replace('/merchant/overview')
-          break
-      }
+      window.location.href = getRoleRedirectUrl(profile.role)
     }
-  }, [hasHydrated, isAuthenticated, profile, router])
+  }, [hasHydrated, isAuthenticated, profile])
 
   useEffect(() => {
     let effectiveRef = searchRef
@@ -127,15 +115,7 @@ function LoginForm() {
     try {
       await signIn({ email, password })
       const role = useAuthStore.getState().profile?.role
-      if (role === 'SUPER_ADMIN') {
-        router.push("/admin/overview")
-      } else if (role === 'CASHIER') {
-        router.push("/cashier")
-      } else if (role === 'CUSTOMER') {
-        router.push("/customer/overview")
-      } else {
-        router.push("/merchant/overview")
-      }
+      window.location.href = getRoleRedirectUrl(role)
     } catch (error: unknown) {
       if (error instanceof ApiError) {
         setError(error.message)
