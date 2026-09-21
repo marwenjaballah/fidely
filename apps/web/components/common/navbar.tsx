@@ -23,6 +23,7 @@ import { cn } from "@/lib/utils"
 
 import { LanguageSwitcher } from "@/components/common/language-switcher"
 import { useI18n } from "@/lib/i18n"
+import { getRoleRedirectUrl } from "@/lib/navigation"
 
 const sectionNavClass =
   "text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
@@ -118,16 +119,28 @@ export function Navbar() {
                       </Button>
                     </>
                   ) : (
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" className="relative h-10 w-10 rounded-full">
-                          <Avatar className="h-10 w-10">
-                            <AvatarFallback className="bg-primary/10 text-primary">
-                              {getUserInitials()}
-                            </AvatarFallback>
-                          </Avatar>
-                        </Button>
-                      </DropdownMenuTrigger>
+                    <div className="flex items-center gap-2">
+                      <Button size="sm" variant="default" className="shadow-xs text-xs font-semibold gap-1.5" asChild>
+                        <a href={getRoleRedirectUrl(profile?.role)}>
+                          {profile?.role === 'SUPER_ADMIN'
+                            ? strings.nav_super_admin_panel
+                            : profile?.role === 'CASHIER'
+                            ? strings.nav_cashier_terminal
+                            : profile?.role === 'CUSTOMER'
+                            ? strings.customer_my_cards
+                            : strings.nav_dashboard}
+                        </a>
+                      </Button>
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button variant="ghost" className="relative h-10 w-10 rounded-full">
+                            <Avatar className="h-10 w-10">
+                              <AvatarFallback className="bg-primary/10 text-primary">
+                                {getUserInitials()}
+                              </AvatarFallback>
+                            </Avatar>
+                          </Button>
+                        </DropdownMenuTrigger>
                       <DropdownMenuContent align="end" className="w-56">
                         <DropdownMenuLabel>
                           <div className="flex flex-col space-y-1">
@@ -141,35 +154,36 @@ export function Navbar() {
                         </DropdownMenuLabel>
                         {profile?.role === 'SUPER_ADMIN' && (
                           <DropdownMenuItem asChild>
-                            <Link href="/admin/overview" className="font-semibold text-primary">
+                            <a href={getRoleRedirectUrl('SUPER_ADMIN')} className="font-semibold text-primary">
                               {strings.nav_super_admin_panel}
-                            </Link>
+                            </a>
                           </DropdownMenuItem>
                         )}
                         {profile?.role === 'CASHIER' && (
                           <DropdownMenuItem asChild>
-                            <Link href="/cashier">{strings.nav_cashier_terminal}</Link>
+                            <a href={getRoleRedirectUrl('CASHIER')}>{strings.nav_cashier_terminal}</a>
                           </DropdownMenuItem>
                         )}
                         {profile?.role === 'CUSTOMER' && (
                           <DropdownMenuItem asChild>
-                            <Link href="/customer/overview">{strings.customer_my_cards}</Link>
+                            <a href={getRoleRedirectUrl('CUSTOMER')}>{strings.customer_my_cards}</a>
                           </DropdownMenuItem>
                         )}
-                        {(profile?.role === 'MERCHANT' || profile?.role === 'SUPER_ADMIN') && (
+                        {profile?.role === 'MERCHANT' && (
                           <>
                             <DropdownMenuItem asChild>
-                              <Link href="/merchant/overview">{strings.nav_dashboard}</Link>
+                              <a href={getRoleRedirectUrl('MERCHANT')}>{strings.nav_dashboard}</a>
                             </DropdownMenuItem>
                             <DropdownMenuItem asChild>
-                              <Link href="/merchant/settings/account">{strings.nav_account_settings}</Link>
+                              <a href={`${getRoleRedirectUrl('MERCHANT').replace('/overview', '')}/settings/account`}>{strings.nav_account_settings}</a>
                             </DropdownMenuItem>
                           </>
                         )}
                         <DropdownMenuSeparator />
                         <DropdownMenuItem onClick={handleLogout}>{strings.logout}</DropdownMenuItem>
                       </DropdownMenuContent>
-                    </DropdownMenu>
+                      </DropdownMenu>
+                    </div>
                   )}
                 </div>
               </>
@@ -258,36 +272,36 @@ export function Navbar() {
                       <DropdownMenuSeparator />
                       {profile?.role === 'SUPER_ADMIN' && (
                         <DropdownMenuItem asChild>
-                          <Link href="/admin/overview" onClick={closeMobile} className="font-semibold text-primary">
+                          <a href={getRoleRedirectUrl('SUPER_ADMIN')} onClick={closeMobile} className="font-semibold text-primary">
                             {strings.nav_super_admin_panel}
-                          </Link>
+                          </a>
                         </DropdownMenuItem>
                       )}
                       {profile?.role === 'CASHIER' && (
                         <DropdownMenuItem asChild>
-                          <Link href="/cashier" onClick={closeMobile}>
+                          <a href={getRoleRedirectUrl('CASHIER')} onClick={closeMobile}>
                             {strings.nav_cashier_terminal}
-                          </Link>
+                          </a>
                         </DropdownMenuItem>
                       )}
                       {profile?.role === 'CUSTOMER' && (
                         <DropdownMenuItem asChild>
-                          <Link href="/customer/overview" onClick={closeMobile}>
+                          <a href={getRoleRedirectUrl('CUSTOMER')} onClick={closeMobile}>
                             {strings.customer_my_cards}
-                          </Link>
+                          </a>
                         </DropdownMenuItem>
                       )}
-                      {(profile?.role === 'MERCHANT' || profile?.role === 'SUPER_ADMIN') && (
+                      {profile?.role === 'MERCHANT' && (
                         <>
                           <DropdownMenuItem asChild>
-                            <Link href="/merchant/overview" onClick={closeMobile}>
+                            <a href={getRoleRedirectUrl('MERCHANT')} onClick={closeMobile}>
                               {strings.nav_dashboard}
-                            </Link>
+                            </a>
                           </DropdownMenuItem>
                           <DropdownMenuItem asChild>
-                            <Link href="/merchant/settings/account" onClick={closeMobile}>
+                            <a href={`${getRoleRedirectUrl('MERCHANT').replace('/overview', '')}/settings/account`} onClick={closeMobile}>
                               {strings.nav_account_settings}
-                            </Link>
+                            </a>
                           </DropdownMenuItem>
                         </>
                       )}

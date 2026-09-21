@@ -1,11 +1,12 @@
 /**
  * Helper to compute the destination URL for each role across the multi-app ecosystem.
+ * Works seamlessly in both Client Components and Server Components.
  */
 export function getRoleRedirectUrl(role?: string | null): string {
   const isLocal =
-    typeof window !== 'undefined' &&
-    (window.location.hostname === 'localhost' ||
-      window.location.hostname === '127.0.0.1')
+    typeof window !== 'undefined'
+      ? window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
+      : process.env.NODE_ENV !== 'production'
 
   switch (role) {
     case 'SUPER_ADMIN':
