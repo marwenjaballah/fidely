@@ -14,7 +14,7 @@ export function getRoleRedirectUrl(role?: string | null): string {
     case 'CASHIER':
       return isLocal ? 'http://localhost:3003' : 'https://pos.fidely.app'
     case 'CUSTOMER':
-      return isLocal ? 'http://localhost:3002/overview' : 'https://app.fidely.app/overview'
+      return isLocal ? 'http://localhost:3002' : 'https://app.fidely.app'
     case 'MERCHANT':
     default:
       return isLocal ? 'http://localhost:3004/overview' : 'https://business.fidely.app/overview'
