@@ -108,7 +108,8 @@ export class TransactionsService {
    */
   private async resolveCustomerAndMembership(
     qrToken: string,
-    targetStore: { id: string; name: string }
+    targetStore: { id: string; name: string },
+    allowPhone: boolean = true
   ) {
     let customerId: string | null = null;
     let qrStoreId: string | null = null;
@@ -136,7 +137,7 @@ export class TransactionsService {
 
         if (customerById) {
           customerId = customerById.id;
-        } else {
+        } else if (allowPhone) {
           // Check if it's customer phone digits
           const cleanedDigits = qrToken.replace(/\D/g, '');
           if (cleanedDigits.length >= 3) {
@@ -157,6 +158,11 @@ export class TransactionsService {
     }
 
     if (!customerId) {
+      if (!allowPhone) {
+        throw new HTTPException(400, {
+          message: 'Invalid customer QR pass. Rewards can only be redeemed by scanning customer QR pass.',
+        });
+      }
       throw new HTTPException(400, { message: 'Invalid customer pass or phone number.' });
     }
 
@@ -302,8 +308,8 @@ export class TransactionsService {
       rewardName = reward.name;
     }
 
-    // 3. Validate customer and cross-store pass
-    const { customer, customerId } = await this.resolveCustomerAndMembership(qrToken, store);
+    // 3. Validate customer and cross-store pass (allowPhone = false: redemptions require optical QR pass)
+    const { customer, customerId } = await this.resolveCustomerAndMembership(qrToken, store, false);
 
     return await this.prisma.$transaction(async (tx: Prisma.TransactionClient) => {
       const membership = await tx.customerMembership.findUnique({

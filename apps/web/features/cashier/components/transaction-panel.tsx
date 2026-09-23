@@ -87,6 +87,12 @@ export function TransactionPanel({
   const [internalTab, setInternalTab] = useState<'issue' | 'redeem'>('issue');
   const activeTab = controlledTab ?? internalTab;
   const setActiveTab = (tab: 'issue' | 'redeem') => {
+    if (tab === 'redeem') {
+      setMatchedCustomer(null);
+      setShowPhoneLookup(false);
+      setPhoneQuery('');
+      setPhoneSearchError(null);
+    }
     setInternalTab(tab);
     onTabChange?.(tab);
   };
@@ -239,112 +245,106 @@ export function TransactionPanel({
     if (!targetId) return;
     posAudio.playClick();
     posHaptics.tap();
-    if (matchedCustomer) {
-      const success = await onProcess('redeem', 0, targetId, targetName, matchedCustomer.qrToken, matchedCustomer.fullName);
-      if (success) {
-        setMatchedCustomer(null);
-        setSelectedReward(null);
-        setCustomRewardId('');
-      }
-    } else {
-      await onProcess('redeem', 0, targetId, targetName);
-    }
+    // Redeeming rewards or deducting points ALWAYS requires scanning the customer's QR pass
+    await onProcess('redeem', 0, targetId, targetName);
   };
 
   return (
     <div className="w-full bg-card border border-border/80 rounded-3xl shadow-xl overflow-hidden transition-all" dir={dir}>
-      {/* PHONE LOOKUP DOCK / DRAWER */}
-      <div className="border-b border-border/40 bg-muted/40 p-3 sm:p-4">
-        {!showPhoneLookup && !matchedCustomer ? (
-          <button
-            type="button"
-            onClick={() => {
-              setShowPhoneLookup(true);
-              posHaptics.tap();
-            }}
-            className="w-full flex items-center justify-between px-4 py-2.5 rounded-2xl bg-background border border-border/60 hover:border-primary/50 text-xs font-semibold text-muted-foreground hover:text-foreground transition-all shadow-xs"
-          >
-            <div className="flex items-center gap-2">
-              <Phone className="w-4 h-4 text-primary" />
-              <span>{t('cashier_forgot_phone_prompt')}</span>
-            </div>
-            <Search className="w-3.5 h-3.5 text-muted-foreground" />
-          </button>
-        ) : (
-          <div className="space-y-3 bg-background border border-border rounded-2xl p-3.5 animate-in fade-in-50 duration-200">
-            <div className="flex items-center justify-between">
+      {/* PHONE LOOKUP DOCK / DRAWER (ONLY FOR AWARDING POINTS) */}
+      {activeTab === 'issue' && (
+        <div className="border-b border-border/40 bg-muted/40 p-3 sm:p-4">
+          {!showPhoneLookup && !matchedCustomer ? (
+            <button
+              type="button"
+              onClick={() => {
+                setShowPhoneLookup(true);
+                posHaptics.tap();
+              }}
+              className="w-full flex items-center justify-between px-4 py-2.5 rounded-2xl bg-background border border-border/60 hover:border-primary/50 text-xs font-semibold text-muted-foreground hover:text-foreground transition-all shadow-xs"
+            >
               <div className="flex items-center gap-2">
                 <Phone className="w-4 h-4 text-primary" />
-                <span className="text-xs font-bold uppercase tracking-wider">{t('cashier_phone_lookup_title')}</span>
+                <span>{t('cashier_forgot_phone_prompt')}</span>
               </div>
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={() => {
-                  setShowPhoneLookup(false);
-                  setMatchedCustomer(null);
-                  setPhoneQuery('');
-                  setPhoneSearchError(null);
-                  posHaptics.tap();
-                }}
-                className="w-6 h-6 rounded-full"
-              >
-                <X className="w-3.5 h-3.5" />
-              </Button>
-            </div>
-
-            <form onSubmit={handleSearchCustomerPhone} className="flex gap-2">
-              <div className="relative flex-1">
-                <Input
-                  type="tel"
-                  placeholder={t('cashier_digits_only_placeholder')}
-                  value={phoneQuery}
-                  onChange={(e) => {
-                    // Strictly numbers only
-                    const digits = e.target.value.replace(/\D/g, '');
-                    setPhoneQuery(digits);
+              <Search className="w-3.5 h-3.5 text-muted-foreground" />
+            </button>
+          ) : (
+            <div className="space-y-3 bg-background border border-border rounded-2xl p-3.5 animate-in fade-in-50 duration-200">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <Phone className="w-4 h-4 text-primary" />
+                  <span className="text-xs font-bold uppercase tracking-wider">{t('cashier_phone_lookup_title')}</span>
+                </div>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => {
+                    setShowPhoneLookup(false);
+                    setMatchedCustomer(null);
+                    setPhoneQuery('');
+                    setPhoneSearchError(null);
+                    posHaptics.tap();
                   }}
-                  className="h-10 text-xs rounded-xl font-mono tracking-wider ps-8"
-                  dir="ltr"
-                />
-                <Phone className="w-3.5 h-3.5 text-muted-foreground absolute start-3 top-1/2 -translate-y-1/2" />
+                  className="w-6 h-6 rounded-full"
+                >
+                  <X className="w-3.5 h-3.5" />
+                </Button>
               </div>
-              <Button
-                type="submit"
-                disabled={isSearchingPhone || !phoneQuery}
-                size="sm"
-                className="h-10 px-4 rounded-xl text-xs font-bold gap-1.5"
-              >
-                {isSearchingPhone ? <RefreshCw className="w-3.5 h-3.5 animate-spin" /> : <Search className="w-3.5 h-3.5" />}
-                {t('cashier_find_btn')}
-              </Button>
-            </form>
 
-            {phoneSearchError && (
-              <p className="text-[11px] text-destructive font-medium">{phoneSearchError}</p>
-            )}
+              <form onSubmit={handleSearchCustomerPhone} className="flex gap-2">
+                <div className="relative flex-1">
+                  <Input
+                    type="tel"
+                    placeholder={t('cashier_digits_only_placeholder')}
+                    value={phoneQuery}
+                    onChange={(e) => {
+                      // Strictly numbers only
+                      const digits = e.target.value.replace(/\D/g, '');
+                      setPhoneQuery(digits);
+                    }}
+                    className="h-10 text-xs rounded-xl font-mono tracking-wider ps-8"
+                    dir="ltr"
+                  />
+                  <Phone className="w-3.5 h-3.5 text-muted-foreground absolute start-3 top-1/2 -translate-y-1/2" />
+                </div>
+                <Button
+                  type="submit"
+                  disabled={isSearchingPhone || !phoneQuery}
+                  size="sm"
+                  className="h-10 px-4 rounded-xl text-xs font-bold gap-1.5"
+                >
+                  {isSearchingPhone ? <RefreshCw className="w-3.5 h-3.5 animate-spin" /> : <Search className="w-3.5 h-3.5" />}
+                  {t('cashier_find_btn')}
+                </Button>
+              </form>
 
-            {matchedCustomer && (
-              <div className="p-3 bg-primary/10 border border-primary/30 rounded-xl flex items-center justify-between animate-in zoom-in-95">
-                <div className="flex items-center gap-2.5">
-                  <div className="w-8 h-8 rounded-full bg-primary/20 text-primary flex items-center justify-center">
-                    <UserCheck className="w-4 h-4" />
-                  </div>
-                  <div className="text-start">
-                    <div className="text-xs font-bold text-foreground">{matchedCustomer.fullName}</div>
-                    <div className="text-[10px] text-muted-foreground font-mono" dir="ltr">
-                      {matchedCustomer.phone} • <strong className="text-primary">{matchedCustomer.pointsBalance} pts</strong>
+              {phoneSearchError && (
+                <p className="text-[11px] text-destructive font-medium">{phoneSearchError}</p>
+              )}
+
+              {matchedCustomer && (
+                <div className="p-3 bg-primary/10 border border-primary/30 rounded-xl flex items-center justify-between animate-in zoom-in-95">
+                  <div className="flex items-center gap-2.5">
+                    <div className="w-8 h-8 rounded-full bg-primary/20 text-primary flex items-center justify-center">
+                      <UserCheck className="w-4 h-4" />
+                    </div>
+                    <div className="text-start">
+                      <div className="text-xs font-bold text-foreground">{matchedCustomer.fullName}</div>
+                      <div className="text-[10px] text-muted-foreground font-mono" dir="ltr">
+                        {matchedCustomer.phone} • <strong className="text-primary">{matchedCustomer.pointsBalance} pts</strong>
+                      </div>
                     </div>
                   </div>
+                  <Badge className="bg-primary text-primary-foreground text-[10px] font-bold">
+                    {t('cashier_active_customer_badge')}
+                  </Badge>
                 </div>
-                <Badge className="bg-primary text-primary-foreground text-[10px] font-bold">
-                  {t('cashier_active_customer_badge')}
-                </Badge>
-              </div>
-            )}
-          </div>
-        )}
-      </div>
+              )}
+            </div>
+          )}
+        </div>
+      )}
 
       <Tabs
         value={activeTab}
@@ -650,32 +650,15 @@ export function TransactionPanel({
               disabled={
                 Boolean(
                   (!isManualRewardMode && !selectedReward) ||
-                  (isManualRewardMode && !customRewardId.trim()) ||
-                  (matchedCustomer && !isManualRewardMode && selectedReward && matchedCustomer.pointsBalance < selectedReward.pointsCost)
+                  (isManualRewardMode && !customRewardId.trim())
                 )
               }
               className="w-full h-14 text-base font-bold rounded-2xl bg-primary hover:bg-primary/90 text-primary-foreground shadow-lg shadow-primary/20 gap-2"
             >
-              {matchedCustomer ? (
-                <>
-                  <UserCheck className="w-5 h-5" />
-                  {isManualRewardMode ? (
-                    `Deduct ${customRewardId.trim() || 'Points'} for ${(matchedCustomer.fullName || 'Customer').split(' ')[0]}`
-                  ) : (
-                    t('cashier_redeem_for_customer', {
-                      reward: selectedReward?.name || 'Perk',
-                      name: (matchedCustomer.fullName || 'Customer').split(' ')[0],
-                    })
-                  )}
-                </>
-              ) : (
-                <>
-                  <QrCode className="w-5 h-5" />
-                  {t('cashier_scan_to_redeem', {
-                    pts: selectedReward ? `(${selectedReward.pointsCost} pts)` : '',
-                  })}
-                </>
-              )}
+              <QrCode className="w-5 h-5" />
+              {t('cashier_scan_to_redeem', {
+                pts: selectedReward ? `(${selectedReward.pointsCost} pts)` : '',
+              })}
             </Button>
           </form>
         </TabsContent>

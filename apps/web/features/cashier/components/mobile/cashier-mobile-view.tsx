@@ -91,6 +91,7 @@ export function CashierMobileView({
     token: string
     name?: string
     balance?: number
+    source?: 'qr' | 'phone'
   } | null>(null)
 
   // Transaction amount & selected reward
@@ -107,7 +108,7 @@ export function CashierMobileView({
 
   // Fetch store rewards when activeStore or tab changes
   React.useEffect(() => {
-    if (activeStore?.id && (mobileTab === 'redeem' || scannedCustomer)) {
+    if (activeStore?.id && (mobileTab === 'redeem' || (scannedCustomer && scannedCustomer.source === 'qr'))) {
       apiClient
         .get('/api/v1/transactions/store-rewards', { params: { storeId: activeStore.id } })
         .then((res: any) => setRewards(res.data || []))
@@ -123,6 +124,7 @@ export function CashierMobileView({
     setScannedCustomer({
       token: decodedToken.trim(),
       name: t('cashier_customer_label') || 'Customer',
+      source: 'qr',
     })
     // Fetch store rewards if not loaded
     if (activeStore?.id && rewards.length === 0) {
@@ -133,7 +135,7 @@ export function CashierMobileView({
     }
   }
 
-  // Handle phone lookup customer
+  // Handle phone lookup customer (strictly for awarding points)
   const handlePhoneCustomerFound = (customer: SearchedCustomer) => {
     const raw: any = Array.isArray(customer) ? customer[0] : customer
     if (!raw) return
@@ -145,13 +147,8 @@ export function CashierMobileView({
       token,
       name,
       balance,
+      source: 'phone',
     })
-    if (activeStore?.id && rewards.length === 0) {
-      apiClient
-        .get('/api/v1/transactions/store-rewards', { params: { storeId: activeStore.id } })
-        .then((res: any) => setRewards(res.data || []))
-        .catch(() => {})
-    }
   }
 
   const handleKeypadTap = (val: string) => {
@@ -199,7 +196,7 @@ export function CashierMobileView({
   }
 
   const handleConfirmRedeem = async (rewardId: string, rewardName: string) => {
-    if (!scannedCustomer || isBusy) return
+    if (!scannedCustomer || scannedCustomer.source !== 'qr' || isBusy) return
     setSelectedRewardId(rewardId)
     setIsProcessing(true)
     try {
@@ -232,16 +229,6 @@ export function CashierMobileView({
         activeCashierStoreId={activeStore?.id}
         onSelectCashierStore={onSelectStore}
         shiftActive={true}
-        rightElement={
-          <button
-            type="button"
-            onClick={() => setPhoneLookupOpen(true)}
-            className="flex items-center gap-1 py-1 px-2.5 rounded-full bg-primary/15 text-primary border border-primary/25 text-xs font-bold active:scale-95 transition-all shadow-2xs"
-          >
-            <Phone className="w-3.5 h-3.5" />
-            <span>Phone</span>
-          </button>
-        }
       />
 
       {/* ── MAIN SCENE CONTAINER ── */}
@@ -411,7 +398,7 @@ export function CashierMobileView({
         {/* ── TAB 2: REDEEM PERKS ── */}
         {mobileTab === 'redeem' && (
           <div className="space-y-4">
-            {!scannedCustomer ? (
+            {!scannedCustomer || scannedCustomer.source !== 'qr' ? (
               <div className="space-y-3">
                 <div className="rounded-3xl border border-border/70 bg-card p-3 shadow-xl text-center space-y-2">
                   <div className="rounded-2xl overflow-hidden bg-black/95 p-1 relative min-h-[260px] flex items-center justify-center">
@@ -437,29 +424,9 @@ export function CashierMobileView({
                   <p className="text-[11px] text-muted-foreground font-medium py-1">
                     {isBusy
                       ? 'Waiting for verification to finish...'
-                      : 'Scan customer pass to unlock rewards'}
+                      : 'Scan customer QR pass to unlock rewards'}
                   </p>
                 </div>
-
-                <button
-                  type="button"
-                  disabled={isBusy}
-                  onClick={() => setPhoneLookupOpen(true)}
-                  className="w-full flex items-center justify-between p-3.5 rounded-2xl border border-border/60 bg-card hover:bg-muted/30 text-start active:scale-[0.98] transition-all shadow-2xs disabled:opacity-50"
-                >
-                  <div className="flex items-center gap-2.5">
-                    <div className="w-8 h-8 rounded-xl bg-primary/15 text-primary flex items-center justify-center font-bold">
-                      <Phone className="w-4 h-4" />
-                    </div>
-                    <div>
-                      <p className="text-xs font-bold text-foreground">Look up by phone</p>
-                      <p className="text-[11px] text-muted-foreground">Tap to search customer balance</p>
-                    </div>
-                  </div>
-                  <Badge variant="outline" className="text-[10px] font-bold">
-                    Search
-                  </Badge>
-                </button>
               </div>
             ) : (
               <div className="rounded-3xl border border-primary/40 bg-card p-4 shadow-2xl space-y-4 animate-in zoom-in-95 duration-200">
@@ -739,7 +706,13 @@ export function CashierMobileView({
       {/* ── CASHIER BOTTOM NAV ── */}
       <CashierBottomNav
         activeTab={mobileTab}
-        onSelectTab={setMobileTab}
+        onSelectTab={(tab) => {
+          if (tab === 'redeem' && scannedCustomer?.source === 'phone') {
+            setScannedCustomer(null)
+            setSelectedRewardId(null)
+          }
+          setMobileTab(tab)
+        }}
         shiftTxCount={recentTxs.length}
       />
 

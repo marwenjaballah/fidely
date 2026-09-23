@@ -14,12 +14,8 @@ import { Input } from '@/components/ui/input'
 import {
   Phone,
   Search,
-  UserCheck,
   X,
   Loader2,
-  Coins,
-  Gift,
-  Check,
 } from 'lucide-react'
 import { useI18n } from '@/lib/i18n'
 import { posHaptics } from '@/lib/haptics'
@@ -110,7 +106,7 @@ export function CashierPhoneLookupSheet({
                   {t('cashier_forgot_phone_prompt') || 'Lookup by Phone Number'}
                 </DrawerTitle>
                 <DrawerDescription className="text-xs text-muted-foreground">
-                  Award points or redeem rewards using customer phone digits
+                  Award points using customer phone number
                 </DrawerDescription>
               </div>
             </div>
