@@ -129,13 +129,35 @@ export class TransactionsService {
         customerId = existingMembership.customerId;
         qrStoreId = existingMembership.storeId;
       } else {
-        // Assume raw customer ID
-        customerId = qrToken;
+        // Check if raw user ID
+        const customerById = await this.prisma.user.findUnique({
+          where: { id: qrToken },
+        });
+
+        if (customerById) {
+          customerId = customerById.id;
+        } else {
+          // Check if it's customer phone digits
+          const cleanedDigits = qrToken.replace(/\D/g, '');
+          if (cleanedDigits.length >= 3) {
+            const customerByPhone = await this.prisma.user.findFirst({
+              where: {
+                phone: {
+                  contains: cleanedDigits,
+                  mode: 'insensitive',
+                },
+              },
+            });
+            if (customerByPhone) {
+              customerId = customerByPhone.id;
+            }
+          }
+        }
       }
     }
 
     if (!customerId) {
-      throw new HTTPException(400, { message: 'Invalid customer QR pass.' });
+      throw new HTTPException(400, { message: 'Invalid customer pass or phone number.' });
     }
 
     // Verify customer exists
@@ -252,15 +274,32 @@ export class TransactionsService {
     // 1. Authorize cashier and resolve store
     const store = await this.resolveAndValidateCashierStore(cashierId, cashierRole, storeId);
 
-    // 2. Validate reward belongs to this store
-    const reward = await this.prisma.reward.findUnique({
-      where: { id: rewardId },
-    });
+    // 2. Validate reward belongs to this store OR is a custom points deduction
+    let reward: any = null;
+    let pointsCost = 0;
+    let rewardName = 'Reward';
 
-    if (!reward || reward.storeId !== store.id || !reward.active) {
-      throw new HTTPException(404, {
-        message: `Reward not found or does not belong to '${store.name}'.`,
+    // Check if rewardId is custom points deduction or numeric amount (e.g. "50", "custom:50", "points:50")
+    const customPointsMatch = rewardId.trim().match(/^(?:points:|custom:)?(\d+)$/i);
+    if (customPointsMatch && customPointsMatch[1]) {
+      pointsCost = parseInt(customPointsMatch[1], 10);
+      if (pointsCost <= 0) {
+        throw new HTTPException(400, { message: 'Points to deduct must be greater than 0.' });
+      }
+      rewardName = `${pointsCost} Points Deduction`;
+    } else {
+      // Check store reward catalog
+      reward = await this.prisma.reward.findUnique({
+        where: { id: rewardId.trim() },
       });
+
+      if (!reward || reward.storeId !== store.id || !reward.active) {
+        throw new HTTPException(404, {
+          message: `Reward not found or does not belong to '${store.name}'.`,
+        });
+      }
+      pointsCost = reward.pointsCost;
+      rewardName = reward.name;
     }
 
     // 3. Validate customer and cross-store pass
@@ -276,10 +315,10 @@ export class TransactionsService {
         },
       });
 
-      if (!membership || membership.pointsBalance < reward.pointsCost) {
+      if (!membership || membership.pointsBalance < pointsCost) {
         const currentBalance = membership?.pointsBalance || 0;
         throw new HTTPException(400, {
-          message: `Insufficient points: Customer has ${currentBalance} pts, but '${reward.name}' requires ${reward.pointsCost} pts.`,
+          message: `Insufficient points: Customer has ${currentBalance} pts, but '${rewardName}' requires ${pointsCost} pts.`,
         });
       }
 
@@ -287,7 +326,7 @@ export class TransactionsService {
       const updatedMembership = await tx.customerMembership.update({
         where: { id: membership.id },
         data: {
-          pointsBalance: membership.pointsBalance - reward.pointsCost,
+          pointsBalance: membership.pointsBalance - pointsCost,
         },
       });
 
@@ -298,27 +337,31 @@ export class TransactionsService {
           cashierId,
           membershipId: membership.id,
           type: 'redeem',
-          pointsAffected: -reward.pointsCost,
+          pointsAffected: -pointsCost,
         },
       });
 
-      // Create Voucher for customer marked as used immediately (since cashier handed over the perk at POS)
-      const now = new Date();
-      const voucher = await tx.voucher.create({
-        data: {
-          membershipId: membership.id,
-          rewardId: reward.id,
-          code: `VOUCHER-${Math.random().toString(36).substring(2, 8).toUpperCase()}`,
-          status: 'used',
-          issuedAt: now,
-          usedAt: now,
-        },
-      });
+      // Create Voucher for customer marked as used immediately (if redeeming a catalog reward)
+      let voucherCode = `DEDUCT-${Math.random().toString(36).substring(2, 8).toUpperCase()}`;
+      if (reward) {
+        const now = new Date();
+        const voucher = await tx.voucher.create({
+          data: {
+            membershipId: membership.id,
+            rewardId: reward.id,
+            code: `VOUCHER-${Math.random().toString(36).substring(2, 8).toUpperCase()}`,
+            status: 'used',
+            issuedAt: now,
+            usedAt: now,
+          },
+        });
+        voucherCode = voucher.code;
+      }
 
       return {
         newBalance: updatedMembership.pointsBalance,
-        voucherCode: voucher.code,
-        rewardName: reward.name,
+        voucherCode,
+        rewardName,
         storeName: store.name,
       };
     });
@@ -426,12 +469,14 @@ export class TransactionsService {
 
       results.push({
         customerId: u.id,
+        id: u.id,
         fullName: u.fullName,
         phone: u.phone,
         email: u.email,
         membershipId: membership.id,
         pointsBalance: membership.pointsBalance,
         qrCodeToken: membership.qrCodeToken,
+        qrToken: membership.qrCodeToken || `${u.id}:${store.id}`,
       });
     }
 

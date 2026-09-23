@@ -222,12 +222,14 @@ export const lookupCustomerByPhoneRoute = createRoute({
           schema: z.array(
             z.object({
               customerId: z.string(),
+              id: z.string().optional(),
               fullName: z.string().nullable(),
               phone: z.string().nullable(),
               email: z.string(),
               membershipId: z.string(),
               pointsBalance: z.number(),
               qrCodeToken: z.string(),
+              qrToken: z.string().optional(),
             })
           ),
         },

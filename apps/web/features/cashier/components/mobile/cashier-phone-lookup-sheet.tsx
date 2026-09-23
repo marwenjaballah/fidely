@@ -58,8 +58,20 @@ export function CashierPhoneLookupSheet({
       const { data } = await apiClient.get('/api/v1/transactions/lookup-by-phone', {
         params: { phone: clean, storeId },
       })
+      const results = Array.isArray(data) ? data : data ? [data] : []
+      if (results.length === 0) {
+        throw new Error(t('cashier_customer_not_found') || 'No customer found with this phone number')
+      }
+      const raw = results[0]
+      const customer: SearchedCustomer = {
+        id: raw.customerId || raw.id,
+        fullName: raw.fullName || raw.phone || 'Customer',
+        phone: raw.phone || clean,
+        qrToken: raw.qrToken || raw.qrCodeToken || `${raw.customerId || raw.id}:${storeId}`,
+        pointsBalance: typeof raw.pointsBalance === 'number' ? raw.pointsBalance : 0,
+      }
       posHaptics.scan()
-      onCustomerFound(data)
+      onCustomerFound(customer)
       onOpenChange(false)
       setPhoneQuery('')
     } catch (err: any) {

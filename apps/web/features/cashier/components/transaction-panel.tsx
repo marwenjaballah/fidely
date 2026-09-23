@@ -147,14 +147,29 @@ export function TransactionPanel({
 
     try {
       const api = getApiClient();
-      const { data } = await api.get<SearchedCustomer>('/api/v1/transactions/lookup-by-phone', {
+      const { data } = await api.get<any>('/api/v1/transactions/lookup-by-phone', {
         params: { phone: cleanPhone, storeId },
       });
-      setMatchedCustomer(data);
+      const results = Array.isArray(data) ? data : data ? [data] : [];
+      if (results.length === 0) {
+        setMatchedCustomer(null);
+        setPhoneSearchError(t('cashier_customer_not_found') || 'No customer found with this phone number');
+        posHaptics.error();
+        return;
+      }
+      const raw = results[0];
+      const customer: SearchedCustomer = {
+        id: raw.customerId || raw.id,
+        fullName: raw.fullName || raw.phone || 'Customer',
+        phone: raw.phone || cleanPhone,
+        qrToken: raw.qrToken || raw.qrCodeToken || `${raw.customerId || raw.id}:${storeId}`,
+        pointsBalance: typeof raw.pointsBalance === 'number' ? raw.pointsBalance : 0,
+      };
+      setMatchedCustomer(customer);
       posHaptics.scan();
     } catch (err: any) {
       setMatchedCustomer(null);
-      setPhoneSearchError(err?.message || t('cashier_customer_not_found'));
+      setPhoneSearchError(err?.message || t('cashier_customer_not_found') || 'Customer not found');
       posHaptics.error();
     } finally {
       setIsSearchingPhone(false);
@@ -218,8 +233,8 @@ export function TransactionPanel({
 
   const handleRedeemSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    const targetId = isManualRewardMode ? customRewardId : selectedReward?.id;
-    const targetName = isManualRewardMode ? t('cashier_custom_reward_label') : selectedReward?.name;
+    const targetId = isManualRewardMode ? customRewardId.trim() : selectedReward?.id;
+    const targetName = isManualRewardMode ? `${customRewardId.trim()} pts deduction` : selectedReward?.name;
 
     if (!targetId) return;
     posAudio.playClick();
@@ -229,6 +244,7 @@ export function TransactionPanel({
       if (success) {
         setMatchedCustomer(null);
         setSelectedReward(null);
+        setCustomRewardId('');
       }
     } else {
       await onProcess('redeem', 0, targetId, targetName);
@@ -492,7 +508,7 @@ export function TransactionPanel({
                   <UserCheck className="w-5 h-5" />
                   {t('cashier_award_to_customer', {
                     points: estimatedPoints,
-                    name: matchedCustomer.fullName.split(' ')[0],
+                    name: (matchedCustomer.fullName || 'Customer').split(' ')[0],
                     amount: parsedSpend,
                   })}
                 </>
@@ -552,6 +568,7 @@ export function TransactionPanel({
                   <div className="space-y-2 max-h-[260px] overflow-y-auto pe-1">
                     {rewards.map((r) => {
                       const isSelected = selectedReward?.id === r.id;
+                      const canAfford = !matchedCustomer || matchedCustomer.pointsBalance >= r.pointsCost;
                       return (
                         <div
                           key={r.id}
@@ -563,7 +580,9 @@ export function TransactionPanel({
                           className={`flex items-center justify-between p-3.5 rounded-2xl border cursor-pointer transition-all ${
                             isSelected
                               ? 'bg-primary/10 border-primary text-foreground shadow-sm'
-                              : 'bg-card border-border hover:bg-muted/50'
+                              : canAfford
+                              ? 'bg-card border-border hover:bg-muted/50'
+                              : 'bg-muted/20 border-border/50 opacity-60'
                           }`}
                         >
                           <div className="flex items-center gap-3">
@@ -586,7 +605,7 @@ export function TransactionPanel({
 
                           <div className="flex items-center gap-2 shrink-0">
                             <Badge
-                              variant={isSelected ? 'default' : 'secondary'}
+                              variant={isSelected ? 'default' : canAfford ? 'secondary' : 'outline'}
                               className="font-mono text-xs font-bold"
                               dir="ltr"
                             >
@@ -607,34 +626,47 @@ export function TransactionPanel({
             ) : (
               <div className="space-y-2">
                 <Label htmlFor="reward-code" className="text-xs text-muted-foreground font-medium">
-                  {t('cashier_custom_reward_label')}
+                  {t('cashier_custom_reward_label') || 'Points to Deduct or Voucher Code'}
                 </Label>
                 <Input
                   id="reward-code"
                   type="text"
-                  placeholder="Paste reward UUID or voucher code"
+                  placeholder="e.g. 50 (to deduct 50 pts) or VOUCHER-XXXX"
                   value={customRewardId}
                   onChange={(e) => setCustomRewardId(e.target.value)}
-                  className="h-12 rounded-xl font-mono"
+                  className="h-12 rounded-xl font-mono text-center text-sm font-bold"
                   dir="ltr"
                   required
                 />
+                <p className="text-[11px] text-muted-foreground">
+                  Enter a number of points to remove directly or paste a customer voucher code
+                </p>
               </div>
             )}
 
             {/* Submit / Action Button */}
             <Button
               type="submit"
-              disabled={(!isManualRewardMode && !selectedReward) || (isManualRewardMode && !customRewardId)}
+              disabled={
+                Boolean(
+                  (!isManualRewardMode && !selectedReward) ||
+                  (isManualRewardMode && !customRewardId.trim()) ||
+                  (matchedCustomer && !isManualRewardMode && selectedReward && matchedCustomer.pointsBalance < selectedReward.pointsCost)
+                )
+              }
               className="w-full h-14 text-base font-bold rounded-2xl bg-primary hover:bg-primary/90 text-primary-foreground shadow-lg shadow-primary/20 gap-2"
             >
               {matchedCustomer ? (
                 <>
                   <UserCheck className="w-5 h-5" />
-                  {t('cashier_redeem_for_customer', {
-                    reward: selectedReward?.name || 'Perk',
-                    name: matchedCustomer.fullName.split(' ')[0],
-                  })}
+                  {isManualRewardMode ? (
+                    `Deduct ${customRewardId.trim() || 'Points'} for ${(matchedCustomer.fullName || 'Customer').split(' ')[0]}`
+                  ) : (
+                    t('cashier_redeem_for_customer', {
+                      reward: selectedReward?.name || 'Perk',
+                      name: (matchedCustomer.fullName || 'Customer').split(' ')[0],
+                    })
+                  )}
                 </>
               ) : (
                 <>

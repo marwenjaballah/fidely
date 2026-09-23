@@ -95,6 +95,7 @@ export function CashierMobileView({
 
   // Transaction amount & selected reward
   const [spendAmount, setSpendAmount] = useState('')
+  const [customDeductPoints, setCustomDeductPoints] = useState('')
   const [rewards, setRewards] = useState<any[]>([])
   const [selectedRewardId, setSelectedRewardId] = useState<string | null>(null)
   const [isProcessing, setIsProcessing] = useState(false)
@@ -134,10 +135,16 @@ export function CashierMobileView({
 
   // Handle phone lookup customer
   const handlePhoneCustomerFound = (customer: SearchedCustomer) => {
+    const raw: any = Array.isArray(customer) ? customer[0] : customer
+    if (!raw) return
+    const token = raw.qrToken || raw.qrCodeToken || `${raw.id || raw.customerId}:${activeStore?.id}`
+    const name = raw.fullName || raw.phone || t('cashier_customer_label') || 'Customer'
+    const balance = typeof raw.pointsBalance === 'number' ? raw.pointsBalance : 0
+
     setScannedCustomer({
-      token: customer.qrToken,
-      name: customer.fullName || customer.phone,
-      balance: customer.pointsBalance,
+      token,
+      name,
+      balance,
     })
     if (activeStore?.id && rewards.length === 0) {
       apiClient
@@ -529,6 +536,61 @@ export function CashierMobileView({
                       )
                     })
                   )}
+                </div>
+
+                {/* Direct Points Removal */}
+                <div className="pt-3 border-t border-border/40 space-y-2">
+                  <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
+                    Direct Points Removal
+                  </p>
+                  <div className="flex gap-2">
+                    <Input
+                      type="number"
+                      placeholder="e.g. 50 pts"
+                      value={customDeductPoints}
+                      onChange={(e) => setCustomDeductPoints(e.target.value.replace(/\D/g, ''))}
+                      className="h-10 text-xs font-mono font-bold text-center rounded-xl bg-muted/40 border-border/70"
+                      dir="ltr"
+                    />
+                    <Button
+                      size="sm"
+                      disabled={
+                        isBusy ||
+                        !customDeductPoints ||
+                        parseInt(customDeductPoints, 10) <= 0 ||
+                        (typeof scannedCustomer.balance === 'number' &&
+                          scannedCustomer.balance < parseInt(customDeductPoints, 10))
+                      }
+                      onClick={() => {
+                        const pts = customDeductPoints.trim()
+                        if (pts) {
+                          handleConfirmRedeem(pts, `${pts} Points Deduction`)
+                          setCustomDeductPoints('')
+                        }
+                      }}
+                      className="h-10 px-3.5 rounded-xl text-xs font-bold shrink-0 bg-primary text-primary-foreground shadow-xs"
+                    >
+                      Deduct {customDeductPoints ? `${customDeductPoints} Pts` : 'Points'}
+                    </Button>
+                  </div>
+                  {/* Quick Deduction Presets */}
+                  <div className="grid grid-cols-4 gap-1.5 pt-0.5">
+                    {[20, 50, 100, 200].map((preset) => {
+                      const canAffordPreset =
+                        typeof scannedCustomer.balance !== 'number' || scannedCustomer.balance >= preset
+                      return (
+                        <button
+                          key={preset}
+                          type="button"
+                          disabled={isBusy || !canAffordPreset}
+                          onClick={() => setCustomDeductPoints(preset.toString())}
+                          className="py-1 rounded-lg border border-border/50 bg-card text-[11px] font-bold font-mono hover:bg-muted active:scale-95 transition-all disabled:opacity-40"
+                        >
+                          -{preset}
+                        </button>
+                      )
+                    })}
+                  </div>
                 </div>
               </div>
             )}
