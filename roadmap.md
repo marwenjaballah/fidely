@@ -1,16 +1,16 @@
 # Fidely Implementation Roadmap
 
-**Project Description**: Multi-tenant, zero-download PWA loyalty platform for coffee shops in Tunisia.
-**Tech Stack**: Next.js 14+ (App Router), Hono API, Drizzle ORM, Tailwind CSS (based on `saas-boilerplate-next-hono`), PostgreSQL.
+**Project Description**: Multi-tenant, zero-download PWA loyalty platform for coffee shops and retail businesses.
+**Tech Stack**: Next.js 16 (App Router), Hono API, Prisma ORM, Tailwind CSS, PostgreSQL / Supabase.
 
 ---
 
-## Phase 1: Foundation & Boilerplate Setup (Current)
-- [x] **Step 1: Clone Boilerplate**: Clone `marwenjaballah/saas-boilerplate-next-hono` into the repository.
-- [x] **Step 2: Clean Up & Initialize**: Remove boilerplate git history, initialize fresh git repository, and install dependencies using `pnpm`.
-- [x] **Step 3: Environment Setup**: Configure `.env.local` for PostgreSQL database (Supabase/Neon).
-- [x] **Step 4: Drizzle Schema Migration**: Extend the boilerplate's schema with multi-tenant tables (`stores`, `customer_memberships`, `rewards`, `transactions`, `vouchers`) and run migrations.
-- [x] **Step 5: Role-based Authentication**: Map boilerplate authentication to specific roles: `super_admin`, `merchant`, `cashier`, `customer`.
+## Phase 1: Foundation & Architecture Setup
+- [x] **Step 1: Workspace Architecture**: TurboRepo + pnpm workspaces monorepo structure.
+- [x] **Step 2: Clean Up & Initialize**: Fresh repository setup, dependency management, and build orchestration.
+- [x] **Step 3: Environment Setup**: Configure environment configurations for development, staging, and production.
+- [x] **Step 4: Schema Migration**: Multi-tenant Prisma schema (`stores`, `customer_memberships`, `rewards`, `transactions`, `vouchers`).
+- [x] **Step 5: Role-based Authentication**: Role-based access control: `super_admin`, `merchant`, `cashier`, `customer`.
 
 ## Phase 2: Customer PWA & Store Routing
 - [x] **Step 1: Store Routing**: Implement dynamic tenant resolution (`/store/[slug]`) mapping to individual merchants.
@@ -27,7 +27,7 @@
 - [x] **Step 5: Reward Redemption**: Build the flow for scanning customer passes to validate and deduct points for rewards.
 
 ## Phase 4: Merchant Dashboard & CRM
-- [ ] **Step 1: Dashboard UI Framework**: Setup the Merchant admin sidebar and overview layout using the boilerplate's dashboard components.
+- [ ] **Step 1: Dashboard UI Framework**: Setup the Merchant admin sidebar and overview layout using modern responsive dashboard components.
 - [ ] **Step 2: Store Customization**: Build settings forms allowing merchants to configure their branding (colors, logo) and `pointsPerTnd` rules.
 - [ ] **Step 3: Customer CRM**: Develop a paginated table view for merchants to see their loyalty members and balances.
 - [ ] **Step 4: Staff Management (RBAC)**: Create UI for merchants to invite users as cashiers for their store.

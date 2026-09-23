@@ -1,6 +1,6 @@
 import { ImageResponse } from "next/og"
 
-export const alt = "SaaS Boilerplate — Next.js + Hono starter"
+export const alt = "Fidely — Universal Digital Loyalty & Rewards Platform"
 export const size = { width: 1200, height: 630 }
 export const contentType = "image/png"
 
@@ -15,76 +15,138 @@ export default function OpenGraphImage() {
           flexDirection: "column",
           alignItems: "center",
           justifyContent: "center",
-          background: "linear-gradient(145deg, #0f172a 0%, #1e293b 40%, #0f172a 100%)",
+          background: "radial-gradient(circle at 50% 20%, #182820 0%, #090d0b 70%, #050706 100%)",
           color: "#fafaf9",
           fontFamily: "ui-sans-serif, system-ui, sans-serif",
+          position: "relative",
         }}
       >
+        {/* Ambient Top Glow */}
+        <div
+          style={{
+            position: "absolute",
+            top: -100,
+            width: 700,
+            height: 300,
+            background: "rgba(16, 185, 129, 0.22)",
+            filter: "blur(120px)",
+            borderRadius: "50%",
+          }}
+        />
+
         <div
           style={{
             display: "flex",
             alignItems: "center",
-            gap: 36,
+            gap: 40,
+            zIndex: 1,
+          }}
+        >
+          {/* Brand Shield Icon */}
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              width: 128,
+              height: 128,
+              borderRadius: 36,
+              background: "linear-gradient(135deg, rgba(16, 185, 129, 0.25) 0%, rgba(5, 150, 105, 0.08) 100%)",
+              border: "2px solid rgba(52, 211, 153, 0.5)",
+              boxShadow: "0 20px 40px -15px rgba(16, 185, 129, 0.4)",
+            }}
+          >
+            <div
+              style={{
+                fontSize: 64,
+                fontWeight: 900,
+                color: "#10b981",
+                display: "flex",
+              }}
+            >
+              F
+            </div>
+          </div>
+
+          <div style={{ display: "flex", flexDirection: "column", gap: 14, maxWidth: 760 }}>
+            <div
+              style={{
+                fontSize: 68,
+                fontWeight: 900,
+                letterSpacing: "-0.035em",
+                lineHeight: 1.05,
+                color: "#ffffff",
+                display: "flex",
+              }}
+            >
+              Fidely
+            </div>
+            <div
+              style={{
+                fontSize: 28,
+                color: "#a7f3d0",
+                lineHeight: 1.35,
+                fontWeight: 600,
+                display: "flex",
+              }}
+            >
+              Universal Digital Loyalty Passes & Fast Cashier POS
+            </div>
+          </div>
+        </div>
+
+        {/* Feature Pills */}
+        <div
+          style={{
+            marginTop: 48,
+            display: "flex",
+            gap: 16,
+            zIndex: 1,
           }}
         >
           <div
             style={{
+              padding: "10px 24px",
+              borderRadius: 999,
+              background: "rgba(255, 255, 255, 0.06)",
+              border: "1px solid rgba(255, 255, 255, 0.12)",
+              fontSize: 18,
+              fontWeight: 600,
+              color: "#e2e8f0",
               display: "flex",
-              flexDirection: "column",
-              gap: 8,
-              padding: 20,
-              borderRadius: 24,
-              background: "rgba(249, 115, 22, 0.14)",
-              border: "2px solid rgba(249, 115, 22, 0.45)",
             }}
           >
-            <div style={{ display: "flex", gap: 10 }}>
-              <div
-                style={{
-                  width: 40,
-                  height: 40,
-                  borderRadius: 8,
-                  border: "3px solid #fb923c",
-                }}
-              />
-              <div
-                style={{
-                  width: 40,
-                  height: 40,
-                  borderRadius: 8,
-                  border: "3px solid #fb923c",
-                }}
-              />
-            </div>
-            <div style={{ display: "flex", gap: 10 }}>
-              <div
-                style={{
-                  width: 40,
-                  height: 40,
-                  borderRadius: 8,
-                  border: "3px solid #fb923c",
-                }}
-              />
-              <div
-                style={{
-                  width: 40,
-                  height: 40,
-                  borderRadius: 8,
-                  border: "3px solid #fb923c",
-                }}
-              />
-            </div>
+            Zero App Downloads
           </div>
-          <div style={{ display: "flex", flexDirection: "column", gap: 12, maxWidth: 720 }}>
-            <div style={{ fontSize: 62, fontWeight: 700, letterSpacing: "-0.03em", lineHeight: 1.05 }}>
-              SaaS Boilerplate
-            </div>
-            <div style={{ fontSize: 30, color: "#94a3b8", lineHeight: 1.3 }}>
-              Next.js + Hono monorepo — auth, typed API, Prisma, Turborepo
-            </div>
+          <div
+            style={{
+              padding: "10px 24px",
+              borderRadius: 999,
+              background: "rgba(16, 185, 129, 0.12)",
+              border: "1px solid rgba(52, 211, 153, 0.3)",
+              fontSize: 18,
+              fontWeight: 600,
+              color: "#34d399",
+              display: "flex",
+            }}
+          >
+            Instant QR Counter Stands
+          </div>
+          <div
+            style={{
+              padding: "10px 24px",
+              borderRadius: 999,
+              background: "rgba(255, 255, 255, 0.06)",
+              border: "1px solid rgba(255, 255, 255, 0.12)",
+              fontSize: 18,
+              fontWeight: 600,
+              color: "#e2e8f0",
+              display: "flex",
+            }}
+          >
+            &lt;1s Cashier Scanner
           </div>
         </div>
-        <div style={{ marginTop: 40, fontSize: 22, color: "#64748b" }}>Open source starter</div>
       </div>
     ),
     { ...size }

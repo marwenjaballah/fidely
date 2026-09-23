@@ -1,5 +1,5 @@
 {
-  "name": "saas-monorepo",
+  "name": "fidely",
   "private": true,
   "scripts": {
     "build": "turbo run build",

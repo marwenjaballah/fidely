@@ -16,9 +16,9 @@ export const setupSwagger = (app: OpenAPIHono<Env>) => {
   app.doc('/openapi.json', {
     openapi: '3.1.0',
     info: {
-      title: 'Saas Boilerplate API',
+      title: 'Fidely API',
       version: '1.0.0',
-      description: 'REST API powered by Hono, Supabase, and Prisma',
+      description: 'High-performance loyalty transaction engine and digital pass API',
     },
     servers: servers.length ? servers : undefined,
   })

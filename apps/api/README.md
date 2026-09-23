@@ -1,16 +1,16 @@
-# API - Hono.js Backend
+# Fidely API - High-Performance Hono Backend
 
-Production-ready REST API built with Hono.js, Supabase Auth, and Prisma ORM.
+Production-ready REST API for the Fidely Digital Loyalty platform built with Hono.js, Supabase Auth, and Prisma ORM.
 
 ## 🎯 Overview
 
-This API provides a complete backend solution for the SaaS boilerplate, featuring:
+This API powers the Fidely loyalty ecosystem, featuring:
 
-- **Fast & Lightweight** - Built on Hono.js for optimal performance
-- **Type-Safe** - Full TypeScript with Zod validation
-- **Secure** - JWT authentication with Supabase Auth
-- **Documented** - Auto-generated OpenAPI/Swagger documentation
-- **Scalable** - Middleware-based architecture with autoloading routes
+- **Ultra-Fast & Lightweight** - Built on Hono.js for sub-millisecond response times
+- **Loyalty Core Engine** - Points accrual, customer pass resolution, concurrency-safe transactions, and voucher redemptions
+- **Multi-Tenant Architecture** - Secure store boundaries for Super Admins, Merchants, Cashiers, and Customers
+- **Type-Safe & Validated** - Full TypeScript with Zod validation schemas
+- **Documented** - Interactive OpenAPI/Swagger documentation at `/docs`
 
 ## 📁 Project Structure
 

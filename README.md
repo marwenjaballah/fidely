@@ -1,55 +1,49 @@
-# SaaS Boilerplate - Next.js + Hono Monorepo
+# Fidely - Universal Digital Loyalty Passes & Fast Cashier POS Monorepo
 
-A production-ready, full-stack SaaS boilerplate built with Next.js, Hono, Supabase, and Prisma. This monorepo provides a complete foundation for building modern SaaS applications with authentication, authorization, database management, and more.
+A production-grade, full-stack digital loyalty ecosystem built with Next.js 16, Hono, Supabase, and Prisma. Fidely powers digital loyalty cards (Apple Wallet, Google Wallet, Counter QR), instant cashier scan-and-earn flows, multi-tenant merchant dashboards, reward redemption, and tier-based customer engagement.
 
 ## 🏗️ Architecture
 
 This is a **Turborepo monorepo** containing:
 
-- **`apps/api`** - Hono.js REST API backend with Supabase Auth
-- **`apps/web`** - Next.js 16 frontend application
-- **`packages/database`** - Prisma schema and database utilities
-- **`packages/types`** - Shared TypeScript types and constants
+- **`apps/api`** - High-performance Hono.js REST API backend with Supabase Auth & Prisma
+- **`apps/web`** - Next.js 16 App Router application (Merchant dashboard, Cashier POS, Customer wallet passes)
+- **`packages/database`** - Prisma schema and database utilities (PostgreSQL / Supabase)
+- **`packages/types`** - Shared TypeScript types, schemas, and constants
 - **`packages/eslint-config`** - Shared ESLint configurations
 - **`packages/typescript-config`** - Shared TypeScript configurations
 
 ## ✨ Features
 
 ### Backend (API)
-- ✅ **Hono.js** - Fast, lightweight web framework
-- ✅ **Supabase Auth** - Complete authentication system (email/password, OAuth)
-- ✅ **Prisma ORM** - Type-safe database access
-- ✅ **OpenAPI/Swagger** - Auto-generated API documentation
-- ✅ **JWT Authentication** - Secure token-based auth with refresh tokens
-- ✅ **Cookie-based Sessions** - HTTP-only cookies for security
-- ✅ **Middleware Stack** - CORS, compression, rate limiting, error handling
-- ✅ **i18n Support** - Internationalization with i18next
-- ✅ **Request Logging** - Structured logging with Pino
+- ✅ **Hono.js** - Ultra-fast, lightweight web framework on Node
+- ✅ **Supabase Auth & PostgreSQL** - Complete multi-tenant auth and database
+- ✅ **Prisma ORM** - Type-safe database access with strict relations
+- ✅ **OpenAPI/Swagger** - Auto-generated documentation at `/docs`
+- ✅ **Loyalty Engine** - Points accrual, cashier QR scanning, voucher redemption, concurrency-safe mutations
+- ✅ **JWT Authentication** - Secure token-based auth with HTTP-only cookies
+- ✅ **Middleware Stack** - CORS, compression, rate limiting, request tracing, error handling
 
 ### Frontend (Web)
-- ✅ **Next.js 16** - React framework with App Router
-- ✅ **React 19** - Latest React features
-- ✅ **TypeScript** - Full type safety
-- ✅ **Zustand** - State management with persistence
-- ✅ **Axios** - HTTP client with automatic token refresh
-- ✅ **shadcn/ui** - Beautiful, accessible UI components
-- ✅ **Tailwind CSS** - Utility-first CSS framework
-- ✅ **Theme Support** - Dark/light mode with system preference
-- ✅ **Form Handling** - React Hook Form with Zod validation
+- ✅ **Next.js 16 & React 19** - App Router with Server Components & Turbopack
+- ✅ **Multi-Tenant Roles** - Merchant Admin, Fast Cashier POS (`/cashier`), and Customer Digital Pass (`/pass/[token]`, `/store/[slug]`)
+- ✅ **Bilingual & RTL Ready** - Full i18n support across English (`en`), French (`fr`), and Arabic (`ar`)
+- ✅ **Instant Cashier Camera Scanner** - Real-time QR scanner with front/back camera switching & vibration feedback
+- ✅ **Zustand State Management** - Lightweight persistent stores
+- ✅ **Tailwind CSS & Radix UI** - Accessible, dark-mode ready design system
+- ✅ **SEO & Rich Snippets** - OpenGraph, Twitter Cards, Schema.org JSON-LD, dynamic `sitemap.xml` & `robots.txt`
 
 ### Database & Types
-- ✅ **Prisma** - Database schema management
-- ✅ **PostgreSQL** - Via Supabase
-- ✅ **Type Generation** - Auto-generated types from database schema
-- ✅ **Migrations** - Version-controlled database changes
-- ✅ **Seeding** - Environment-specific seed data
+- ✅ **Prisma** - Schema management with clean relational modeling
+- ✅ **Multi-Tenant Schema** - Stores, Customer Memberships, Rewards, Transactions, Vouchers
+- ✅ **Type Generation** - Auto-generated types from Prisma schema
 
 ## 📋 Prerequisites
 
 - **Node.js** 22.x or higher
-- **pnpm** 9.0.0 or higher (package manager)
-- **PostgreSQL** database (via Supabase or self-hosted)
-- **Supabase** account (for authentication and storage)
+- **pnpm** 9.0.0 or higher
+- **PostgreSQL** database (via Supabase or local Docker)
+- **Supabase** project (Auth, Storage)
 
 ## 🚀 Quick Start
 
@@ -57,7 +51,7 @@ This is a **Turborepo monorepo** containing:
 
 ```bash
 git clone <repository-url>
-cd saas-boilerplate-next-hono
+cd fidely
 ```
 
 ### 2. Install Dependencies
@@ -187,7 +181,7 @@ pnpm --filter web start    # Start production server
 
 ## 🔐 Authentication System
 
-This boilerplate includes a complete authentication system built on Supabase Auth. Features include:
+Fidely includes a robust authentication and authorization system built on Supabase Auth. Features include:
 
 - Email/password authentication
 - Google OAuth integration

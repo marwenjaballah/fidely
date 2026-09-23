@@ -3,114 +3,87 @@ import Link from "next/link"
 import { MarketingArticle } from "@/components/common/marketing-article"
 
 export const metadata: Metadata = {
-  title: "Terms of Service",
-  description: "Terms governing use of this SaaS boilerplate site and software. Template language for customization.",
+  title: "Terms of Service - Fidely Loyalty Platform",
+  description:
+    "Terms of Service governing the use of the Fidely universal digital loyalty platform, merchant dashboards, and cashier scanning terminals.",
 }
 
 export default function TermsPage() {
   return (
     <MarketingArticle
       title="Terms of Service"
-      description="Last updated: April 2026. These terms are provided as a starting point for projects built from this boilerplate—have them reviewed by qualified counsel before production use."
+      description="Last updated: September 2026. These terms govern your access and use of the Fidely universal digital loyalty platform, merchant terminals, and customer passes."
     >
-      <h2>1. Agreement</h2>
+      <h2>1. Agreement to Terms</h2>
       <p>
-        By accessing or using this website, applications derived from this template, or related services (collectively,
-        the &quot;Service&quot;), you agree to be bound by these Terms of Service. If you do not agree, do not use the
-        Service.
+        By accessing or using Fidely, including our website, merchant management tools, cashier POS terminals, customer digital passes, and API services (collectively, the &quot;Service&quot;), you agree to be bound by these Terms of Service. If you do not agree to these terms, please do not use the Service.
       </p>
 
-      <h2>2. Who we are</h2>
+      <h2>2. Description of the Service</h2>
       <p>
-        References to &quot;we,&quot; &quot;us,&quot; or &quot;our&quot; mean the person or entity operating the
-        deployment you are using. This boilerplate does not identify a specific legal entity—you must substitute your
-        company name, address, and contact details in your deployment and legal documents.
+        Fidely provides cloud software enabling merchants (retail stores, cafes, restaurants, and outlets) to issue digital loyalty memberships, award points based on purchase spend, and redeem reward vouchers. Customers access their loyalty passes via mobile web or Progressive Web App (PWA) with zero mandatory app store downloads.
       </p>
 
-      <h2>3. Accounts and eligibility</h2>
-      <p>
-        Where the Service offers accounts, you agree to provide accurate information and to keep credentials secure.
-        You are responsible for activity that occurs under your account. We may suspend or terminate accounts that
-        violate these terms or present security or abuse risk.
-      </p>
-
-      <h2>4. Acceptable use</h2>
-      <p>You agree not to misuse the Service. Examples of prohibited conduct include, without limitation:</p>
+      <h2>3. Merchant Responsibilities</h2>
+      <p>Merchants using Fidely agree to:</p>
       <ul>
-        <li>Attempting to probe, scan, or test the vulnerability of any system or network without authorization.</li>
-        <li>Transmitting malware, excessive automated traffic, or content designed to disrupt or harass.</li>
-        <li>Using the Service to violate applicable law or third-party rights.</li>
-        <li>Reverse engineering or attempting to extract source code except where applicable law expressly permits.</li>
+        <li>Maintain accurate information regarding store identity, point earning multipliers, and rewards catalog values.</li>
+        <li>Honor valid loyalty points and rewards earned by customers in good faith at their registered store locations.</li>
+        <li>Safeguard cashier login credentials and ensure staff use cashier terminals solely for authorized in-store customer transactions.</li>
+        <li>Comply with local tax, commercial, consumer protection, and privacy laws applicable to their jurisdiction.</li>
       </ul>
 
-      <h2>5. Intellectual property</h2>
+      <h2>4. Customer Loyalty Points & Vouchers</h2>
       <p>
-        The open-source components of this boilerplate remain subject to their respective licenses. Your application
-        code, branding, and customer data are yours (or your licensors&apos;) subject to your agreements with users and
-        vendors. We do not claim ownership of your content.
+        Loyalty points and reward vouchers issued through Fidely are promotional incentives granted at the discretion of individual merchants. Unless explicitly stated by an individual store merchant:
+      </p>
+      <ul>
+        <li>Points have no standalone cash surrender value and cannot be exchanged for legal tender.</li>
+        <li>Points accrued at a specific store are non-transferable to other unrelated merchant stores, protecting against cross-store pass misuse.</li>
+        <li>Merchants determine their own reward rules, expiration policies, and perk eligibility.</li>
+      </ul>
+
+      <h2>5. Acceptable Use Policy</h2>
+      <p>You agree not to misuse or attempt to compromise the Fidely platform. Prohibited actions include:</p>
+      <ul>
+        <li>Generating fraudulent points, fabricating QR codes, or manipulating transaction records.</li>
+        <li>Attempting to probe, scan, or exploit security vulnerabilities in the Fidely infrastructure or API.</li>
+        <li>Transmitting malware, spam, or executing denial-of-service attempts.</li>
+        <li>Interfering with the operation of cashier scanners or unauthorized data extraction.</li>
+      </ul>
+
+      <h2>6. Account Security & Privacy</h2>
+      <p>
+        You are responsible for safeguarding your account credentials. You must notify us immediately of any unauthorized access to your merchant or cashier account. Your personal data is processed strictly in accordance with our <Link href="/privacy">Privacy Policy</Link>.
       </p>
 
-      <h2>6. Third-party services</h2>
+      <h2>7. Intellectual Property</h2>
       <p>
-        The Service may integrate with third parties (for example authentication or database providers). Those services
-        have their own terms and privacy policies. We are not responsible for third-party availability, security
-        incidents, or pricing changes.
+        The Fidely brand, logos, software, user interfaces, documentation, and algorithms are the exclusive property of Fidely and its licensors. Merchants retain all rights to their proprietary store logos, trademarks, and customer business records.
       </p>
 
-      <h2>7. Disclaimers</h2>
+      <h2>8. Service Availability & Modifications</h2>
       <p>
-        THE SERVICE IS PROVIDED &quot;AS IS&quot; AND &quot;AS AVAILABLE.&quot; TO THE MAXIMUM EXTENT PERMITTED BY
-        LAW, WE DISCLAIM ALL WARRANTIES, WHETHER EXPRESS, IMPLIED, OR STATUTORY, INCLUDING MERCHANTABILITY, FITNESS FOR
-        A PARTICULAR PURPOSE, AND NON-INFRINGEMENT. TEMPLATE TEXT IS NOT LEGAL ADVICE.
+        We strive for continuous 99.9% uptime. However, the Service is provided on an &quot;AS IS&quot; and &quot;AS AVAILABLE&quot; basis. We reserve the right to update, enhance, or temporarily suspend features for maintenance, security, or legal requirements with reasonable advance notice when feasible.
       </p>
 
-      <h2>8. Limitation of liability</h2>
+      <h2>9. Limitation of Liability</h2>
       <p>
-        TO THE MAXIMUM EXTENT PERMITTED BY LAW, IN NO EVENT WILL WE BE LIABLE FOR ANY INDIRECT, INCIDENTAL, SPECIAL,
-        CONSEQUENTIAL, OR PUNITIVE DAMAGES, OR ANY LOSS OF PROFITS, DATA, OR GOODWILL, ARISING FROM YOUR USE OF THE
-        SERVICE, EVEN IF WE HAVE BEEN ADVISED OF THE POSSIBILITY OF SUCH DAMAGES. OUR AGGREGATE LIABILITY FOR ANY CLAIM
-        ARISING OUT OF THESE TERMS OR THE SERVICE WILL NOT EXCEED THE GREATER OF ONE HUNDRED US DOLLARS (US $100) OR THE
-        AMOUNTS YOU PAID US FOR THE SERVICE IN THE TWELVE MONTHS BEFORE THE CLAIM (IF ANY).
+        To the maximum extent permitted by applicable law, Fidely shall not be liable for indirect, incidental, special, consequential, or punitive damages, including loss of profits, data, or business goodwill arising from the use or inability to use the platform.
       </p>
 
-      <h2>9. Indemnity</h2>
+      <h2>10. Contact Us</h2>
       <p>
-        You will defend and indemnify us and our affiliates, officers, directors, employees, and agents against any
-        claims, damages, losses, liabilities, costs, and expenses (including reasonable attorneys&apos; fees) arising
-        from your content, your use of the Service, or your violation of these terms or applicable law.
-      </p>
-
-      <h2>10. Changes</h2>
-      <p>
-        We may modify these terms from time to time. We will post the updated terms with a new &quot;Last updated&quot;
-        date where reasonable. Continued use after changes become effective constitutes acceptance. If you disagree
-        with a change, stop using the Service.
-      </p>
-
-      <h2>11. Termination</h2>
-      <p>
-        You may stop using the Service at any time. We may suspend or terminate access if we reasonably believe you
-        have violated these terms or if required for legal or operational reasons. Provisions that by their nature
-        should survive (including disclaimers, limitations, and indemnities) will survive termination.
-      </p>
-
-      <h2>12. Governing law and disputes</h2>
-      <p>
-        Choose governing law and a forum appropriate for your entity and users. This template does not select a
-        jurisdiction. Replace this section with counsel-approved language (for example Delaware law and courts, or
-        arbitration rules).
-      </p>
-
-      <h2>13. Contact</h2>
-      <p>
-        For questions about these terms, use the contact options published on the <Link href="/#contact">contact</Link>{" "}
-        section of the site after you configure them for your deployment.
+        For inquiries regarding these terms or commercial merchant agreements, please reach out to our team at{" "}
+        <a href="mailto:support@fidely.app" className="text-primary hover:underline font-semibold">
+          support@fidely.app
+        </a>.
       </p>
 
       <hr />
 
       <p>
-        See also the <Link href="/privacy">privacy policy</Link> and <Link href="/docs">technical documentation</Link>.
+        Please review our <Link href="/privacy">Privacy Policy</Link> and <Link href="/docs">Merchant Documentation</Link>.
       </p>
     </MarketingArticle>
   )

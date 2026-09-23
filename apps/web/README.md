@@ -1,19 +1,18 @@
-# Web - Next.js Frontend
+# Fidely Web - Next.js 16 Digital Loyalty Frontend
 
-Modern, production-ready Next.js 16 frontend application with React 19, TypeScript, and shadcn/ui components.
+Modern, production-grade Next.js 16 frontend application for the Fidely platform with React 19, TypeScript, and Tailwind CSS / shadcn/ui components.
 
 ## 🎯 Overview
 
-This is the frontend application for the SaaS boilerplate, featuring:
+This is the primary web application for Fidely, featuring:
 
-- **Next.js 16** - Latest App Router with React Server Components
-- **React 19** - Latest React features and improvements
-- **TypeScript** - Full type safety across the application
-- **Zustand** - Lightweight state management with persistence
-- **shadcn/ui** - Beautiful, accessible UI components
-- **Tailwind CSS** - Utility-first styling
-- **Dark Mode** - Theme support with system preference
-- **Form Handling** - React Hook Form with Zod validation
+- **Merchant Admin Portal** - Multi-tenant store management, customer tiers, rewards catalog, real-time analytics
+- **Cashier POS Interface** (`/cashier`) - Fast barcode & QR code camera scanner for awarding points and redeeming vouchers
+- **Customer Digital Pass** (`/pass/[token]`, `/store/[slug]`) - Real-time mobile loyalty card & counter QR enrollment
+- **Next.js 16 App Router** - React Server Components, streaming, and full App Router layout system
+- **Full Internationalization (i18n)** - English (`en`), French (`fr`), Arabic (`ar` with RTL support)
+- **Production SEO & Rich Snippets** - Dynamic OpenGraph images, Twitter cards, Schema.org JSON-LD, `sitemap.xml`, and `robots.txt`
+- **Tailwind CSS & shadcn/ui** - Sleek dark/light theme with accessible Radix UI primitives
 
 ## 📁 Project Structure
 
