@@ -22,6 +22,7 @@ import { useI18n } from "@/lib/i18n"
 import { LanguageSwitcher } from "@/components/common/language-switcher"
 import { useAuthStore } from "@/store/auth-store"
 import { getRoleRedirectUrl } from "@/lib/navigation"
+import { getStoredAccessToken, getStoredRefreshToken } from "@/lib/api-client"
 
 function LoginForm() {
   const searchParams = useSearchParams()
@@ -42,7 +43,11 @@ function LoginForm() {
 
   useEffect(() => {
     if (hasHydrated && isAuthenticated && profile) {
-      window.location.href = getRoleRedirectUrl(profile.role)
+      const accessToken = getStoredAccessToken()
+      const refreshToken = getStoredRefreshToken()
+      window.location.href = getRoleRedirectUrl(profile.role, {
+        tokens: { accessToken, refreshToken },
+      })
     }
   }, [hasHydrated, isAuthenticated, profile])
 
@@ -115,7 +120,11 @@ function LoginForm() {
     try {
       await signIn({ email, password })
       const role = useAuthStore.getState().profile?.role
-      window.location.href = getRoleRedirectUrl(role)
+      const accessToken = getStoredAccessToken()
+      const refreshToken = getStoredRefreshToken()
+      window.location.href = getRoleRedirectUrl(role, {
+        tokens: { accessToken, refreshToken },
+      })
     } catch (error: unknown) {
       if (error instanceof ApiError) {
         setError(error.message)

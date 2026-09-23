@@ -9,6 +9,8 @@ import { useToast } from '@/hooks/use-toast'
 import { useI18n } from '@/lib/i18n'
 import { Loader2 } from 'lucide-react'
 import { ResponsiveCustomerView } from '@/features/customer/components/responsive-customer-view'
+import { getRoleRedirectUrl } from '@/lib/navigation'
+import { getStoredAccessToken, getStoredRefreshToken } from '@/lib/api-client'
 
 export default function CustomerOverviewPage() {
   const router = useRouter()
@@ -33,12 +35,20 @@ export default function CustomerOverviewPage() {
   const [isJoiningSlug, setIsJoiningSlug] = useState(false)
   const [joinSlugError, setJoinSlugError] = useState<string | null>(null)
 
-  // Auth redirect protection
+  // Auth redirect protection & role gate
   useEffect(() => {
-    if (hasHydrated && !isAuthenticated) {
-      router.push('/auth/login')
+    if (hasHydrated) {
+      if (!isAuthenticated) {
+        router.push('/auth/login')
+      } else if (profile?.role && profile.role !== 'CUSTOMER') {
+        const accessToken = getStoredAccessToken()
+        const refreshToken = getStoredRefreshToken()
+        window.location.href = getRoleRedirectUrl(profile.role, {
+          tokens: { accessToken, refreshToken },
+        })
+      }
     }
-  }, [hasHydrated, isAuthenticated, router])
+  }, [hasHydrated, isAuthenticated, profile?.role, router])
 
   // Overview data fetching & pending referral join
   useEffect(() => {

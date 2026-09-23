@@ -28,6 +28,8 @@ import { useMerchantStore } from '@/store/merchant-store'
 import { LanguageSwitcher } from '@/components/common/language-switcher'
 import { MobileHeader } from '@/components/mobile/mobile-header'
 import { MerchantBottomNav } from '@/components/mobile/merchant-bottom-nav'
+import { getRoleRedirectUrl } from '@/lib/navigation'
+import { getStoredAccessToken, getStoredRefreshToken } from '@/lib/api-client'
 
 /**
  * Merchant Dashboard Layout
@@ -60,8 +62,11 @@ export default function DashboardLayout({
             if (!isAuthenticated) {
                 router.push('/auth/login')
             } else if (profile && profile.role !== 'MERCHANT' && profile.role !== 'SUPER_ADMIN') {
-                // If not merchant or super admin, redirect to role-specific overview
-                router.push('/overview')
+                const accessToken = getStoredAccessToken()
+                const refreshToken = getStoredRefreshToken()
+                window.location.href = getRoleRedirectUrl(profile.role, {
+                    tokens: { accessToken, refreshToken },
+                })
             } else if (isAuthenticated) {
                 fetchStores()
             }

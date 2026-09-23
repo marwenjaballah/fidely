@@ -8,6 +8,7 @@ import { useAuthStore } from "@/store/auth-store"
 import { ApiError } from "@/features/auth/services/auth-service"
 import { strings } from "@/lib/strings"
 import { getRoleRedirectUrl } from "@/lib/navigation"
+import { setStoredTokens } from "@/lib/api-client"
 
 type CallbackState = "processing" | "success" | "error"
 
@@ -27,14 +28,31 @@ function CallbackContent() {
   useEffect(() => {
     if (typeof window === "undefined" || processedRef.current) return
 
-    // Check both query params and hash fragments (Supabase may use either)
+    // 1. Cross-subdomain SSO handoff
+    const isSso = searchParams.get("sso") === "1"
+    const ssoAccessToken = searchParams.get("access_token")
+    const ssoRefreshToken = searchParams.get("refresh_token")
+
+    if (isSso && ssoAccessToken) {
+      processedRef.current = true
+      setStoredTokens(ssoAccessToken, ssoRefreshToken || undefined)
+      useAuthStore.getState().revalidateSession().then(() => {
+        setState("success")
+        window.location.replace('/')
+      }).catch((err) => {
+        console.error("SSO handoff error:", err)
+        window.location.replace('/')
+      })
+      return
+    }
+
+    // 2. OAuth Callback (Google / Supabase)
     const hashParams = new URLSearchParams(window.location.hash.replace(/^#/, ""))
     const code = searchParams.get("code") || hashParams.get("code")
     const stateParam = searchParams.get("state") || hashParams.get("state")
     const error = searchParams.get("error") || hashParams.get("error")
     const errorDescription = searchParams.get("error_description") || hashParams.get("error_description")
     
-    // Also check for access_token in hash (Supabase might pass tokens directly)
     const accessToken = hashParams.get("access_token")
     const refreshToken = hashParams.get("refresh_token")
 
@@ -45,8 +63,6 @@ function CallbackContent() {
       return
     }
 
-    // If we have tokens directly in hash, we can use them (but this shouldn't happen with our backend flow)
-    // For now, we require the code to exchange on backend
     if (!code && !accessToken) {
       setErrorMessage(strings.auth_oauth_missing_code)
       setState("error")
@@ -59,10 +75,8 @@ function CallbackContent() {
     const processCallback = async () => {
       try {
         if (code) {
-          // Use code to exchange for session via backend
           await handlersRef.current.handleGoogleCallback(code, stateParam || undefined)
         } else if (accessToken) {
-          // If tokens are passed directly, validate them via backend
           await handlersRef.current.handleGoogleTokens(accessToken, refreshToken || undefined)
         } else {
           setErrorMessage(strings.auth_oauth_missing_code)
@@ -74,8 +88,15 @@ function CallbackContent() {
 
         const timeout = setTimeout(() => {
           const userRole = useAuthStore.getState().profile?.role
-          window.location.href = getRoleRedirectUrl(userRole)
-        }, 1500)
+          const currentAccessToken = localStorage.getItem("fidely_access_token")
+          const currentRefreshToken = localStorage.getItem("fidely_refresh_token")
+          window.location.href = getRoleRedirectUrl(userRole, {
+            tokens: {
+              accessToken: currentAccessToken,
+              refreshToken: currentRefreshToken,
+            },
+          })
+        }, 1000)
 
         return () => clearTimeout(timeout)
       } catch (err: unknown) {
@@ -144,4 +165,3 @@ export default function CallbackPage() {
     </Suspense>
   )
 }
-

@@ -19,7 +19,7 @@ export default function proxy(request: NextRequest) {
 
   // 2. Extract Subdomain
   // Production hosts: pos.fidely.app, app.fidely.app, business.fidely.app, admin.fidely.app, fidely.app
-  // Local development: pos.localhost:3001, app.localhost:3001, etc.
+  // Local development: pos.localhost, app.localhost, business.localhost, admin.localhost (with optional ports)
   let subdomain = ''
   const hostWithoutPort = hostname.split(':')[0].toLowerCase()
 
@@ -29,31 +29,39 @@ export default function proxy(request: NextRequest) {
     subdomain = hostWithoutPort.replace('.localhost', '')
   }
 
-  // 3. Subdomain Rewrites
+  // 3. Subdomain Rewrites & Clean URL Enforcement
   if (subdomain === 'pos') {
-    if (!pathname.startsWith('/cashier')) {
-      return NextResponse.rewrite(
-        new URL(`/cashier${pathname === '/' ? '' : pathname}`, request.url)
-      )
+    if (pathname.startsWith('/cashier')) {
+      const cleanPath = pathname.replace(/^\/cashier/, '') || '/'
+      return NextResponse.redirect(new URL(cleanPath, request.url))
     }
+    return NextResponse.rewrite(
+      new URL(`/cashier${pathname === '/' ? '' : pathname}`, request.url)
+    )
   } else if (subdomain === 'app') {
-    if (!pathname.startsWith('/customer')) {
-      return NextResponse.rewrite(
-        new URL(`/customer${pathname === '/' ? '/overview' : pathname}`, request.url)
-      )
+    if (pathname.startsWith('/customer')) {
+      const cleanPath = pathname.replace(/^\/customer/, '') || '/overview'
+      return NextResponse.redirect(new URL(cleanPath, request.url))
     }
+    return NextResponse.rewrite(
+      new URL(`/customer${pathname === '/' ? '/overview' : pathname}`, request.url)
+    )
   } else if (subdomain === 'business') {
-    if (!pathname.startsWith('/merchant')) {
-      return NextResponse.rewrite(
-        new URL(`/merchant${pathname === '/' ? '/overview' : pathname}`, request.url)
-      )
+    if (pathname.startsWith('/merchant')) {
+      const cleanPath = pathname.replace(/^\/merchant/, '') || '/overview'
+      return NextResponse.redirect(new URL(cleanPath, request.url))
     }
+    return NextResponse.rewrite(
+      new URL(`/merchant${pathname === '/' ? '/overview' : pathname}`, request.url)
+    )
   } else if (subdomain === 'admin') {
-    if (!pathname.startsWith('/admin')) {
-      return NextResponse.rewrite(
-        new URL(`/admin${pathname === '/' ? '/overview' : pathname}`, request.url)
-      )
+    if (pathname.startsWith('/admin')) {
+      const cleanPath = pathname.replace(/^\/admin/, '') || '/overview'
+      return NextResponse.redirect(new URL(cleanPath, request.url))
     }
+    return NextResponse.rewrite(
+      new URL(`/admin${pathname === '/' ? '/overview' : pathname}`, request.url)
+    )
   }
 
   return NextResponse.next()

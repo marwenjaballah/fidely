@@ -38,6 +38,8 @@ import {
 import { Separator } from '@/components/ui/separator'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
+import { getRoleRedirectUrl } from '@/lib/navigation'
+import { getStoredAccessToken, getStoredRefreshToken } from '@/lib/api-client'
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   const { isAuthenticated, hasHydrated, profile } = useAuth()
@@ -55,13 +57,11 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       if (!isAuthenticated) {
         router.push('/auth/login')
       } else if (profile && profile.role !== 'SUPER_ADMIN') {
-        router.push(
-          profile.role === 'MERCHANT'
-            ? '/merchant/overview'
-            : profile.role === 'CASHIER'
-            ? '/cashier'
-            : '/customer/overview'
-        )
+        const accessToken = getStoredAccessToken()
+        const refreshToken = getStoredRefreshToken()
+        window.location.href = getRoleRedirectUrl(profile.role, {
+          tokens: { accessToken, refreshToken },
+        })
       }
     }
   }, [isAuthenticated, hasHydrated, profile, router, isMounted])

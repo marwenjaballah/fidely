@@ -11,6 +11,8 @@ import { AUTH_ROUTES } from '@/features/auth/services/auth-service';
 import { useI18n } from '@/lib/i18n';
 import { ResponsiveCashierView } from '@/features/cashier/components/responsive-cashier-view';
 import { CashierStoreInfo, RecentTx } from '@/features/cashier/components/mobile/cashier-mobile-view';
+import { getRoleRedirectUrl } from '@/lib/navigation';
+import { getStoredAccessToken, getStoredRefreshToken } from '@/lib/api-client';
 
 const baseURL = (process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3000').replace(/\/$/, '');
 let apiClient: ReturnType<typeof createCookieAuthApiClient> | null = null;
@@ -95,7 +97,11 @@ export default function CashierPage() {
       if (!isAuthenticated) {
         router.push('/auth/login');
       } else if (profile?.role === 'CUSTOMER') {
-        router.push('/customer/overview');
+        const accessToken = getStoredAccessToken();
+        const refreshToken = getStoredRefreshToken();
+        window.location.href = getRoleRedirectUrl('CUSTOMER', {
+          tokens: { accessToken, refreshToken },
+        });
       } else {
         fetchStores();
       }

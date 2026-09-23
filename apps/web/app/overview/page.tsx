@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import { useAuth } from '@/features/auth/hooks/use-auth'
 import { Loader2 } from 'lucide-react'
 import { getRoleRedirectUrl } from '@/lib/navigation'
+import { getStoredAccessToken, getStoredRefreshToken } from '@/lib/api-client'
 
 export default function OverviewRouterPage() {
   const router = useRouter()
@@ -18,7 +19,11 @@ export default function OverviewRouterPage() {
       return
     }
 
-    const redirectUrl = getRoleRedirectUrl(profile.role)
+    const accessToken = getStoredAccessToken()
+    const refreshToken = getStoredRefreshToken()
+    const redirectUrl = getRoleRedirectUrl(profile.role, {
+      tokens: { accessToken, refreshToken },
+    })
     window.location.href = redirectUrl
   }, [hasHydrated, isAuthenticated, profile, router])
 
