@@ -901,6 +901,9 @@ export const en = {
   language_selection: 'Language',
   explore_scan_stand_btn: 'Scan Counter Stand QR',
   explore_search_placeholder: 'Search stores by name or slug...',
+  explore_available_stores: 'Available Stores',
+  explore_all_joined: 'You have joined all available partner stores!',
+  explore_no_results: 'No available stores found matching "{query}".',
   profile_saved_title: 'Profile Updated',
   profile_saved_desc: 'Your profile has been saved successfully.',
 } as const

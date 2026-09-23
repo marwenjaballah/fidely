@@ -903,6 +903,9 @@ export const fr: Record<TranslationKey, string> = {
   language_selection: 'Langue',
   explore_scan_stand_btn: 'Scanner le QR Présentoir',
   explore_search_placeholder: 'Rechercher un commerce par nom...',
+  explore_available_stores: 'Commerces Disponibles',
+  explore_all_joined: 'Vous avez rejoint tous les commerces partenaires disponibles !',
+  explore_no_results: 'Aucun commerce disponible ne correspond à "{query}".',
   profile_saved_title: 'Profil mis à jour',
   profile_saved_desc: 'Votre profil a été enregistré avec succès.',
 }

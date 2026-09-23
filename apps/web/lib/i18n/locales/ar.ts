@@ -903,6 +903,9 @@ export const ar: Record<TranslationKey, string> = {
   language_selection: 'اللغة',
   explore_scan_stand_btn: 'مسح حامل QR على الكاونتر',
   explore_search_placeholder: 'ابحث عن المتاجر بالاسم...',
+  explore_available_stores: 'المتاجر المتاحة',
+  explore_all_joined: 'لقد انضممت إلى جميع المتاجر المتاحة!',
+  explore_no_results: 'لم يتم العثور على متاجر متاحة تطابق "{query}".',
   profile_saved_title: 'تم تحديث الملف الشخصي',
   profile_saved_desc: 'تم حفظ بيانات ملفك الشخصي بنجاح.',
 }

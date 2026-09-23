@@ -90,6 +90,12 @@ export function CustomerDesktopView({
   const [phoneInput, setPhoneInput] = useState(userPhone || '')
   const [isSavingPhone, setIsSavingPhone] = useState(false)
 
+  const joinedStoreIds = React.useMemo(() => new Set(memberships.map((m) => m.storeId)), [memberships])
+  const unjoinedStores = React.useMemo(
+    () => availableStores.filter((s) => !joinedStoreIds.has(s.id)),
+    [availableStores, joinedStoreIds]
+  )
+
   const handlePhoneSave = async () => {
     if (!phoneInput.trim() || !onSavePhone) return
     setIsSavingPhone(true)
@@ -185,13 +191,13 @@ export function CustomerDesktopView({
               </Button>
             </div>
 
-            {availableStores.length > 0 && (
+            {unjoinedStores.length > 0 && (
               <div className="space-y-3 pt-2 text-start">
                 <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                  {t('store_switcher_my_stores') || 'Available Stores'}
+                  {t('explore_available_stores') || 'Available Stores'}
                 </p>
                 <div className="grid gap-2">
-                  {availableStores.map((store) => (
+                  {unjoinedStores.map((store) => (
                     <div
                       key={store.id}
                       className="flex items-center justify-between p-3.5 rounded-2xl border border-border/60 bg-muted/30 hover:bg-muted/60 transition"
@@ -573,7 +579,7 @@ export function CustomerDesktopView({
                   <QrCode className="h-3.5 w-3.5" /> Scan Stand
                 </TabsTrigger>
                 <TabsTrigger value="explore" className="text-xs gap-1">
-                  <Coffee className="h-3.5 w-3.5" /> Stores ({availableStores.length})
+                  <Coffee className="h-3.5 w-3.5" /> {t('explore_available_stores') || 'Stores'} ({unjoinedStores.length})
                 </TabsTrigger>
                 <TabsTrigger value="code" className="text-xs gap-1">
                   <Globe className="h-3.5 w-3.5" /> Code / Link
@@ -597,37 +603,45 @@ export function CustomerDesktopView({
 
               <TabsContent value="explore" className="space-y-3">
                 <div className="space-y-2.5 max-h-[320px] overflow-y-auto pe-1">
-                  {availableStores.map((store) => (
-                    <div
-                      key={store.id}
-                      className="flex items-center justify-between p-3.5 rounded-2xl border border-border/60 bg-muted/30 hover:bg-muted/50 transition"
-                    >
-                      <div className="flex items-center gap-3">
-                        <div className="h-10 w-10 rounded-xl bg-primary/15 text-primary flex items-center justify-center font-bold overflow-hidden border border-border/40 shrink-0">
-                          {store.logoUrl ? (
-                            <img src={store.logoUrl} alt={store.name} className="h-full w-full object-cover" />
-                          ) : (
-                            <Coffee className="h-5 w-5" />
-                          )}
-                        </div>
-                        <div className="text-start">
-                          <p className="font-semibold text-sm">{store.name}</p>
-                          <p className="text-xs text-muted-foreground font-mono">fidely.app/{store.slug}</p>
-                        </div>
-                      </div>
-                      <Button
-                        size="sm"
-                        onClick={() => onJoinStore(store.id)}
-                        disabled={joiningStoreId === store.id}
-                      >
-                        {joiningStoreId === store.id ? (
-                          <Loader2 className="h-4 w-4 animate-spin" />
-                        ) : (
-                          t('customer_add_coffee_card') || 'Add'
-                        )}
-                      </Button>
+                  {unjoinedStores.length === 0 ? (
+                    <div className="p-8 text-center bg-muted/20 rounded-2xl border text-xs text-muted-foreground space-y-1">
+                      <p className="font-semibold text-foreground">
+                        {t('explore_all_joined') || 'You have joined all available partner stores!'}
+                      </p>
                     </div>
-                  ))}
+                  ) : (
+                    unjoinedStores.map((store) => (
+                      <div
+                        key={store.id}
+                        className="flex items-center justify-between p-3.5 rounded-2xl border border-border/60 bg-muted/30 hover:bg-muted/50 transition"
+                      >
+                        <div className="flex items-center gap-3">
+                          <div className="h-10 w-10 rounded-xl bg-primary/15 text-primary flex items-center justify-center font-bold overflow-hidden border border-border/40 shrink-0">
+                            {store.logoUrl ? (
+                              <img src={store.logoUrl} alt={store.name} className="h-full w-full object-cover" />
+                            ) : (
+                              <Coffee className="h-5 w-5" />
+                            )}
+                          </div>
+                          <div className="text-start">
+                            <p className="font-semibold text-sm">{store.name}</p>
+                            <p className="text-xs text-muted-foreground font-mono">fidely.app/{store.slug}</p>
+                          </div>
+                        </div>
+                        <Button
+                          size="sm"
+                          onClick={() => onJoinStore(store.id)}
+                          disabled={joiningStoreId === store.id}
+                        >
+                          {joiningStoreId === store.id ? (
+                            <Loader2 className="h-4 w-4 animate-spin" />
+                          ) : (
+                            t('customer_add_coffee_card') || 'Add'
+                          )}
+                        </Button>
+                      </div>
+                    ))
+                  )}
                 </div>
               </TabsContent>
 
