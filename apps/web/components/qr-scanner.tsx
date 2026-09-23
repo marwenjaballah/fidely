@@ -14,14 +14,8 @@ import {
   RefreshCw,
   Zap,
   ZapOff,
-  Upload,
-  Keyboard,
-  FileImage,
-  ArrowRight,
-  ShieldAlert,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import { useI18n } from '@/lib/i18n';
 
 interface QRScannerProps {
@@ -39,7 +33,6 @@ export function QRScanner({
   const reactId = useId().replace(/[:]/g, '_');
   const containerId = customContainerId || `qr-reader-${reactId}`;
 
-  const [activeTab, setActiveTab] = useState<'camera' | 'file' | 'manual'>('camera');
   const [hasPermission, setHasPermission] = useState<boolean | null>(null);
   const [permissionError, setPermissionError] = useState<string | null>(null);
   const [cameras, setCameras] = useState<CameraDevice[]>([]);
@@ -47,14 +40,6 @@ export function QRScanner({
   const [isTorchOn, setIsTorchOn] = useState(false);
   const [supportsTorch, setSupportsTorch] = useState(false);
   const [isInitializing, setIsInitializing] = useState(true);
-
-  // File scan state
-  const [isScanningFile, setIsScanningFile] = useState(false);
-  const [fileError, setFileError] = useState<string | null>(null);
-  const fileInputRef = useRef<HTMLInputElement | null>(null);
-
-  // Manual input state
-  const [manualCode, setManualCode] = useState('');
 
   const scannerRef = useRef<Html5Qrcode | null>(null);
   const isMountedRef = useRef(true);
@@ -238,12 +223,6 @@ export function QRScanner({
           }
         } catch {}
 
-        // ─── DO NOT call Html5Qrcode.getCameras() here ───────────────────────
-        // Doing so after start() triggers a second getUserMedia on mobile which
-        // kills the active stream (the exact "disappearing video" bug).
-        // Camera list was already populated in STEP 1 above.
-        // ─────────────────────────────────────────────────────────────────────
-
         setIsInitializing(false);
       } catch (err: any) {
         console.error('Failed to start camera QR scanner:', err);
@@ -265,30 +244,20 @@ export function QRScanner({
     [containerId, onScanSuccess, onScanError, safeStopScanner]
   );
 
-
-  // Initialize camera when activeTab is 'camera'
+  // Initialize camera on mount
   useEffect(() => {
     isMountedRef.current = true;
 
-    if (activeTab === 'camera') {
-      // Small timeout allows DOM container to reliably render
-      const timeoutId = setTimeout(() => {
-        startScanner();
-      }, 50);
-
-      return () => {
-        clearTimeout(timeoutId);
-        safeStopScanner();
-      };
-    } else {
-      safeStopScanner();
-    }
+    // Small timeout allows DOM container to reliably render
+    const timeoutId = setTimeout(() => {
+      startScanner();
+    }, 50);
 
     return () => {
-      isMountedRef.current = false;
+      clearTimeout(timeoutId);
       safeStopScanner();
     };
-  }, [activeTab, startScanner, safeStopScanner]);
+  }, [startScanner, safeStopScanner]);
 
   // Teardown scanner on full unmount
   useEffect(() => {
@@ -333,297 +302,108 @@ export function QRScanner({
     }
   };
 
-  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
-    setIsScanningFile(true);
-    setFileError(null);
-
-    try {
-      let fileScanner = scannerRef.current;
-      if (!fileScanner) {
-        fileScanner = new Html5Qrcode(containerId, {
-          formatsToSupport: [Html5QrcodeSupportedFormats.QR_CODE],
-          verbose: false,
-        });
-        scannerRef.current = fileScanner;
-      }
-
-      const decodedText = await fileScanner.scanFile(file, true);
-      if (decodedText) {
-        onScanSuccess(decodedText);
-      }
-    } catch (err: any) {
-      console.warn('File QR scan error:', err);
-      setFileError('No valid QR code found in this image. Please try another image or enter the code manually.');
-    } finally {
-      setIsScanningFile(false);
-      if (fileInputRef.current) {
-        fileInputRef.current.value = '';
-      }
-    }
-  };
-
-  const handleManualSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!manualCode.trim()) return;
-    onScanSuccess(manualCode.trim());
-  };
-
   return (
-    <div className="w-full max-w-md mx-auto space-y-3">
-      {/* Mode Switcher Tabs */}
-      <div className="grid grid-cols-3 gap-1 p-1 bg-muted/60 backdrop-blur-sm rounded-2xl border border-border/60 text-xs font-semibold">
-        <button
-          type="button"
-          onClick={() => {
-            setFileError(null);
-            setActiveTab('camera');
-          }}
-          className={`flex items-center justify-center gap-1.5 py-2 px-3 rounded-xl transition-all ${
-            activeTab === 'camera'
-              ? 'bg-background text-foreground shadow-sm font-bold'
-              : 'text-muted-foreground hover:text-foreground'
-          }`}
-        >
-          <Camera className="w-3.5 h-3.5 text-primary" />
-          <span>Camera</span>
-        </button>
+    <div className="w-full max-w-md mx-auto">
+      <div className="relative w-full aspect-square max-w-md mx-auto overflow-hidden rounded-3xl shadow-2xl bg-black border-2 border-border/80 group">
+        {/* Scanner HTML5 Container */}
+        {/* Note: do NOT use object-cover on mobile – it produces a black frame */}
+        {/* when the video dimensions aren't resolved at stream-start time.     */}
+        <div
+          id={containerId}
+          className="w-full h-full bg-black [&_video]:w-full [&_video]:h-full [&_video]:object-fill [&_#qr-shaded-region]:!hidden [&_#qr-shaded-region_*]:!hidden [&_canvas]:!opacity-0 [&_canvas]:!absolute [&_canvas]:!pointer-events-none [&_div]:!border-none"
+        />
 
-        <button
-          type="button"
-          onClick={() => {
-            safeStopScanner();
-            setFileError(null);
-            setActiveTab('file');
-          }}
-          className={`flex items-center justify-center gap-1.5 py-2 px-3 rounded-xl transition-all ${
-            activeTab === 'file'
-              ? 'bg-background text-foreground shadow-sm font-bold'
-              : 'text-muted-foreground hover:text-foreground'
-          }`}
-        >
-          <Upload className="w-3.5 h-3.5 text-indigo-400" />
-          <span>Upload</span>
-        </button>
+        {/* Reticle Overlay (Active when camera is running) */}
+        {!isInitializing && hasPermission && (
+          <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
+            <div className="relative w-[240px] h-[240px] sm:w-[260px] sm:h-[260px]">
+              {/* Reticle Corners */}
+              <div className="absolute top-0 left-0 w-8 h-8 border-t-4 border-l-4 border-indigo-500 rounded-tl-xl shadow-sm" />
+              <div className="absolute top-0 right-0 w-8 h-8 border-t-4 border-r-4 border-indigo-500 rounded-tr-xl shadow-sm" />
+              <div className="absolute bottom-0 left-0 w-8 h-8 border-b-4 border-l-4 border-indigo-500 rounded-bl-xl shadow-sm" />
+              <div className="absolute bottom-0 right-0 w-8 h-8 border-b-4 border-r-4 border-indigo-500 rounded-br-xl shadow-sm" />
 
-        <button
-          type="button"
-          onClick={() => {
-            safeStopScanner();
-            setActiveTab('manual');
-          }}
-          className={`flex items-center justify-center gap-1.5 py-2 px-3 rounded-xl transition-all ${
-            activeTab === 'manual'
-              ? 'bg-background text-foreground shadow-sm font-bold'
-              : 'text-muted-foreground hover:text-foreground'
-          }`}
-        >
-          <Keyboard className="w-3.5 h-3.5 text-amber-500" />
-          <span>Enter Code</span>
-        </button>
-      </div>
-
-      {/* Camera View Mode */}
-      <div className={`relative ${activeTab === 'camera' ? 'block' : 'hidden'}`}>
-        <div className="relative w-full aspect-square max-w-md mx-auto overflow-hidden rounded-3xl shadow-2xl bg-black border-2 border-border/80 group">
-          {/* Scanner HTML5 Container */}
-          {/* Note: do NOT use object-cover on mobile – it produces a black frame */}
-          {/* when the video dimensions aren't resolved at stream-start time.     */}
-          <div
-            id={containerId}
-            className="w-full h-full bg-black [&_video]:w-full [&_video]:h-full [&_video]:object-fill [&_#qr-shaded-region]:!hidden [&_#qr-shaded-region_*]:!hidden [&_canvas]:!opacity-0 [&_canvas]:!absolute [&_canvas]:!pointer-events-none [&_div]:!border-none"
-          />
-
-          {/* Reticle Overlay (Active when camera is running) */}
-          {!isInitializing && hasPermission && (
-            <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
-              <div className="relative w-[240px] h-[240px] sm:w-[260px] sm:h-[260px]">
-                {/* Reticle Corners */}
-                <div className="absolute top-0 left-0 w-8 h-8 border-t-4 border-l-4 border-indigo-500 rounded-tl-xl shadow-sm" />
-                <div className="absolute top-0 right-0 w-8 h-8 border-t-4 border-r-4 border-indigo-500 rounded-tr-xl shadow-sm" />
-                <div className="absolute bottom-0 left-0 w-8 h-8 border-b-4 border-l-4 border-indigo-500 rounded-bl-xl shadow-sm" />
-                <div className="absolute bottom-0 right-0 w-8 h-8 border-b-4 border-r-4 border-indigo-500 rounded-br-xl shadow-sm" />
-
-                {/* Sweeping Laser Line */}
-                <div className="absolute left-2 right-2 h-0.5 bg-gradient-to-r from-transparent via-indigo-400 to-transparent shadow-[0_0_12px_#6366f1] animate-pulse duration-1000 top-1/2 -translate-y-1/2" />
-              </div>
+              {/* Sweeping Laser Line */}
+              <div className="absolute left-2 right-2 h-0.5 bg-gradient-to-r from-transparent via-indigo-400 to-transparent shadow-[0_0_12px_#6366f1] animate-pulse duration-1000 top-1/2 -translate-y-1/2" />
             </div>
-          )}
+          </div>
+        )}
 
-          {/* Top Controls Overlay */}
-          {!isInitializing && hasPermission && (
-            <div className="absolute top-3 left-3 right-3 flex items-center justify-between pointer-events-auto z-10">
-              <div className="bg-black/60 backdrop-blur-md px-3 py-1.5 rounded-full border border-white/10 text-[11px] font-medium text-white/90 flex items-center gap-1.5">
-                <Camera className="w-3.5 h-3.5 text-primary" />
-                <span>{t('scanner_instruction')}</span>
-              </div>
-
-              <div className="flex items-center gap-1.5">
-                {supportsTorch && (
-                  <Button
-                    type="button"
-                    size="icon"
-                    variant="ghost"
-                    onClick={toggleTorch}
-                    className="w-8 h-8 rounded-full bg-black/60 backdrop-blur-md text-white border border-white/10 hover:bg-black/80"
-                    title={t('scanner_torch_toggle')}
-                  >
-                    {isTorchOn ? <Zap className="w-4 h-4 text-amber-400" /> : <ZapOff className="w-4 h-4 text-white/70" />}
-                  </Button>
-                )}
-
-                {cameras.length > 1 && (
-                  <Button
-                    type="button"
-                    size="icon"
-                    variant="ghost"
-                    onClick={handleSwitchCamera}
-                    className="w-8 h-8 rounded-full bg-black/60 backdrop-blur-md text-white border border-white/10 hover:bg-black/80"
-                    title={t('scanner_switch_camera')}
-                  >
-                    <SwitchCamera className="w-4 h-4 text-white" />
-                  </Button>
-                )}
-              </div>
+        {/* Top Controls Overlay */}
+        {!isInitializing && hasPermission && (
+          <div className="absolute top-3 left-3 right-3 flex items-center justify-between pointer-events-auto z-10">
+            <div className="bg-black/60 backdrop-blur-md px-3 py-1.5 rounded-full border border-white/10 text-[11px] font-medium text-white/90 flex items-center gap-1.5">
+              <Camera className="w-3.5 h-3.5 text-primary" />
+              <span>{t('scanner_instruction')}</span>
             </div>
-          )}
 
-          {/* Initializing Spinner Overlay */}
-          {isInitializing && (
-            <div className="absolute inset-0 bg-black/80 backdrop-blur-sm flex flex-col items-center justify-center text-white space-y-2.5 z-20">
-              <RefreshCw className="w-8 h-8 animate-spin text-primary" />
-              <div className="text-center space-y-0.5">
-                <p className="text-xs font-bold text-white">{t('loading')}</p>
-                <p className="text-[11px] text-white/60">{t('scanner_camera_permission')}</p>
-              </div>
-            </div>
-          )}
-
-          {/* Camera Error / Permission Blocked Overlay */}
-          {!isInitializing && hasPermission === false && (
-            <div className="absolute inset-0 bg-background/95 backdrop-blur-md flex flex-col items-center justify-center p-6 text-center space-y-3.5 z-20">
-              <div className="w-12 h-12 rounded-2xl bg-destructive/10 text-destructive flex items-center justify-center border border-destructive/20">
-                <AlertCircle className="w-6 h-6" />
-              </div>
-              <div className="space-y-1">
-                <h4 className="text-sm font-bold text-foreground">{t('scanner_camera_error')}</h4>
-                <p className="text-xs text-muted-foreground max-w-xs leading-relaxed">
-                  {permissionError || t('scanner_camera_permission')}
-                </p>
-              </div>
-              <div className="flex flex-wrap items-center justify-center gap-2 pt-1">
+            <div className="flex items-center gap-1.5">
+              {supportsTorch && (
                 <Button
                   type="button"
-                  size="sm"
-                  onClick={() => startScanner()}
-                  className="text-xs font-semibold rounded-xl gap-1.5"
+                  size="icon"
+                  variant="ghost"
+                  onClick={toggleTorch}
+                  className="w-8 h-8 rounded-full bg-black/60 backdrop-blur-md text-white border border-white/10 hover:bg-black/80"
+                  title={t('scanner_torch_toggle')}
                 >
-                  <RefreshCw className="w-3.5 h-3.5" />
-                  {t('refresh')}
+                  {isTorchOn ? <Zap className="w-4 h-4 text-amber-400" /> : <ZapOff className="w-4 h-4 text-white/70" />}
                 </Button>
+              )}
+
+              {cameras.length > 1 && (
                 <Button
                   type="button"
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setActiveTab('file')}
-                  className="text-xs font-semibold rounded-xl gap-1.5"
+                  size="icon"
+                  variant="ghost"
+                  onClick={handleSwitchCamera}
+                  className="w-8 h-8 rounded-full bg-black/60 backdrop-blur-md text-white border border-white/10 hover:bg-black/80"
+                  title={t('scanner_switch_camera')}
                 >
-                  <FileImage className="w-3.5 h-3.5" />
-                  Upload Image
+                  <SwitchCamera className="w-4 h-4 text-white" />
                 </Button>
-              </div>
+              )}
             </div>
-          )}
-        </div>
+          </div>
+        )}
+
+        {/* Initializing Spinner Overlay */}
+        {isInitializing && (
+          <div className="absolute inset-0 bg-black/80 backdrop-blur-sm flex flex-col items-center justify-center text-white space-y-2.5 z-20">
+            <RefreshCw className="w-8 h-8 animate-spin text-primary" />
+            <div className="text-center space-y-0.5">
+              <p className="text-xs font-bold text-white">{t('loading')}</p>
+              <p className="text-[11px] text-white/60">{t('scanner_camera_permission')}</p>
+            </div>
+          </div>
+        )}
+
+        {/* Camera Error / Permission Blocked Overlay */}
+        {!isInitializing && hasPermission === false && (
+          <div className="absolute inset-0 bg-background/95 backdrop-blur-md flex flex-col items-center justify-center p-6 text-center space-y-3.5 z-20">
+            <div className="w-12 h-12 rounded-2xl bg-destructive/10 text-destructive flex items-center justify-center border border-destructive/20">
+              <AlertCircle className="w-6 h-6" />
+            </div>
+            <div className="space-y-1">
+              <h4 className="text-sm font-bold text-foreground">{t('scanner_camera_error')}</h4>
+              <p className="text-xs text-muted-foreground max-w-xs leading-relaxed">
+                {permissionError || t('scanner_camera_permission')}
+              </p>
+            </div>
+            <div className="flex flex-wrap items-center justify-center gap-2 pt-1">
+              <Button
+                type="button"
+                size="sm"
+                onClick={() => startScanner()}
+                className="text-xs font-semibold rounded-xl gap-1.5"
+              >
+                <RefreshCw className="w-3.5 h-3.5" />
+                {t('refresh')}
+              </Button>
+            </div>
+          </div>
+        )}
       </div>
-
-      {/* File Upload Mode */}
-      {activeTab === 'file' && (
-        <div className="bg-card border-2 border-dashed border-border/80 hover:border-primary/50 transition-colors rounded-3xl p-6 text-center space-y-4">
-          <input
-            ref={fileInputRef}
-            type="file"
-            accept="image/*"
-            className="hidden"
-            id="qr-file-input"
-            onChange={handleFileChange}
-          />
-          <div className="w-14 h-14 rounded-2xl bg-primary/10 text-primary flex items-center justify-center mx-auto border border-primary/20">
-            {isScanningFile ? (
-              <RefreshCw className="w-7 h-7 animate-spin" />
-            ) : (
-              <Upload className="w-7 h-7" />
-            )}
-          </div>
-
-          <div className="space-y-1">
-            <h4 className="text-sm font-bold text-foreground">
-              {isScanningFile ? 'Analyzing image...' : 'Upload QR Code Screenshot'}
-            </h4>
-            <p className="text-xs text-muted-foreground max-w-xs mx-auto">
-              Select or drop a photo or screenshot containing the customer pass QR code.
-            </p>
-          </div>
-
-          {fileError && (
-            <div className="p-3 bg-destructive/10 border border-destructive/20 rounded-xl text-xs text-destructive font-medium">
-              {fileError}
-            </div>
-          )}
-
-          <Button
-            type="button"
-            variant="default"
-            disabled={isScanningFile}
-            onClick={() => fileInputRef.current?.click()}
-            className="w-full h-11 rounded-xl text-xs font-bold gap-2"
-          >
-            <FileImage className="w-4 h-4" />
-            {isScanningFile ? 'Scanning Image...' : 'Choose Image File'}
-          </Button>
-        </div>
-      )}
-
-      {/* Manual Input Mode */}
-      {activeTab === 'manual' && (
-        <form
-          onSubmit={handleManualSubmit}
-          className="bg-card border border-border/80 rounded-3xl p-5 space-y-4 shadow-sm"
-        >
-          <div className="space-y-1">
-            <h4 className="text-sm font-bold text-foreground flex items-center gap-1.5">
-              <Keyboard className="w-4 h-4 text-primary" />
-              Manual Pass / Code Entry
-            </h4>
-            <p className="text-xs text-muted-foreground">
-              Paste or type the customer QR token or store link.
-            </p>
-          </div>
-
-          <div className="space-y-2">
-            <Input
-              type="text"
-              placeholder="e.g. user_123:store_456 or store-slug"
-              value={manualCode}
-              onChange={(e) => setManualCode(e.target.value)}
-              className="h-12 rounded-xl text-xs font-mono"
-              autoFocus
-              required
-            />
-          </div>
-
-          <Button
-            type="submit"
-            disabled={!manualCode.trim()}
-            className="w-full h-11 rounded-xl text-xs font-bold gap-2"
-          >
-            <span>Apply Code</span>
-            <ArrowRight className="w-3.5 h-3.5" />
-          </Button>
-        </form>
-      )}
     </div>
   );
 }
