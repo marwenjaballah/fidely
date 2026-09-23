@@ -1,7 +1,7 @@
 import { create } from 'zustand'
 import { persist, createJSONStorage } from 'zustand/middleware'
 import axios from 'axios'
-import type { Profile } from '@/lib/db-types'
+import type { Profile, UserRole } from '@/lib/db-types'
 import {
   createCookieAuthApiClient,
   refreshAuthSession,
@@ -26,6 +26,12 @@ import { USER_ROUTES } from '@/features/users/services/user-service'
 
 export type { Profile }
 
+export interface GoogleOAuthOptions {
+  role?: UserRole
+  intent?: 'login' | 'signup'
+  referredByStoreId?: string
+}
+
 export interface AuthState {
   profile: Profile | null
   hasHydrated: boolean
@@ -42,8 +48,8 @@ export interface AuthState {
   requestPasswordReset: (email: string) => Promise<void>
   resetPassword: (payload: { newPassword: string; accessToken: string }) => Promise<void>
   getGoogleOAuthUrl: (redirectTo?: string) => Promise<string>
-  handleGoogleCallback: (code: string, state?: string) => Promise<void>
-  handleGoogleTokens: (accessToken: string, refreshToken?: string) => Promise<void>
+  handleGoogleCallback: (code: string, state?: string, options?: GoogleOAuthOptions) => Promise<void>
+  handleGoogleTokens: (accessToken: string, refreshToken?: string, options?: GoogleOAuthOptions) => Promise<void>
 }
 
 const STORAGE_KEY = process.env.NEXT_PUBLIC_APP_AUTH_STORAGE_KEY ?? 'app.auth'
@@ -252,14 +258,24 @@ export const useAuthStore = create<AuthState>()(
           }
         },
 
-        handleGoogleCallback: async (code: string, state?: string) => {
+        handleGoogleCallback: async (
+          code: string,
+          state?: string,
+          options?: GoogleOAuthOptions,
+        ) => {
           setAuthLoading(true)
           clearAuthError()
           try {
             const client = getAuthClient()
             const { data } = await client.post<{ data: LoginResponseData }>(
               AUTH_ROUTES.googleOAuthCallback,
-              { code, state },
+              {
+                code,
+                state,
+                role: options?.role ? mapFrontendRoleToBackend(options.role) : undefined,
+                intent: options?.intent,
+                referredByStoreId: options?.referredByStoreId,
+              },
             )
             const session = data.data
             setStoredTokens(session.accessToken, session.refreshToken)
@@ -281,14 +297,24 @@ export const useAuthStore = create<AuthState>()(
           }
         },
 
-        handleGoogleTokens: async (accessToken: string, refreshToken?: string) => {
+        handleGoogleTokens: async (
+          accessToken: string,
+          refreshToken?: string,
+          options?: GoogleOAuthOptions,
+        ) => {
           setAuthLoading(true)
           clearAuthError()
           try {
             const client = getAuthClient()
             const { data } = await client.post<{ data: LoginResponseData }>(
               AUTH_ROUTES.googleOAuthTokens,
-              { accessToken, refreshToken },
+              {
+                accessToken,
+                refreshToken,
+                role: options?.role ? mapFrontendRoleToBackend(options.role) : undefined,
+                intent: options?.intent,
+                referredByStoreId: options?.referredByStoreId,
+              },
             )
             const session = data.data
             setStoredTokens(session.accessToken || accessToken, session.refreshToken || refreshToken)

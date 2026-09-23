@@ -1,6 +1,7 @@
 import type { PrismaClient, UserRole as PrismaUserRole } from '@repo/database';
 import type { User as SupabaseUser } from '@supabase/supabase-js';
 import type { Database } from '@repo/types';
+import { HTTPException } from 'hono/http-exception';
 import type { AuthenticationServiceOptions } from '../types/services.js';
 import { getSupabaseServiceClient } from '../lib/supabase.js';
 import { env } from '../config/env.js';
@@ -53,11 +54,17 @@ type GoogleOAuthPayload = {
 type GoogleOAuthCallbackPayload = {
   code: string;
   state?: string;
+  role?: DbUserRole;
+  intent?: 'login' | 'signup';
+  referredByStoreId?: string;
 };
 
 type GoogleOAuthTokenPayload = {
   accessToken: string;
   refreshToken?: string;
+  role?: DbUserRole;
+  intent?: 'login' | 'signup';
+  referredByStoreId?: string;
 };
 
 type SupabaseClientType = AuthenticationServiceOptions['supabase'];
@@ -241,14 +248,19 @@ export class AuthenticationService {
 
     // IMPORTANT: DB role is the source of truth.
     // Supabase `user_metadata.role` can be missing/stale at login time, and must not downgrade users.
-    const existingUser = await this.prisma.user.findUnique({
-      where: { id: user.id },
-      select: { role: true, referredByStoreId: true },
+    const existingUser = await this.prisma.user.findFirst({
+      where: {
+        OR: [
+          { id: user.id },
+          { email: email.toLowerCase() },
+        ],
+      },
+      select: { id: true, role: true, referredByStoreId: true },
     });
 
     const role: DbUserRole =
-      overrides?.role ??
       (existingUser?.role as DbUserRole | undefined) ??
+      overrides?.role ??
       (user.user_metadata?.role as DbUserRole | undefined) ??
       'CUSTOMER';
 
@@ -286,10 +298,11 @@ export class AuthenticationService {
       }
     }
 
+    const targetUserId = existingUser?.id ?? user.id;
     let dbUser: any;
     try {
       dbUser = await this.prisma.user.upsert({
-        where: { id: user.id },
+        where: { id: targetUserId },
         update: {
           email,
           role: prismaRole,
@@ -311,7 +324,7 @@ export class AuthenticationService {
         err.message
       );
       dbUser = await this.prisma.user.upsert({
-        where: { id: user.id },
+        where: { id: targetUserId },
         update: {
           email,
           role: prismaRole,
@@ -425,13 +438,51 @@ export class AuthenticationService {
       ...googleProfile,
     });
 
-    const role: DbUserRole = (googleProfile?.role as DbUserRole | undefined) ?? 'CUSTOMER';
+    const userEmail = user.email?.toLowerCase();
+
+    // Check if user already exists in database
+    const existingUser = await this.prisma.user.findFirst({
+      where: {
+        OR: [
+          { id: user.id },
+          ...(userEmail ? [{ email: userEmail }] : []),
+        ],
+      },
+      select: { id: true, email: true, role: true },
+    });
+
+    // If intent is login, but no user account exists in Fidely:
+    if (payload.intent === 'login' && !existingUser) {
+      // Clean up newly created Supabase auth user so no unlinked ghost user remains
+      await serviceClient.auth.admin.deleteUser(user.id).catch(() => {});
+
+      const err = new HTTPException(404, { message: 'ACCOUNT_NOT_FOUND' });
+      (err as any).data = {
+        email: user.email,
+        fullName: googleProfile?.full_name || googleProfile?.name || '',
+      };
+      throw err;
+    }
+
+    const role: DbUserRole =
+      (existingUser?.role as DbUserRole | undefined) ??
+      payload.role ??
+      (googleProfile?.role as DbUserRole | undefined) ??
+      'CUSTOMER';
 
     // Upsert user in database
     const syncedUser = await this.upsertUserFromSupabase(user, {
       ...profileMetadata,
       role,
+      referredByStoreId: payload.referredByStoreId,
     });
+
+    // If new user, sync role to Supabase user_metadata as well
+    if (!existingUser && role) {
+      await serviceClient.auth.admin.updateUserById(user.id, {
+        user_metadata: { ...googleProfile, role },
+      }).catch(() => {});
+    }
 
     return {
       accessToken: session.access_token,
@@ -465,13 +516,51 @@ export class AuthenticationService {
       ...googleProfile,
     });
 
-    const role: DbUserRole = (googleProfile?.role as DbUserRole | undefined) ?? 'CUSTOMER';
+    const userEmail = user.email?.toLowerCase();
+
+    // Check if user already exists in database
+    const existingUser = await this.prisma.user.findFirst({
+      where: {
+        OR: [
+          { id: user.id },
+          ...(userEmail ? [{ email: userEmail }] : []),
+        ],
+      },
+      select: { id: true, email: true, role: true },
+    });
+
+    // If intent is login, but no user account exists in Fidely:
+    if (payload.intent === 'login' && !existingUser) {
+      // Clean up newly created Supabase auth user so no unlinked ghost user remains
+      await serviceClient.auth.admin.deleteUser(user.id).catch(() => {});
+
+      const err = new HTTPException(404, { message: 'ACCOUNT_NOT_FOUND' });
+      (err as any).data = {
+        email: user.email,
+        fullName: googleProfile?.full_name || googleProfile?.name || '',
+      };
+      throw err;
+    }
+
+    const role: DbUserRole =
+      (existingUser?.role as DbUserRole | undefined) ??
+      payload.role ??
+      (googleProfile?.role as DbUserRole | undefined) ??
+      'CUSTOMER';
 
     // Upsert user in database
     const syncedUser = await this.upsertUserFromSupabase(user, {
       ...profileMetadata,
       role,
+      referredByStoreId: payload.referredByStoreId,
     });
+
+    // If new user, sync role to Supabase user_metadata as well
+    if (!existingUser && role) {
+      await serviceClient.auth.admin.updateUserById(user.id, {
+        user_metadata: { ...googleProfile, role },
+      }).catch(() => {});
+    }
 
     // Get session info - we'll use the provided tokens
     // Calculate expires_in (default to 3600 seconds / 1 hour)

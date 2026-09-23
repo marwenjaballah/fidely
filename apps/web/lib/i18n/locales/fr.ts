@@ -161,6 +161,9 @@ export const fr: Record<TranslationKey, string> = {
   auth_google_loading: 'Connexion en cours...',
   auth_generic_error: 'Une erreur s\'est produite. Veuillez réessayer plus tard.',
   auth_back_to_login: 'Retour à la connexion',
+  auth_notice_no_account_title: 'Aucun compte trouvé',
+  auth_notice_no_account_desc: 'Aucun compte Fidely n\'est associé à cet e-mail Google. Veuillez choisir si vous souhaitez créer un compte Commerçant ou Client pour continuer.',
+  auth_notice_no_account_desc_email: 'Aucun compte Fidely n\'est associé à {email}. Veuillez choisir votre type de compte ci-dessous pour continuer.',
 
   // Auth: 2-Step Sign Up Flow
   auth_signup_title: 'Créer un nouveau compte',

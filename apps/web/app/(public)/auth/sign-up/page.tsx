@@ -25,6 +25,7 @@ import {
   Gift,
   Printer,
   Zap,
+  AlertCircle,
 } from "lucide-react"
 import type { UserRole } from "@/lib/db-types"
 import { ApiError } from "@/features/auth/services/auth-service"
@@ -32,6 +33,7 @@ import { FidelyLogo } from "@/components/common/fidely-logo"
 import { useAuth } from "@/features/auth/hooks/use-auth"
 import { useI18n } from "@/lib/i18n"
 import { LanguageSwitcher } from "@/components/common/language-switcher"
+import { saveOAuthContext } from "@/features/auth/utils/oauth-context"
 import {
   validateEmail,
   validatePassword,
@@ -50,19 +52,27 @@ function SignUpForm() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const searchRef = searchParams.get('ref') || searchParams.get('joinStore') || undefined
+  const notice = searchParams.get('notice')
+  const paramEmail = searchParams.get('email') || ""
+  const paramName = searchParams.get('name') || ""
   const { t, isRtl } = useI18n()
 
   const [referralStoreId, setReferralStoreId] = useState<string | undefined>(searchRef)
   const [storeInfo, setStoreInfo] = useState<{ name: string; logoUrl?: string | null; welcomePoints?: number } | null>(null)
   
   // Step 1 = Role Selection, Step 2 = Details & Credentials Form
-  const [step, setStep] = useState<1 | 2>(() => (searchRef ? 2 : 1))
+  const [step, setStep] = useState<1 | 2>(() => (searchRef && notice !== 'no_account' ? 2 : 1))
   const [role, setRole] = useState<UserRole>(() => (searchRef ? 'CUSTOMER' : 'CUSTOMER'))
 
-  const [fullName, setFullName] = useState("")
-  const [email, setEmail] = useState("")
+  const [fullName, setFullName] = useState(paramName)
+  const [email, setEmail] = useState(paramEmail)
   const [password, setPassword] = useState("")
   const [repeatPassword, setRepeatPassword] = useState("")
+
+  useEffect(() => {
+    if (paramEmail && !email) setEmail(paramEmail)
+    if (paramName && !fullName) setFullName(paramName)
+  }, [paramEmail, paramName])
 
   const [showPassword, setShowPassword] = useState(false)
   const [showConfirmPassword, setShowConfirmPassword] = useState(false)
@@ -229,6 +239,11 @@ function SignUpForm() {
     setIsGoogleLoading(true)
     setError(null)
     try {
+      saveOAuthContext({
+        intent: 'signup',
+        role,
+        referredByStoreId: referralStoreId,
+      })
       const callbackUrl = `${window.location.origin}/auth/callback`
       await signInWithGoogle(callbackUrl)
     } catch (err: unknown) {
@@ -282,6 +297,21 @@ function SignUpForm() {
                     {t('auth_signup_step1_desc')}
                   </p>
                 </div>
+
+                {/* Account Not Found Notice Banner */}
+                {notice === 'no_account' && (
+                  <div className="bg-amber-500/10 border border-amber-500/25 rounded-2xl p-4 sm:p-5 flex items-start gap-3.5 text-amber-600 dark:text-amber-400 animate-in fade-in slide-in-from-top-2 duration-300">
+                    <AlertCircle className="w-5 h-5 shrink-0 mt-0.5 text-amber-500" />
+                    <div className="space-y-1 text-left">
+                      <h3 className="text-sm font-bold text-foreground">
+                        {t('auth_notice_no_account_title')}
+                      </h3>
+                      <p className="text-xs text-muted-foreground leading-relaxed">
+                        {email ? t('auth_notice_no_account_desc_email', { email }) : t('auth_notice_no_account_desc')}
+                      </p>
+                    </div>
+                  </div>
+                )}
 
                 {/* Role Cards Grid */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">

@@ -401,6 +401,15 @@ export const googleOAuthUrlSchema = createRoute({
   },
 });
 
+const oauthAccountNotFoundErrorSchema = z.object({
+  error: z.object({
+    message: z.string(),
+    code: z.string().optional(),
+    email: z.string().optional(),
+    fullName: z.string().optional(),
+  }),
+});
+
 export const googleOAuthCallbackSchema = createRoute({
   method: "post",
   path: "/google/callback",
@@ -413,6 +422,9 @@ export const googleOAuthCallbackSchema = createRoute({
           schema: z.object({
             code: z.string().min(1),
             state: z.string().optional(),
+            role: z.enum(["CUSTOMER", "MERCHANT", "CASHIER"]).optional(),
+            intent: z.enum(["login", "signup"]).optional(),
+            referredByStoreId: z.string().optional(),
           }),
         },
       },
@@ -445,6 +457,14 @@ export const googleOAuthCallbackSchema = createRoute({
         },
       },
     },
+    404: {
+      description: "No account found for Google email",
+      content: {
+        "application/json": {
+          schema: oauthAccountNotFoundErrorSchema,
+        },
+      },
+    },
     500: {
       description: "Unexpected error",
       content: {
@@ -468,6 +488,9 @@ export const googleOAuthTokensSchema = createRoute({
           schema: z.object({
             accessToken: z.string().min(1),
             refreshToken: z.string().optional(),
+            role: z.enum(["CUSTOMER", "MERCHANT", "CASHIER"]).optional(),
+            intent: z.enum(["login", "signup"]).optional(),
+            referredByStoreId: z.string().optional(),
           }),
         },
       },
@@ -497,6 +520,14 @@ export const googleOAuthTokensSchema = createRoute({
       content: {
         "application/json": {
           schema: authErrorSchema,
+        },
+      },
+    },
+    404: {
+      description: "No account found for Google email",
+      content: {
+        "application/json": {
+          schema: oauthAccountNotFoundErrorSchema,
         },
       },
     },

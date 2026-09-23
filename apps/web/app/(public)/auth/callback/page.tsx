@@ -7,6 +7,7 @@ import { useAuth } from "@/features/auth/hooks/use-auth"
 import { useAuthStore } from "@/store/auth-store"
 import { ApiError } from "@/features/auth/services/auth-service"
 import { strings } from "@/lib/strings"
+import { getOAuthContext, clearOAuthContext } from "@/features/auth/utils/oauth-context"
 
 type CallbackState = "processing" | "success" | "error"
 
@@ -56,19 +57,33 @@ function CallbackContent() {
     processedRef.current = true
 
     const processCallback = async () => {
+      const oauthContext = getOAuthContext()
+      const role = (searchParams.get("role") as any) || oauthContext?.role
+      const intent = (searchParams.get("intent") as any) || oauthContext?.intent
+      const referredByStoreId = searchParams.get("ref") || oauthContext?.referredByStoreId
+
       try {
         if (code) {
           // Use code to exchange for session via backend
-          await handlersRef.current.handleGoogleCallback(code, stateParam || undefined)
+          await handlersRef.current.handleGoogleCallback(code, stateParam || undefined, {
+            role,
+            intent,
+            referredByStoreId,
+          })
         } else if (accessToken) {
           // If tokens are passed directly, validate them via backend
-          await handlersRef.current.handleGoogleTokens(accessToken, refreshToken || undefined)
+          await handlersRef.current.handleGoogleTokens(accessToken, refreshToken || undefined, {
+            role,
+            intent,
+            referredByStoreId,
+          })
         } else {
           setErrorMessage(strings.auth_oauth_missing_code)
           setState("error")
           return
         }
-        
+
+        clearOAuthContext()
         setState("success")
 
         const timeout = setTimeout(() => {
@@ -86,7 +101,21 @@ function CallbackContent() {
 
         return () => clearTimeout(timeout)
       } catch (err: unknown) {
+        clearOAuthContext()
         console.error("OAuth callback error:", err)
+
+        if (err instanceof ApiError && (err.status === 404 || err.message === 'ACCOUNT_NOT_FOUND')) {
+          const errorData = (err.data as any)?.error || (err.data as any) || {}
+          const email = errorData.email || ''
+          const fullName = errorData.fullName || ''
+          const params = new URLSearchParams()
+          params.set('notice', 'no_account')
+          if (email) params.set('email', email)
+          if (fullName) params.set('name', fullName)
+          handlersRef.current.router.replace(`/auth/sign-up?${params.toString()}`)
+          return
+        }
+
         if (err instanceof ApiError) {
           setErrorMessage(err.message)
         } else {

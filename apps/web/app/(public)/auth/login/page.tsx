@@ -21,6 +21,7 @@ import { FidelyLogo } from "@/components/common/fidely-logo"
 import { useI18n } from "@/lib/i18n"
 import { LanguageSwitcher } from "@/components/common/language-switcher"
 import { useAuthStore } from "@/store/auth-store"
+import { saveOAuthContext } from "@/features/auth/utils/oauth-context"
 
 function LoginForm() {
   const searchParams = useSearchParams()
@@ -276,6 +277,9 @@ function LoginForm() {
                 onClick={async () => {
                   setIsGoogleLoading(true)
                   try {
+                    saveOAuthContext({
+                      intent: 'login',
+                    })
                     const callbackUrl = `${window.location.origin}/auth/callback`
                     await signInWithGoogle(callbackUrl)
                   } catch (error) {

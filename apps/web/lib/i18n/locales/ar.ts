@@ -161,6 +161,9 @@ export const ar: Record<TranslationKey, string> = {
   auth_google_loading: 'جارٍ الاتصال...',
   auth_generic_error: 'حدث خطأ ما. يرجى المحاولة مرة أخرى لاحقاً.',
   auth_back_to_login: 'العودة لتسجيل الدخول',
+  auth_notice_no_account_title: 'لم يتم العثور على حساب',
+  auth_notice_no_account_desc: 'لا يوجد حساب Fidely مرتبط ببريد Google هذا. يرجى اختيار ما إذا كنت ترغب في الانضمام كتاجر أو كعميل للمتابعة.',
+  auth_notice_no_account_desc_email: 'لا يوجد حساب Fidely مرتبط بـ {email}. يرجى اختيار نوع حسابك أدناه للمتابعة.',
 
   // Auth: 2-Step Sign Up Flow
   auth_signup_title: 'إنشاء حساب جديد',

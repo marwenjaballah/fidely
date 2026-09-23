@@ -159,6 +159,9 @@ export const en = {
   auth_google_loading: 'Connecting...',
   auth_generic_error: 'Something went wrong. Please try again later.',
   auth_back_to_login: 'Back to login',
+  auth_notice_no_account_title: 'No account found',
+  auth_notice_no_account_desc: 'No Fidely account is associated with this Google email. Please select whether you want to join as a Merchant or Customer to continue.',
+  auth_notice_no_account_desc_email: 'No Fidely account is associated with {email}. Please choose your account type below to get started.',
 
   // Auth: 2-Step Sign Up Flow
   auth_signup_title: 'Create a new account',

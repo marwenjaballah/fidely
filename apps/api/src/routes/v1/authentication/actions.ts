@@ -260,14 +260,24 @@ handler.openapi(googleOAuthCallbackSchema, async (c) => {
   } catch (error) {
     logger.warn({ error, scope: "auth.google.callback" }, "Google OAuth callback failed");
     const normalized = normalizeError(error, 401);
-    const status: 400 | 401 | 500 =
-      normalized.status >= 500 ? 500 : normalized.status === 400 ? 400 : 401;
+    const status: 400 | 401 | 404 | 500 =
+      normalized.status >= 500
+        ? 500
+        : normalized.status === 404
+        ? 404
+        : normalized.status === 400
+        ? 400
+        : 401;
+
+    const errorData = (error as any)?.data;
 
     return c.json(
       {
         error: {
           message: normalized.message,
-          code: "AUTH_GOOGLE_CALLBACK_FAILED",
+          code: normalized.status === 404 ? "ACCOUNT_NOT_FOUND" : "AUTH_GOOGLE_CALLBACK_FAILED",
+          ...(errorData?.email ? { email: errorData.email } : {}),
+          ...(errorData?.fullName ? { fullName: errorData.fullName } : {}),
         },
       },
       status
@@ -286,14 +296,24 @@ handler.openapi(googleOAuthTokensSchema, async (c) => {
   } catch (error) {
     logger.warn({ error, scope: "auth.google.tokens" }, "Google OAuth token validation failed");
     const normalized = normalizeError(error, 401);
-    const status: 400 | 401 | 500 =
-      normalized.status >= 500 ? 500 : normalized.status === 400 ? 400 : 401;
+    const status: 400 | 401 | 404 | 500 =
+      normalized.status >= 500
+        ? 500
+        : normalized.status === 404
+        ? 404
+        : normalized.status === 400
+        ? 400
+        : 401;
+
+    const errorData = (error as any)?.data;
 
     return c.json(
       {
         error: {
           message: normalized.message,
-          code: "AUTH_GOOGLE_TOKENS_FAILED",
+          code: normalized.status === 404 ? "ACCOUNT_NOT_FOUND" : "AUTH_GOOGLE_TOKENS_FAILED",
+          ...(errorData?.email ? { email: errorData.email } : {}),
+          ...(errorData?.fullName ? { fullName: errorData.fullName } : {}),
         },
       },
       status
