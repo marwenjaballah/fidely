@@ -156,13 +156,18 @@ export default function CashierPage() {
 
         posAudio.playSuccess();
         posHaptics.pointsIssued();
+        const customerDisplayName = data.customerName || t('cashier_customer_label') || 'Customer';
         setFeedback({
           state: 'success',
           type: 'issue',
           title: t('cashier_tx_issue_title') || 'Points Awarded!',
-          message: `${t('pos_points_awarded_feedback', { points: data.pointsIssued, name: data.customerName || 'Customer' }) || `Awarded +${data.pointsIssued} points`}`,
+          message:
+            t('pos_points_awarded_feedback', {
+              points: data.pointsIssued,
+              name: customerDisplayName,
+            }) || `+${data.pointsIssued} points awarded to ${customerDisplayName}`,
           points: data.pointsIssued,
-          customerName: data.customerName || 'Customer',
+          customerName: customerDisplayName,
           newBalance: data.newBalance,
           storeName: data.storeName,
         });
@@ -183,12 +188,16 @@ export default function CashierPage() {
 
         posAudio.playSuccess();
         posHaptics.rewardClaimed();
+        const finalRewardName = rewardName || data.rewardName || 'Reward';
         setFeedback({
           state: 'success',
           type: 'redeem',
-          title: (t as any)('cashier_tx_redeem_title') || 'Reward Claimed!',
-          message: `${(t as any)('pos_reward_redeemed_feedback', { reward: rewardName || data.rewardName }) || `Redeemed ${data.rewardName}`}`,
-          rewardName: rewardName || data.rewardName,
+          title: t('cashier_tx_redeem_title') || 'Reward Claimed!',
+          message:
+            t('pos_voucher_redeemed_feedback', {
+              title: finalRewardName,
+            }) || `Reward "${finalRewardName}" successfully redeemed!`,
+          rewardName: finalRewardName,
           voucherCode: data.voucherCode,
           newBalance: data.newBalance,
           storeName: data.storeName,
@@ -203,8 +212,8 @@ export default function CashierPage() {
       posHaptics.error();
       setFeedback({
         state: 'error',
-        title: (t as any)('cashier_tx_failed_title') || 'Transaction Failed',
-        message: err.message || t('auth_generic_error') || 'Could not complete transaction',
+        title: t('cashier_tx_failed_title') || t('cashier_tx_declined') || 'Transaction Failed',
+        message: err.message || t('pos_transaction_error') || t('auth_generic_error') || 'Could not complete transaction',
       });
       return false;
     } finally {

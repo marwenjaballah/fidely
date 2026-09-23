@@ -764,6 +764,7 @@ export const fr: Record<TranslationKey, string> = {
   cashier_tx_completed: 'Transaction terminée avec succès !',
   cashier_tx_issue_title: 'Points Attribués !',
   cashier_tx_redeem_title: 'Récompense Validée !',
+  cashier_tx_failed_title: 'Échec de la Transaction',
   cashier_tx_declined: 'Transaction Refusée',
   cashier_claimed_perk: 'Avantage Validé',
   cashier_voucher_code: 'Code Coupon',

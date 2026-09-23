@@ -762,6 +762,7 @@ export const en = {
   cashier_tx_completed: 'Transaction Completed!',
   cashier_tx_issue_title: 'Points Awarded!',
   cashier_tx_redeem_title: 'Reward Redeemed!',
+  cashier_tx_failed_title: 'Transaction Failed',
   cashier_tx_declined: 'Transaction Declined',
   cashier_claimed_perk: 'Claimed Perk',
   cashier_voucher_code: 'Voucher Code',

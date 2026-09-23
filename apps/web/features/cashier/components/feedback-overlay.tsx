@@ -36,6 +36,33 @@ export function FeedbackOverlay({ data, onDismiss }: FeedbackOverlayProps) {
   const isSuccess = data.state === 'success';
   const totalDuration = isSuccess ? 3000 : 5000;
 
+  const customerDisplayName = data.customerName || t('cashier_customer_label') || 'Customer';
+
+  const headingTitle =
+    data.title ||
+    (isSuccess
+      ? data.type === 'issue'
+        ? t('cashier_tx_issue_title') || 'Points Awarded!'
+        : data.type === 'redeem'
+        ? t('cashier_tx_redeem_title') || 'Reward Claimed!'
+        : t('cashier_tx_completed') || 'Transaction Completed!'
+      : t('cashier_tx_failed_title') || t('cashier_tx_declined') || 'Transaction Declined');
+
+  const subtitleMessage =
+    data.message ||
+    (isSuccess
+      ? data.type === 'issue'
+        ? t('pos_points_awarded_feedback', {
+            points: data.points ?? 0,
+            name: customerDisplayName,
+          }) || `+${data.points ?? 0} points awarded to ${customerDisplayName}`
+        : data.type === 'redeem'
+        ? t('pos_voucher_redeemed_feedback', {
+            title: data.rewardName || 'Reward',
+          }) || `Reward "${data.rewardName || 'Reward'}" successfully redeemed!`
+        : t('pos_transaction_success') || 'Transaction Completed Successfully!'
+      : t('pos_transaction_error') || 'Failed to process transaction');
+
   useEffect(() => {
     if (data.state === 'idle') return;
 
@@ -126,11 +153,11 @@ export function FeedbackOverlay({ data, onDismiss }: FeedbackOverlayProps) {
           {/* Heading & Subtitle */}
           <div className="space-y-1">
             <h2 className="text-2xl font-black tracking-tight">
-              {data.title || (isSuccess ? t('cashier_tx_completed') : t('cashier_tx_declined'))}
+              {headingTitle}
             </h2>
-            {data.message && (
+            {subtitleMessage && (
               <p className="text-sm text-muted-foreground leading-relaxed max-w-sm">
-                {data.message}
+                {subtitleMessage}
               </p>
             )}
           </div>
@@ -138,10 +165,10 @@ export function FeedbackOverlay({ data, onDismiss }: FeedbackOverlayProps) {
           {/* Transaction Summary Card */}
           {isSuccess && (
             <div className="w-full bg-muted/60 border border-border/60 rounded-2xl p-4 space-y-3 text-start">
-              {data.customerName && (
+              {customerDisplayName && (
                 <div className="flex justify-between items-center text-xs pb-2 border-b border-border/40">
                   <span className="text-muted-foreground">{t('cashier_customer_label')}</span>
-                  <span className="font-semibold text-foreground">{data.customerName}</span>
+                  <span className="font-semibold text-foreground">{customerDisplayName}</span>
                 </div>
               )}
 

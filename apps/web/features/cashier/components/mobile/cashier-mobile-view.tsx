@@ -121,7 +121,7 @@ export function CashierMobileView({
     posHaptics.scan()
     setScannedCustomer({
       token: decodedToken.trim(),
-      name: 'Customer',
+      name: t('cashier_customer_label') || 'Customer',
     })
     // Fetch store rewards if not loaded
     if (activeStore?.id && rewards.length === 0) {

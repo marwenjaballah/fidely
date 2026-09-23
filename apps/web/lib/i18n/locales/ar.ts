@@ -764,6 +764,7 @@ export const ar: Record<TranslationKey, string> = {
   cashier_tx_completed: 'اكتملت المعاملة بنجاح!',
   cashier_tx_issue_title: 'تم منح النقاط!',
   cashier_tx_redeem_title: 'تم استبدال المكافأة!',
+  cashier_tx_failed_title: 'فشلت المعاملة',
   cashier_tx_declined: 'تم رفض المعاملة',
   cashier_claimed_perk: 'المكافأة المستردة',
   cashier_voucher_code: 'رمز القسيمة',
