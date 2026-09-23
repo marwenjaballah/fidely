@@ -5,7 +5,7 @@ export class CustomerService {
   constructor(private prisma: PrismaClient) {}
 
   /**
-   * Retrieves all memberships, points, rewards, active vouchers, and transactions for a customer.
+   * Retrieves all memberships, points, rewards, claimed vouchers, and transactions for a customer.
    */
   async getCustomerOverview(customerId: string) {
     // 1. Ensure user is enrolled in their referral store if they have one

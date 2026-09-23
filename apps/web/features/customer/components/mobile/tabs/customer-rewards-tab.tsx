@@ -25,7 +25,7 @@ interface CustomerRewardsTabProps {
 
 export function CustomerRewardsTab({ activeMembership }: CustomerRewardsTabProps) {
   const { t, dir } = useI18n()
-  const [subTab, setSubTab] = useState<'rewards' | 'history'>('rewards')
+  const [subTab, setSubTab] = useState<'rewards' | 'claimed' | 'history'>('rewards')
 
   if (!activeMembership) {
     return (
@@ -51,8 +51,8 @@ export function CustomerRewardsTab({ activeMembership }: CustomerRewardsTabProps
 
   return (
     <div className="space-y-4 text-start" dir={dir}>
-      {/* Sub-navigation Switcher */}
-      <div className="flex items-center p-1 rounded-2xl bg-muted/60 border border-border/50">
+      {/* Sub-navigation Switcher: Perks | Claimed | History */}
+      <div className="flex items-center p-1 rounded-2xl bg-muted/60 border border-border/50 gap-1">
         <button
           type="button"
           onClick={() => {
@@ -66,10 +66,31 @@ export function CustomerRewardsTab({ activeMembership }: CustomerRewardsTabProps
           }`}
         >
           <Gift className="h-3.5 w-3.5" />
-          <span>{t('nav_perks') || 'Perks & Vouchers'}</span>
-          {unlockedRewards.length + vouchers.length > 0 && (
+          <span>{t('customer_bottom_nav_perks') || 'Perks'}</span>
+          {unlockedRewards.length > 0 && (
+            <Badge variant="secondary" className="text-[10px] px-1.5 py-0 h-4 font-mono font-bold bg-emerald-500/15 text-emerald-600 dark:text-emerald-400">
+              {unlockedRewards.length}
+            </Badge>
+          )}
+        </button>
+
+        <button
+          type="button"
+          onClick={() => {
+            posHaptics.tap()
+            setSubTab('claimed')
+          }}
+          className={`flex-1 py-2 text-xs font-bold rounded-xl transition-all flex items-center justify-center gap-1.5 ${
+            subTab === 'claimed'
+              ? 'bg-background text-foreground shadow-xs'
+              : 'text-muted-foreground hover:text-foreground'
+          }`}
+        >
+          <CheckCircle2 className="h-3.5 w-3.5" />
+          <span>{t('customer_tab_claimed') || 'Claimed'}</span>
+          {vouchers.length > 0 && (
             <Badge variant="secondary" className="text-[10px] px-1.5 py-0 h-4 font-mono font-bold">
-              {unlockedRewards.length + vouchers.length}
+              {vouchers.length}
             </Badge>
           )}
         </button>
@@ -91,50 +112,9 @@ export function CustomerRewardsTab({ activeMembership }: CustomerRewardsTabProps
         </button>
       </div>
 
-      {/* ── SUB-TAB 1: PERKS & VOUCHERS ── */}
+      {/* ── SUB-TAB 1: PERKS (Available Catalog) ── */}
       {subTab === 'rewards' && (
         <div className="space-y-4">
-          {/* Active Claimed Vouchers Section (if any) */}
-          {vouchers.length > 0 && (
-            <div className="rounded-3xl border border-primary/30 bg-primary/5 p-4 space-y-3">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <Ticket className="w-4 h-4 text-primary" />
-                  <h4 className="text-xs font-bold uppercase tracking-wider text-primary">
-                    Active Claim Vouchers ({vouchers.length})
-                  </h4>
-                </div>
-              </div>
-
-              <div className="space-y-2">
-                {vouchers.map((voucher) => (
-                  <div
-                    key={voucher.id}
-                    className="p-3 rounded-2xl border border-primary/20 bg-background flex items-center justify-between shadow-2xs"
-                  >
-                    <div className="space-y-1 min-w-0">
-                      <p className="font-bold text-xs text-foreground truncate">{voucher.rewardName}</p>
-                      <div className="flex items-center gap-2">
-                        <code className="text-xs bg-muted px-2 py-0.5 rounded font-mono font-bold text-foreground">
-                          {voucher.code}
-                        </code>
-                        <span className="text-[10px] text-muted-foreground">
-                          {voucher.pointsCost} {t('pts')}
-                        </span>
-                      </div>
-                    </div>
-                    <Badge
-                      variant={voucher.status === 'used' ? 'secondary' : 'default'}
-                      className="text-[10px] font-bold shrink-0"
-                    >
-                      {voucher.status === 'used' ? 'CLAIMED' : 'READY AT COUNTER'}
-                    </Badge>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-
           {/* Unlocked & Ready Rewards */}
           {unlockedRewards.length > 0 && (
             <div className="space-y-2">
@@ -224,10 +204,88 @@ export function CustomerRewardsTab({ activeMembership }: CustomerRewardsTabProps
               </div>
             )}
           </div>
+
+          {/* Quick link to Claimed Rewards if customer has any */}
+          {vouchers.length > 0 && (
+            <button
+              type="button"
+              onClick={() => {
+                posHaptics.tap()
+                setSubTab('claimed')
+              }}
+              className="w-full p-3 rounded-2xl border border-border/70 bg-card hover:bg-muted/40 transition flex items-center justify-between shadow-2xs mt-2"
+            >
+              <div className="flex items-center gap-2.5">
+                <div className="h-8 w-8 rounded-xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center">
+                  <CheckCircle2 className="h-4 w-4" />
+                </div>
+                <div className="text-start">
+                  <p className="text-xs font-bold text-foreground">{t('rewards_claimed_title') || 'Claimed Rewards'}</p>
+                  <p className="text-[10px] text-muted-foreground">
+                    {vouchers.length} {vouchers.length === 1 ? 'reward' : 'rewards'} already redeemed at counter
+                  </p>
+                </div>
+              </div>
+              <ArrowUpRight className="h-4 w-4 text-muted-foreground" />
+            </button>
+          )}
         </div>
       )}
 
-      {/* ── SUB-TAB 2: POINTS HISTORY ── */}
+      {/* ── SUB-TAB 2: CLAIMED REWARDS (Already Fulfilled at Counter) ── */}
+      {subTab === 'claimed' && (
+        <div className="rounded-3xl border border-border/70 bg-card p-4 shadow-xs space-y-3">
+          <div className="flex items-center gap-2">
+            <CheckCircle2 className="w-4 h-4 text-emerald-500" />
+            <h3 className="font-bold text-xs uppercase tracking-wider text-foreground">
+              {t('rewards_claimed_title') || 'Claimed Rewards'} ({vouchers.length})
+            </h3>
+          </div>
+          <p className="text-xs text-muted-foreground">
+            {t('rewards_claimed_desc') || 'Rewards already redeemed and handed to you at the counter.'}
+          </p>
+
+          {vouchers.length === 0 ? (
+            <div className="py-12 text-center text-xs text-muted-foreground space-y-2">
+              <Gift className="h-8 w-8 text-muted-foreground/30 mx-auto" />
+              <p>{t('rewards_no_claimed') || 'No rewards claimed yet.'}</p>
+            </div>
+          ) : (
+            <div className="space-y-2">
+              {vouchers.map((voucher) => (
+                <div
+                  key={voucher.id}
+                  className="p-3.5 rounded-2xl border border-border/60 bg-muted/20 flex items-center justify-between gap-3 shadow-2xs"
+                >
+                  <div className="space-y-1 min-w-0">
+                    <p className="font-bold text-xs text-foreground truncate">{voucher.rewardName}</p>
+                    <div className="flex items-center gap-2 text-[10px] text-muted-foreground flex-wrap">
+                      <span className="font-mono text-emerald-600 dark:text-emerald-400 font-bold">
+                        {voucher.pointsCost} {t('pts')}
+                      </span>
+                      <span>•</span>
+                      <span>{format(new Date(voucher.usedAt || voucher.issuedAt), 'MMM d, h:mm a')}</span>
+                      <span>•</span>
+                      <code className="bg-muted px-1.5 py-0.5 rounded font-mono text-[10px] text-foreground font-bold">
+                        {voucher.code}
+                      </code>
+                    </div>
+                  </div>
+                  <Badge
+                    variant="secondary"
+                    className="text-[10px] font-bold bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 shrink-0 gap-1 px-2 py-0.5"
+                  >
+                    <CheckCircle2 className="w-3 h-3" />
+                    {t('rewards_status_claimed') || 'CLAIMED'}
+                  </Badge>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* ── SUB-TAB 3: POINTS HISTORY ── */}
       {subTab === 'history' && (
         <div className="rounded-3xl border border-border/70 bg-card p-4 shadow-sm space-y-3">
           <div className="flex items-center gap-2">

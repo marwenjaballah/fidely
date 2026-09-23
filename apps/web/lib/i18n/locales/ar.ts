@@ -626,9 +626,15 @@ export const ar: Record<TranslationKey, string> = {
   rewards_need_more: 'تحتاج إلى {points} نقطة إضافية',
   rewards_claim_title: 'تأكيد استبدال المكافأة',
   rewards_claim_desc: 'هل أنت متأكد من استبدال "{title}" مقابل {points} نقطة؟',
-  rewards_claim_success: 'تم الحصول على قسيمة المكافأة!',
-  rewards_voucher_instruction: 'أظهر رمز QR هذا أو الكود للكاشير عند الدفع.',
-  rewards_voucher_code: 'رمز القسيمة',
+  rewards_claim_success: 'تم استلام المكافأة بنجاح!',
+  rewards_voucher_instruction: 'تم استلام هذه المكافآت بالفعل وتسليمها لك عند الكاشير.',
+  rewards_voucher_code: 'رمز المكافأة',
+  customer_tab_claimed: 'المستلمة',
+  rewards_claimed_title: 'المكافآت المستلمة',
+  rewards_claimed_desc: 'المكافآت التي تم استبدالها وتسليمها لك بالفعل عند الكاشير.',
+  rewards_no_claimed: 'لا توجد مكافآت مستلمة بعد. أظهر بطاقتك عند الكاشير للاستفادة من المكافآت!',
+  rewards_status_claimed: 'تم الاستلام',
+  rewards_view_claimed: 'عرض المكافآت المستلمة',
   rewards_expires_in: 'ينتهي خلال {time}',
 
   // Settings & Profile (Merchant Settings)

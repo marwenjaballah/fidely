@@ -365,8 +365,8 @@ export function CustomerDesktopView({
                       <TabsTrigger value="rewards" className="rounded-xl text-xs gap-1">
                         <Gift className="h-3.5 w-3.5" /> {t('customer_bottom_nav_perks') || 'Perks'}
                       </TabsTrigger>
-                      <TabsTrigger value="vouchers" className="rounded-xl text-xs gap-1">
-                        <Ticket className="h-3.5 w-3.5" /> {t('customer_tab_rewards') || 'Vouchers'} ({activeMembership.vouchers.length})
+                      <TabsTrigger value="claimed" className="rounded-xl text-xs gap-1">
+                        <CheckCircle2 className="h-3.5 w-3.5" /> {t('customer_tab_claimed') || 'Claimed'} ({activeMembership.vouchers.length})
                       </TabsTrigger>
                       <TabsTrigger value="history" className="rounded-xl text-xs gap-1">
                         <History className="h-3.5 w-3.5" /> {t('customer_history_title') || 'History'}
@@ -428,19 +428,22 @@ export function CustomerDesktopView({
                       </div>
                     </TabsContent>
 
-                    {/* Vouchers Tab */}
-                    <TabsContent value="vouchers" className="mt-4 space-y-3">
+                    {/* Claimed Rewards Tab */}
+                    <TabsContent value="claimed" className="mt-4 space-y-3">
                       <div className="rounded-2xl border border-border/70 bg-card p-4 shadow-sm text-start">
-                        <h3 className="font-bold text-sm mb-1">{t('rewards_voucher_code') || 'Active Vouchers'}</h3>
+                        <div className="flex items-center gap-2 mb-1">
+                          <CheckCircle2 className="w-4 h-4 text-emerald-500" />
+                          <h3 className="font-bold text-sm">{t('rewards_claimed_title') || 'Claimed Rewards'}</h3>
+                        </div>
                         <p className="text-xs text-muted-foreground mb-4">
-                          {t('rewards_voucher_instruction') || 'Show these codes to the cashier at checkout.'}
+                          {t('rewards_claimed_desc') || 'Rewards already redeemed and handed to you at the counter.'}
                         </p>
 
                         {activeMembership.vouchers.length === 0 ? (
                           <div className="p-8 text-center space-y-2">
-                            <Ticket className="h-8 w-8 text-muted-foreground/40 mx-auto" />
+                            <Gift className="h-8 w-8 text-muted-foreground/40 mx-auto" />
                             <p className="text-xs text-muted-foreground">
-                              No active vouchers claimed yet.
+                              {t('rewards_no_claimed') || 'No rewards claimed yet.'}
                             </p>
                           </div>
                         ) : (
@@ -448,26 +451,31 @@ export function CustomerDesktopView({
                             {activeMembership.vouchers.map((voucher) => (
                               <div
                                 key={voucher.id}
-                                className="p-3.5 rounded-2xl border border-border/60 bg-muted/20 flex items-center justify-between gap-2"
+                                className="p-3.5 rounded-2xl border border-border/60 bg-muted/20 flex items-center justify-between gap-3 shadow-2xs"
                               >
-                                <div className="space-y-1 text-start">
+                                <div className="space-y-1 text-start min-w-0">
                                   <div className="flex items-center gap-2">
-                                    <p className="font-semibold text-sm">{voucher.rewardName}</p>
+                                    <p className="font-semibold text-sm text-foreground truncate">{voucher.rewardName}</p>
                                     <span className="text-[11px] text-muted-foreground font-mono">
                                       ({voucher.pointsCost} {t('pts')})
                                     </span>
                                   </div>
-                                  <div className="flex items-center gap-2">
-                                    <code className="text-xs bg-muted px-2 py-0.5 rounded font-mono font-bold text-foreground">
+                                  <div className="flex items-center gap-2 text-xs text-muted-foreground font-mono flex-wrap">
+                                    <span className="text-[11px] text-muted-foreground">
+                                      {format(new Date(voucher.usedAt || voucher.issuedAt), 'MMM d, yyyy • h:mm a')}
+                                    </span>
+                                    <span>•</span>
+                                    <code className="text-xs bg-muted px-1.5 py-0.5 rounded font-mono font-bold text-foreground">
                                       {voucher.code}
                                     </code>
                                   </div>
                                 </div>
                                 <Badge
-                                  variant={voucher.status === 'used' ? 'secondary' : 'default'}
-                                  className="text-[11px] font-semibold"
+                                  variant="secondary"
+                                  className="text-[11px] font-bold bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 shrink-0 gap-1 px-2.5 py-1"
                                 >
-                                  {voucher.status === 'used' ? 'CLAIMED' : 'ACTIVE'}
+                                  <CheckCircle2 className="w-3.5 h-3.5" />
+                                  {t('rewards_status_claimed') || 'CLAIMED'}
                                 </Badge>
                               </div>
                             ))}

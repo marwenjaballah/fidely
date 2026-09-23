@@ -626,9 +626,15 @@ export const fr: Record<TranslationKey, string> = {
   rewards_need_more: 'Il vous manque {points} points',
   rewards_claim_title: 'Confirmer l\'échange de la récompense',
   rewards_claim_desc: 'Êtes-vous sûr de vouloir échanger "{title}" contre {points} points ?',
-  rewards_claim_success: 'Bon de Récompense Obtenu !',
-  rewards_voucher_instruction: 'Présentez ce QR code ou code bon au caissier lors de votre passage en caisse.',
-  rewards_voucher_code: 'Code du Bon',
+  rewards_claim_success: 'Récompense Récupérée !',
+  rewards_voucher_instruction: 'Récompenses déjà récupérées et remises au comptoir.',
+  rewards_voucher_code: 'Code de Référence',
+  customer_tab_claimed: 'Récupérées',
+  rewards_claimed_title: 'Récompenses Récupérées',
+  rewards_claimed_desc: 'Récompenses déjà validées et remises lors de votre passage en caisse.',
+  rewards_no_claimed: 'Aucune récompense récupérée pour le moment. Présentez votre pass en caisse pour en profiter !',
+  rewards_status_claimed: 'RÉCUPÉRÉ',
+  rewards_view_claimed: 'Voir les récompenses récupérées',
   rewards_expires_in: 'Expire dans {time}',
 
   // Settings & Profile (Merchant Settings)

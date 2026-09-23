@@ -49,7 +49,7 @@ export function CustomerMobileView({
   const unlockedRewardsCount = activeMembership?.rewards
     ? activeMembership.rewards.filter(
         (r) => r.active && r.pointsCost <= (activeMembership.pointsBalance || 0)
-      ).length + (activeMembership.vouchers?.length || 0)
+      ).length
     : 0
 
   return (

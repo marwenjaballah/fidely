@@ -625,8 +625,14 @@ export const en = {
   rewards_claim_title: 'Confirm Reward Redemption',
   rewards_claim_desc: 'Are you sure you want to redeem "{title}" for {points} points?',
   rewards_claim_success: 'Reward Voucher Claimed!',
-  rewards_voucher_instruction: 'Show this voucher QR or code to the cashier during checkout.',
-  rewards_voucher_code: 'Voucher Code',
+  rewards_voucher_instruction: 'Rewards already redeemed and handed to you at the counter.',
+  rewards_voucher_code: 'Claimed Code',
+  customer_tab_claimed: 'Claimed',
+  rewards_claimed_title: 'Claimed Rewards',
+  rewards_claimed_desc: 'Rewards already redeemed and handed to you at the counter.',
+  rewards_no_claimed: 'No rewards claimed yet. Show your pass at checkout to redeem perks!',
+  rewards_status_claimed: 'CLAIMED',
+  rewards_view_claimed: 'View Claimed Rewards',
   rewards_expires_in: 'Expires in {time}',
 
   // Settings & Profile (Merchant Settings)
