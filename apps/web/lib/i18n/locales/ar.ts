@@ -73,6 +73,9 @@ export const ar: Record<TranslationKey, string> = {
   nav_super_admin_panel: 'لوحة الإدارة الرئيسية',
   nav_cashier_terminal: 'محطة الكاشير',
   nav_merchant_dashboard: 'لوحة تحكم المتجر',
+  nav_switch_workspace: 'التبديل السريع',
+  nav_pos_register: 'نقطة البيع (POS)',
+  nav_customer_passes: 'بطاقاتي كزبون',
 
   // Footer & Legal
   footer_privacy_policy: 'سياسة الخصوصية',

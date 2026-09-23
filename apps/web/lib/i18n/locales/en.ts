@@ -71,6 +71,9 @@ export const en = {
   nav_super_admin_panel: 'Super Admin Panel',
   nav_cashier_terminal: 'Cashier Terminal',
   nav_merchant_dashboard: 'Merchant Dashboard',
+  nav_switch_workspace: 'Quick Switch',
+  nav_pos_register: 'POS Register',
+  nav_customer_passes: 'Customer Passes',
 
   // Footer & Legal
   footer_privacy_policy: 'Privacy Policy',

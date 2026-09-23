@@ -21,7 +21,7 @@ import { useRouter, usePathname } from 'next/navigation'
 import { useEffect, useState, useMemo } from 'react'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
-import { Settings } from 'lucide-react'
+import { Settings, QrCode } from 'lucide-react'
 import { ThemeToggleButton } from '@/components/common/theme-toggle-button'
 import { StoreSwitcher } from '@/components/common/store-switcher'
 import { useMerchantStore } from '@/store/merchant-store'
@@ -168,6 +168,16 @@ export default function DashboardLayout({
                         storeName={activeStore?.name}
                         storeColor={activeStore?.primaryColor}
                         logoUrl={activeStore?.logoUrl}
+                        rightElement={
+                            <Link
+                                href="/cashier"
+                                className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-primary/10 text-primary hover:bg-primary/20 border border-primary/25 text-xs font-bold transition-all active:scale-95 shadow-2xs"
+                                title="Open POS Register"
+                            >
+                                <QrCode className="h-3.5 w-3.5" />
+                                <span>POS</span>
+                            </Link>
+                        }
                     />
 
                     {/* Desktop Header with Breadcrumbs & Controls (md+) */}

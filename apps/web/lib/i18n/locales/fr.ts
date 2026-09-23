@@ -73,6 +73,9 @@ export const fr: Record<TranslationKey, string> = {
   nav_super_admin_panel: 'Panneau Super Admin',
   nav_cashier_terminal: 'Terminal Caissier',
   nav_merchant_dashboard: 'Tableau de bord Commerçant',
+  nav_switch_workspace: 'Changement Rapide',
+  nav_pos_register: 'Caisse POS',
+  nav_customer_passes: 'Cartes Client',
 
   // Footer & Legal
   footer_privacy_policy: 'Politique de confidentialité',

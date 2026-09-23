@@ -3,7 +3,7 @@
 import type * as React from "react"
 import Link from "next/link"
 import { usePathname, useRouter } from "next/navigation"
-import { ChevronDown, LogOut, ChevronsUpDown } from "lucide-react"
+import { ChevronDown, LogOut, ChevronsUpDown, QrCode, CreditCard } from "lucide-react"
 import { useAuth } from "@/features/auth/hooks/use-auth"
 import { useI18n } from "@/lib/i18n"
 import {
@@ -102,6 +102,78 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
             </SidebarGroup>
           </>
         )}
+
+        {/* Workspaces & Quick Switch Section */}
+        <SidebarSeparator className="my-3 bg-sidebar-border/30" />
+        <SidebarGroup>
+          <SidebarGroupLabel className="px-4 text-xs font-semibold text-sidebar-foreground/70 uppercase tracking-wider text-start flex items-center justify-between">
+            <span>{t('nav_switch_workspace') || 'Quick Switch'}</span>
+          </SidebarGroupLabel>
+          <SidebarGroupContent>
+            <SidebarMenu>
+              <SidebarMenuItem>
+                <TooltipProvider delayDuration={0}>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <SidebarMenuButton
+                        asChild
+                        size="default"
+                        className="w-full text-sidebar-foreground hover:bg-sidebar-accent/50 hover:text-sidebar-accent-foreground transition-colors group"
+                      >
+                        <Link href="/cashier" className="flex items-center gap-3 w-full">
+                          <QrCode className="h-4 w-4 text-primary shrink-0 transition-transform group-hover:scale-110" />
+                          {sidebarState !== "collapsed" && (
+                            <div className="flex items-center justify-between flex-1 min-w-0">
+                              <span className="truncate text-sm font-medium">
+                                {t('nav_pos_register') || 'POS Register'}
+                              </span>
+                              <Badge variant="outline" className="text-[10px] px-1.5 py-0 h-4 font-mono font-bold border-primary/30 text-primary bg-primary/10">
+                                POS
+                              </Badge>
+                            </div>
+                          )}
+                        </Link>
+                      </SidebarMenuButton>
+                    </TooltipTrigger>
+                    {sidebarState === "collapsed" && (
+                      <TooltipContent side={isRtl ? "left" : "right"}>
+                        {t('nav_pos_register') || 'POS Register'}
+                      </TooltipContent>
+                    )}
+                  </Tooltip>
+                </TooltipProvider>
+              </SidebarMenuItem>
+
+              <SidebarMenuItem>
+                <TooltipProvider delayDuration={0}>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <SidebarMenuButton
+                        asChild
+                        size="default"
+                        className="w-full text-sidebar-foreground hover:bg-sidebar-accent/50 hover:text-sidebar-accent-foreground transition-colors group"
+                      >
+                        <Link href="/customer/overview" className="flex items-center gap-3 w-full">
+                          <CreditCard className="h-4 w-4 text-emerald-500 shrink-0 transition-transform group-hover:scale-110" />
+                          {sidebarState !== "collapsed" && (
+                            <span className="truncate text-sm font-medium">
+                              {t('nav_customer_passes') || 'Customer Passes'}
+                            </span>
+                          )}
+                        </Link>
+                      </SidebarMenuButton>
+                    </TooltipTrigger>
+                    {sidebarState === "collapsed" && (
+                      <TooltipContent side={isRtl ? "left" : "right"}>
+                        {t('nav_customer_passes') || 'Customer Passes'}
+                      </TooltipContent>
+                    )}
+                  </Tooltip>
+                </TooltipProvider>
+              </SidebarMenuItem>
+            </SidebarMenu>
+          </SidebarGroupContent>
+        </SidebarGroup>
       </SidebarContent>
 
       {/* User Profile Footer */}
@@ -179,6 +251,19 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                     </div>
                   </div>
                 </DropdownMenuLabel>
+                <DropdownMenuSeparator className="bg-sidebar-border/30" />
+                <DropdownMenuItem asChild className="cursor-pointer rounded-lg gap-2">
+                  <Link href="/cashier" className="flex items-center gap-2 w-full">
+                    <QrCode className="h-4 w-4 text-primary shrink-0" />
+                    <span>{t('nav_pos_register') || 'Open POS Register'}</span>
+                  </Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem asChild className="cursor-pointer rounded-lg gap-2">
+                  <Link href="/customer/overview" className="flex items-center gap-2 w-full">
+                    <CreditCard className="h-4 w-4 text-emerald-500 shrink-0" />
+                    <span>{t('nav_customer_passes') || 'My Customer Passes'}</span>
+                  </Link>
+                </DropdownMenuItem>
                 <DropdownMenuSeparator className="bg-sidebar-border/30" />
                 <DropdownMenuItem
                   onClick={handleLogout}

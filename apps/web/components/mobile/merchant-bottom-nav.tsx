@@ -200,8 +200,54 @@ export function MerchantBottomNav() {
             </div>
           </DrawerHeader>
 
+          {/* Workspaces & Quick Switch Cards */}
+          <div className="space-y-2 mb-3">
+            <p className="text-[11px] font-bold text-muted-foreground uppercase tracking-wider px-1 text-start">
+              {t('nav_switch_workspace') || 'Quick Switch'}
+            </p>
+
+            <Link
+              href="/cashier"
+              onClick={() => setMoreDrawerOpen(false)}
+              className="flex items-center justify-between p-3 rounded-2xl border border-primary/30 bg-primary/5 hover:bg-primary/10 transition active:scale-[0.98]"
+            >
+              <div className="flex items-center gap-3">
+                <div className="h-9 w-9 rounded-xl bg-primary/20 text-primary flex items-center justify-center font-bold">
+                  <QrCode className="h-4 w-4" />
+                </div>
+                <div className="text-start">
+                  <p className="text-xs font-bold text-foreground">{t('nav_pos_register') || 'Cashier POS Terminal'}</p>
+                  <p className="text-[11px] text-muted-foreground">Scan customer passes & award points</p>
+                </div>
+              </div>
+              <span className="text-[10px] font-bold uppercase tracking-wider text-primary bg-primary/15 px-2 py-0.5 rounded-full border border-primary/20">
+                POS
+              </span>
+            </Link>
+
+            <Link
+              href="/customer/overview"
+              onClick={() => setMoreDrawerOpen(false)}
+              className="flex items-center justify-between p-3 rounded-2xl border border-border/60 bg-card hover:bg-muted/40 transition active:scale-[0.98]"
+            >
+              <div className="flex items-center gap-3">
+                <div className="h-9 w-9 rounded-xl bg-emerald-500/10 text-emerald-500 flex items-center justify-center">
+                  <CreditCard className="h-4 w-4" />
+                </div>
+                <div className="text-start">
+                  <p className="text-xs font-bold text-foreground">{t('nav_customer_passes') || 'Customer Passes'}</p>
+                  <p className="text-[11px] text-muted-foreground">View your saved cards & perks</p>
+                </div>
+              </div>
+            </Link>
+          </div>
+
           {/* Navigation Links List */}
           <div className="space-y-2">
+            <p className="text-[11px] font-bold text-muted-foreground uppercase tracking-wider px-1 text-start">
+              {t('nav_merchant_settings') || 'Management & Staff'}
+            </p>
+
             <Link
               href="/merchant/staff"
               onClick={() => setMoreDrawerOpen(false)}
