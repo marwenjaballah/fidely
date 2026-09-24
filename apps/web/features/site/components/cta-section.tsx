@@ -1,7 +1,7 @@
 "use client"
 
 import Link from "next/link"
-import { ArrowRight, Sparkles, Coffee, ShieldCheck, CheckCircle2 } from "lucide-react"
+import { ArrowRight, Sparkles, CheckCircle2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { useAuth } from "@/features/auth/hooks/use-auth"
 
@@ -15,22 +15,22 @@ export function CtaSection() {
     : "/auth/sign-up"
 
   return (
-    <section className="py-20 md:py-28 relative overflow-hidden border-b border-border/60 bg-muted/30">
-      <div className="container relative mx-auto max-w-5xl px-4 sm:px-6 lg:px-8">
-        <div className="relative rounded-3xl border border-border/80 bg-card p-8 sm:p-14 text-center shadow-xl space-y-8 overflow-hidden">
+    <section className="py-20 md:py-28 relative overflow-hidden border-b border-border/60 bg-background">
+      <div className="container relative mx-auto max-w-4xl px-4 sm:px-6 lg:px-8">
+        <div className="relative rounded-3xl border border-border/80 bg-card p-8 sm:p-12 text-center shadow-xl space-y-6 overflow-hidden">
           {/* Top Badge */}
-          <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-primary/10 border border-primary/20 text-primary text-xs font-bold">
+          <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-primary/10 border border-primary/20 text-primary text-xs font-semibold">
             <Sparkles className="w-3.5 h-3.5" />
-            <span>Ready in under 2 minutes • No credit card required</span>
+            <span>Setup in under 2 minutes • No credit card required</span>
           </div>
 
           {/* Heading */}
-          <div className="space-y-4 max-w-2xl mx-auto">
+          <div className="space-y-3 max-w-xl mx-auto">
             <h2 className="text-3xl sm:text-5xl font-black tracking-tight text-foreground leading-tight">
               Start Rewarding Your Regulars Today
             </h2>
             <p className="text-muted-foreground text-sm sm:text-base leading-relaxed">
-              Join leading specialty cafes and shops. Create your branded Fidely Wallet pass, print your acrylic counter stand, and accelerate repeat visits immediately.
+              Create your branded digital pass, download your counter stand, and start rewarding customers with zero hardware costs.
             </p>
           </div>
 
@@ -39,28 +39,28 @@ export function CtaSection() {
             <Button
               asChild
               size="lg"
-              className="w-full sm:w-auto h-14 px-9 rounded-2xl bg-primary hover:bg-primary/90 text-primary-foreground font-bold text-base shadow-xl shadow-primary/25 gap-2 transition-transform active:scale-95"
+              className="w-full sm:w-auto h-13 px-8 rounded-2xl bg-foreground hover:bg-foreground/90 text-background font-bold text-sm shadow-xl gap-2 transition-transform active:scale-95"
             >
               <Link href={startHref}>
                 <span>{isAuthenticated ? "Go to Dashboard" : "Launch Your Store Free"}</span>
-                <ArrowRight className="w-5 h-5" />
+                <ArrowRight className="w-4 h-4" />
               </Link>
             </Button>
           </div>
 
           {/* Guarantees */}
-          <div className="flex flex-wrap items-center justify-center gap-6 pt-4 text-xs text-muted-foreground font-medium">
+          <div className="flex flex-wrap items-center justify-center gap-5 pt-3 text-xs text-muted-foreground font-medium">
             <span className="flex items-center gap-1.5">
               <CheckCircle2 className="w-4 h-4 text-emerald-500" />
-              Instant Pass Generation
+              Zero App Installs
             </span>
             <span className="flex items-center gap-1.5">
               <CheckCircle2 className="w-4 h-4 text-emerald-500" />
-              Free Acrylic Stand Canvas Export
+              Zero Extra Hardware
             </span>
             <span className="flex items-center gap-1.5">
               <CheckCircle2 className="w-4 h-4 text-emerald-500" />
-              Unlimited Cashier Devices
+              Instant Setup
             </span>
           </div>
         </div>

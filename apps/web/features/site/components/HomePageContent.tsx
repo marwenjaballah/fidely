@@ -5,19 +5,15 @@ import { useRouter } from "next/navigation"
 import { useAuth } from "@/features/auth/hooks/use-auth"
 import { FidelyLogo } from "@/components/common/fidely-logo"
 import { HeroSection } from "./hero-section"
-import { InteractiveSimulator } from "./interactive-simulator"
-import { RoiCalculator } from "./roi-calculator"
-import { ComparisonSection } from "./comparison-section"
 import { BentoFeatures } from "./bento-features"
 import { StepFlowSection } from "./step-flow-section"
-import { ReviewsSection } from "./reviews-section"
 import { FaqSection } from "./faq-section"
 import { CtaSection } from "./cta-section"
 
 /**
- * HomePageContent - High-Energy, Tactile, Alive Landing Page for Fidely
- * Inspired by modern, human digital product experiences (like usetapp.io)
- * Adhering strictly to Anthropic Design, Vercel Web Guidelines, and UI/UX Pro Max.
+ * HomePageContent - Streamlined, Product-Led Landing Page for Fidely
+ * Eliminates generic AI-generated text walls in favor of visual UI previews,
+ * concise human copy, and responsive, tactile interactions.
  */
 export function HomePageContent() {
   const router = useRouter()
@@ -77,31 +73,19 @@ export function HomePageContent() {
 
   return (
     <div className="flex flex-col w-full overflow-x-hidden scroll-smooth">
-      {/* 1. High-Energy Hero with Interactive Live POS Phone Mockup */}
+      {/* 1. Hero with Live Interactive POS Phone Mockup */}
       <HeroSection />
 
-      {/* 2. Side-by-Side Reality: Old Clunky Way vs The Fidely Way */}
-      <ComparisonSection />
-
-      {/* 3. Interactive 4-Pillar Product Tour Simulator */}
-      <InteractiveSimulator />
-
-      {/* 4. Interactive Cafe Growth & Revenue ROI Calculator */}
-      <RoiCalculator />
-
-      {/* 5. 6-Card Bento Grid Capabilities */}
+      {/* 2. Core Product Pillars: Web-Native Pass, 1s Camera POS, Fraud-Proof Perks */}
       <BentoFeatures />
 
-      {/* 6. 3-Step Merchant Setup Flow */}
+      {/* 3. 3-Step Visual Experience ("How It Works") */}
       <StepFlowSection />
 
-      {/* 7. Verified Merchant Reviews & Ratings */}
-      <ReviewsSection />
-
-      {/* 8. Accessible Accordion FAQs */}
+      {/* 4. 4 Direct, Essential FAQs */}
       <FaqSection />
 
-      {/* 9. High-Conversion Bottom CTA Banner */}
+      {/* 5. Minimalist, Confident Closing CTA */}
       <CtaSection />
     </div>
   )

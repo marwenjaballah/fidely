@@ -10,60 +10,52 @@ import { Badge } from "@/components/ui/badge"
 
 const FAQS = [
   {
-    q: "Do customers need to download an app from the App Store or Google Play?",
-    a: "No! Customers simply point their phone camera at your counter QR stand. Their digital loyalty pass opens instantly in their mobile browser and can be saved directly to Fidely Wallet or their home screen in 1 single tap.",
+    q: "Do customers need to download an app from the App Store?",
+    a: "No. Customers simply point their camera at your counter QR stand. Their pass opens immediately in their mobile browser and can be saved to their home screen in one tap.",
   },
   {
-    q: "What hardware or POS equipment is needed?",
-    a: "Zero special hardware. Any smartphone, tablet (like an iPad), laptop, or touchscreen terminal at your counter functions as your cashier scanner. The camera instantly reads customer QR passes in under 1 second.",
+    q: "Do I need special POS hardware or barcode scanners?",
+    a: "Zero extra hardware. Any smartphone, iPad, tablet, or laptop camera acts as your cashier scanner with instant sub-second recognition.",
   },
   {
-    q: "How do baristas award points and redeem rewards at checkout?",
-    a: "The cashier enters the transaction amount (or taps quick presets like +5, +12.50 TND) and scans the customer's pass. Points are calculated and awarded in under 1 second with instant audio-haptic chime feedback.",
+    q: "How fast is checkout for cashiers and baristas?",
+    a: "Under 1 second. Enter the purchase total and point the camera at the customer's pass. An instant audio chime confirms the transaction.",
   },
   {
-    q: "How does the 1-time voucher burn protection work?",
-    a: "When a customer redeems a voucher perk (like a free coffee or pastry), the barista scans the voucher QR code. The system immediately marks the voucher as 'USED' with an exact timestamp log, preventing duplicate reuse.",
-  },
-  {
-    q: "Can I manage multiple cafe branches and staff accounts?",
-    a: "Yes! Fidely supports multi-store management, dedicated cashier PIN logins for each barista, and cross-store mismatch protection to prevent fraudulent point leakage.",
-  },
-  {
-    q: "How does the acrylic counter stand referral attribution work?",
-    a: "When you export your 1200×1600px counter stand from your dashboard, it embeds your store's unique referral tag. When walk-in customers scan and register, they are automatically linked to your shop in the super admin telemetry hub.",
+    q: "How does fraud prevention work for free rewards?",
+    a: "Rewards generate cryptographic single-use voucher codes that burn instantly upon cashier scan, preventing duplicate claims or screenshot sharing.",
   },
 ]
 
 export function FaqSection() {
   return (
-    <section id="faq" className="py-20 md:py-28 border-b border-border/60 bg-background relative">
-      <div className="container mx-auto max-w-4xl px-4 sm:px-6 lg:px-8 space-y-12">
+    <section id="faq" className="py-20 md:py-28 border-b border-border/60 bg-muted/20 relative">
+      <div className="container mx-auto max-w-3xl px-4 sm:px-6 lg:px-8 space-y-12">
         {/* Section Header */}
-        <div className="text-center max-w-2xl mx-auto space-y-3">
+        <div className="text-center max-w-xl mx-auto space-y-3">
           <Badge variant="outline" className="bg-primary/10 text-primary border-primary/20 text-xs font-bold">
-            Frequently Asked Questions
+            FAQ
           </Badge>
           <h2 className="text-3xl sm:text-4xl md:text-5xl font-black tracking-tight text-foreground">
-            Everything You Need to Know
+            Frequently Asked Questions
           </h2>
           <p className="text-muted-foreground text-sm sm:text-base">
-            Clear answers on Fidely Wallet compatibility, camera scanning, and multi-store operations.
+            Everything you need to know about setting up and running Fidely.
           </p>
         </div>
 
         {/* Accessible Accordion */}
-        <Accordion type="single" collapsible className="w-full space-y-4">
+        <Accordion type="single" collapsible className="w-full space-y-3">
           {FAQS.map((faq, idx) => (
             <AccordionItem
               key={idx}
               value={`item-${idx}`}
-              className="border border-border/60 bg-card rounded-2xl px-6 py-1 data-[state=open]:border-primary/40 data-[state=open]:shadow-sm transition-all"
+              className="border border-border/70 bg-card rounded-2xl px-6 py-0.5 data-[state=open]:border-primary/40 data-[state=open]:shadow-sm transition-all"
             >
               <AccordionTrigger className="text-left font-bold text-base hover:no-underline py-4 text-foreground">
                 {faq.q}
               </AccordionTrigger>
-              <AccordionContent className="text-sm text-muted-foreground leading-relaxed pb-4 pt-1">
+              <AccordionContent className="text-sm text-muted-foreground leading-relaxed pb-4 pt-0">
                 {faq.a}
               </AccordionContent>
             </AccordionItem>

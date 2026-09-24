@@ -77,17 +77,11 @@ export function SiteHeader() {
 
         {/* Navigation Links */}
         <nav className="hidden md:flex items-center gap-7 text-sm font-medium text-muted-foreground">
-          <a href="/#interactive-playground" className="transition-colors hover:text-foreground">
-            {t('nav_intro')}
-          </a>
           <a href="/#features" className="transition-colors hover:text-foreground">
-            {t('nav_features')}
+            {t('nav_features') || 'Features'}
           </a>
           <a href="/#how-it-works" className="transition-colors hover:text-foreground">
-            {t('nav_use_cases')}
-          </a>
-          <a href="/#reviews" className="transition-colors hover:text-foreground">
-            {t('footer_reviews')}
+            {t('nav_use_cases') || 'How It Works'}
           </a>
           <a href="/#faq" className="transition-colors hover:text-foreground">
             FAQ
@@ -215,32 +209,18 @@ export function SiteHeader() {
         <div className="md:hidden border-t border-border/60 bg-background/95 backdrop-blur-xl px-4 py-4 space-y-3 animate-in fade-in slide-in-from-top-2 duration-200">
           <nav className="flex flex-col gap-1 text-sm font-medium">
             <a
-              href="/#interactive-playground"
-              onClick={closeMobile}
-              className="rounded-xl px-3 py-2 text-muted-foreground hover:bg-muted hover:text-foreground"
-            >
-              {t('nav_intro')}
-            </a>
-            <a
               href="/#features"
               onClick={closeMobile}
               className="rounded-xl px-3 py-2 text-muted-foreground hover:bg-muted hover:text-foreground"
             >
-              {t('nav_features')}
+              {t('nav_features') || 'Features'}
             </a>
             <a
               href="/#how-it-works"
               onClick={closeMobile}
               className="rounded-xl px-3 py-2 text-muted-foreground hover:bg-muted hover:text-foreground"
             >
-              {t('nav_use_cases')}
-            </a>
-            <a
-              href="/#reviews"
-              onClick={closeMobile}
-              className="rounded-xl px-3 py-2 text-muted-foreground hover:bg-muted hover:text-foreground"
-            >
-              {t('footer_reviews')}
+              {t('nav_use_cases') || 'How It Works'}
             </a>
             <a
               href="/#faq"

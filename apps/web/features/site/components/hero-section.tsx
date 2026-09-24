@@ -59,10 +59,10 @@ export function HeroSection() {
           {/* Left Column: Bold Headline & Story */}
           <div className="lg:col-span-7 space-y-6 text-left">
             {/* Live Ticker Tag */}
-            <div className="inline-flex items-center gap-2.5 px-4 py-1.5 rounded-full bg-primary/10 border border-primary/20 text-primary text-xs font-bold shadow-xs">
+            <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-primary/10 border border-primary/20 text-primary text-xs font-semibold shadow-2xs">
               <span className="flex h-2 w-2 rounded-full bg-primary animate-ping" />
-              <span>{t('landing_badge')}</span>
-              <span className="text-muted-foreground hidden sm:inline">• {t('landing_feature_auth_title')}</span>
+              <span>{t('landing_badge') || 'Modern Digital Loyalty'}</span>
+              <span className="text-muted-foreground hidden sm:inline">• Web Native</span>
             </div>
 
             {/* High-Impact Punchy Title */}
@@ -74,7 +74,7 @@ export function HeroSection() {
             </h1>
 
             {/* Crisp Subtitle */}
-            <p className="text-base sm:text-xl text-muted-foreground max-w-xl leading-relaxed font-normal">
+            <p className="text-base sm:text-lg text-muted-foreground max-w-xl leading-relaxed font-normal">
               {t('landing_description')}
             </p>
 
@@ -97,26 +97,26 @@ export function HeroSection() {
                 size="lg"
                 className="h-14 px-6 text-base font-semibold rounded-2xl border-border/80 hover:bg-muted/60 transition-all duration-200 active:scale-[0.98]"
               >
-                <a href="#interactive-playground">
+                <a href="#how-it-works">
                   <Play className="h-4 w-4 mr-2 text-primary" />
-                  {t('landing_cta_secondary')}
+                  <span>See How It Works</span>
                 </a>
               </Button>
             </div>
 
             {/* Trust Signals */}
-            <div className="grid grid-cols-3 gap-4 pt-4 border-t border-border/50 max-w-lg">
+            <div className="grid grid-cols-3 gap-6 pt-4 border-t border-border/50 max-w-lg">
               <div>
-                <div className="text-2xl sm:text-3xl font-black text-foreground">{t('landing_hero_stat_speed')}</div>
-                <div className="text-[11px] sm:text-xs text-muted-foreground">Scan POS</div>
+                <div className="text-2xl sm:text-3xl font-black text-foreground font-mono">&lt; 1s</div>
+                <div className="text-xs text-muted-foreground font-medium">Checkout Scan</div>
               </div>
               <div>
-                <div className="text-2xl sm:text-3xl font-black text-primary">{t('landing_hero_stat_businesses')}</div>
-                <div className="text-[11px] sm:text-xs text-muted-foreground">{t('landing_badge')}</div>
+                <div className="text-2xl sm:text-3xl font-black text-primary font-mono">0</div>
+                <div className="text-xs text-muted-foreground font-medium">App Downloads</div>
               </div>
               <div>
-                <div className="text-2xl sm:text-3xl font-black text-amber-500">{t('landing_hero_stat_retention')}</div>
-                <div className="text-[11px] sm:text-xs text-muted-foreground">{t('landing_roi_repeat_rate')}</div>
+                <div className="text-2xl sm:text-3xl font-black text-amber-500 font-mono">100%</div>
+                <div className="text-xs text-muted-foreground font-medium">Hardware-Free</div>
               </div>
             </div>
           </div>
