@@ -610,6 +610,17 @@ export const en = {
   staff_toast_pwd_desc: "New password configured for '{name}'.",
   staff_toast_removed: 'Cashier Removed',
   staff_toast_removed_desc: "'{name}' was removed from {storeName}.",
+  staff_tab_new: 'New Cashier',
+  staff_tab_existing: 'From Other Branches',
+  staff_existing_desc: 'Select a cashier who already works at one of your other branches to grant them access to {storeName}.',
+  staff_search_existing_placeholder: 'Search cashiers from other branches...',
+  staff_no_available_existing: 'No cashiers available to assign',
+  staff_no_available_existing_desc: 'All cashiers from your other branches are already assigned to this store, or no other cashiers exist yet.',
+  staff_btn_assign: 'Assign to this Store',
+  staff_btn_assigning: 'Assigning...',
+  staff_currently_at: 'Active at',
+  staff_toast_assigned: 'Cashier Assigned',
+  staff_toast_assigned_desc: "'{name}' can now access {storeName} with their existing credentials.",
 
   // Analytics Page
   analytics_title: 'Analytics',

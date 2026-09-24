@@ -612,6 +612,17 @@ export const ar: Record<TranslationKey, string> = {
   staff_toast_pwd_desc: "تم تعيين كلمة مرور جديدة لـ '{name}'.",
   staff_toast_removed: 'تم حذف الكاشير',
   staff_toast_removed_desc: "تم حذف '{name}' من {storeName}.",
+  staff_tab_new: 'كاشير جديد',
+  staff_tab_existing: 'من فروع أخرى',
+  staff_existing_desc: 'اختر كاشيراً يعمل بالفعل في أحد فروعك الأخرى لمنحه حق الوصول إلى {storeName}.',
+  staff_search_existing_placeholder: 'البحث عن كاشيرات من فروع أخرى...',
+  staff_no_available_existing: 'لا يوجد كاشير متاح للتعيين',
+  staff_no_available_existing_desc: 'جميع الكاشيرات من فروعك الأخرى معينون بالفعل لهذا المتجر، أو لم تتم إضافة كاشيرات بعد.',
+  staff_btn_assign: 'تعيين لهذا المتجر',
+  staff_btn_assigning: 'جارٍ التعيين...',
+  staff_currently_at: 'نشط في',
+  staff_toast_assigned: 'تم تعيين الكاشير',
+  staff_toast_assigned_desc: "يمكن لـ '{name}' الآن الوصول إلى {storeName} باستخدام بيانات حسابه الحالية.",
 
   // Analytics Page
   analytics_title: 'التحليلات',

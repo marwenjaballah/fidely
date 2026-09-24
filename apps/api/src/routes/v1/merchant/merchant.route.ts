@@ -160,10 +160,83 @@ export const getStoreStaffRoute = createRoute({
             id: z.string(),
             fullName: z.string().nullable(),
             email: z.string(),
+            phone: z.string().nullable().optional(),
             createdAt: z.string(),
           })),
         },
       },
+    },
+  },
+});
+
+export const getAvailableStoreStaffRoute = createRoute({
+  method: 'get',
+  path: '/stores/{id}/staff/available',
+  tags: ['Merchant'],
+  security: [{ bearerAuth: [] }],
+  request: {
+    params: z.object({
+      id: z.string(),
+    }),
+  },
+  responses: {
+    200: {
+      description: 'List of cashiers available from other merchant stores',
+      content: {
+        'application/json': {
+          schema: z.array(z.object({
+            id: z.string(),
+            fullName: z.string().nullable(),
+            email: z.string(),
+            phone: z.string().nullable().optional(),
+            createdAt: z.string(),
+            assignedStores: z.array(z.object({
+              id: z.string(),
+              name: z.string(),
+            })),
+          })),
+        },
+      },
+    },
+  },
+});
+
+export const assignStoreStaffRoute = createRoute({
+  method: 'post',
+  path: '/stores/{id}/staff/assign',
+  tags: ['Merchant'],
+  security: [{ bearerAuth: [] }],
+  request: {
+    params: z.object({
+      id: z.string(),
+    }),
+    body: {
+      content: {
+        'application/json': {
+          schema: z.object({
+            staffId: z.string().min(1),
+          }),
+        },
+      },
+    },
+  },
+  responses: {
+    200: {
+      description: 'Cashier assigned to store',
+      content: {
+        'application/json': {
+          schema: z.object({
+            id: z.string(),
+            fullName: z.string().nullable(),
+            email: z.string(),
+            phone: z.string().nullable().optional(),
+            createdAt: z.string(),
+          }),
+        },
+      },
+    },
+    400: {
+      description: 'Bad request or cashier not authorized',
     },
   },
 });

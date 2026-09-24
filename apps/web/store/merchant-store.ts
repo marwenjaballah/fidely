@@ -28,6 +28,15 @@ export interface Staff {
   createdAt: string
 }
 
+export interface AvailableStaff {
+  id: string
+  fullName: string | null
+  email: string
+  phone?: string | null
+  createdAt: string
+  assignedStores: { id: string; name: string }[]
+}
+
 export interface Reward {
   id: string
   storeId: string
@@ -54,6 +63,7 @@ export interface MerchantState {
   activeStore: Store | null
   customers: Customer[]
   staff: Staff[]
+  availableStaff: AvailableStaff[]
   rewards: Reward[]
   analytics: Analytics | null
   loading: boolean
@@ -65,7 +75,9 @@ export interface MerchantState {
   updateStore: (storeId: string, data: Partial<Store>) => Promise<void>
   fetchCustomers: (storeId: string) => Promise<void>
   fetchStaff: (storeId: string) => Promise<void>
+  fetchAvailableStaff: (storeId: string) => Promise<AvailableStaff[]>
   createStaff: (storeId: string, data: { fullName: string; email: string; password?: string; phone?: string }) => Promise<Staff>
+  assignExistingStaff: (storeId: string, staffId: string) => Promise<Staff>
   inviteStaff: (storeId: string, fullName: string, email: string) => Promise<void>
   updateStaff: (storeId: string, staffId: string, data: { fullName?: string; phone?: string }) => Promise<Staff>
   changeStaffPassword: (storeId: string, staffId: string, password: string) => Promise<void>
@@ -97,6 +109,7 @@ export const useMerchantStore = create<MerchantState>((set, get) => ({
   activeStore: null,
   customers: [],
   staff: [],
+  availableStaff: [],
   rewards: [],
   analytics: null,
   loading: false,
@@ -205,6 +218,18 @@ export const useMerchantStore = create<MerchantState>((set, get) => ({
     }
   },
 
+  fetchAvailableStaff: async (storeId: string) => {
+    try {
+      const client = getMerchantClient()
+      const { data } = await client.get<AvailableStaff[]>(`/api/v1/merchant/stores/${storeId}/staff/available`)
+      set({ availableStaff: data })
+      return data
+    } catch (err) {
+      console.error('Failed to load available staff:', err)
+      return []
+    }
+  },
+
   createStaff: async (storeId: string, data: { fullName: string; email: string; password?: string; phone?: string }) => {
     set({ loading: true, error: null })
     try {
@@ -215,6 +240,22 @@ export const useMerchantStore = create<MerchantState>((set, get) => ({
       return newStaff
     } catch (err) {
       const message = err instanceof ApiError ? err.message : 'Failed to create cashier.'
+      set({ error: message, loading: false })
+      throw err
+    }
+  },
+
+  assignExistingStaff: async (storeId: string, staffId: string) => {
+    set({ loading: true, error: null })
+    try {
+      const client = getMerchantClient()
+      const { data: assignedStaff } = await client.post<Staff>(`/api/v1/merchant/stores/${storeId}/staff/assign`, { staffId })
+      const staff = [...get().staff, assignedStaff]
+      const availableStaff = get().availableStaff.filter((s) => s.id !== staffId)
+      set({ staff, availableStaff, loading: false, error: null })
+      return assignedStaff
+    } catch (err) {
+      const message = err instanceof ApiError ? err.message : 'Failed to assign cashier.'
       set({ error: message, loading: false })
       throw err
     }

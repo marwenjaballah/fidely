@@ -6,6 +6,8 @@ import {
   updateStoreRoute,
   getStoreCustomersRoute,
   getStoreStaffRoute,
+  getAvailableStoreStaffRoute,
+  assignStoreStaffRoute,
   createStoreStaffRoute,
   updateStoreStaffRoute,
   changeStoreStaffPasswordRoute,
@@ -117,6 +119,43 @@ router.openapi(getStoreStaffRoute, async (c) => {
   
   try {
     const staff = await service.getStoreStaff(id, user.id);
+    return c.json(staff, 200);
+  } catch (error: any) {
+    return c.json({ error: error.message }, 400) as any;
+  }
+});
+
+router.openapi(getAvailableStoreStaffRoute, async (c) => {
+  const user = requireUser(c);
+  if (user.role !== 'MERCHANT' && user.role !== 'SUPER_ADMIN') {
+    return c.json({ error: 'Unauthorized' }, 401) as any;
+  }
+  
+  const { id } = c.req.valid('param');
+  const prisma = c.get('prisma');
+  const service = new MerchantService(prisma);
+  
+  try {
+    const staff = await service.getAvailableStoreStaff(id, user.id);
+    return c.json(staff, 200);
+  } catch (error: any) {
+    return c.json({ error: error.message }, 400) as any;
+  }
+});
+
+router.openapi(assignStoreStaffRoute, async (c) => {
+  const user = requireUser(c);
+  if (user.role !== 'MERCHANT' && user.role !== 'SUPER_ADMIN') {
+    return c.json({ error: 'Unauthorized' }, 401) as any;
+  }
+  
+  const { id } = c.req.valid('param');
+  const { staffId } = c.req.valid('json');
+  const prisma = c.get('prisma');
+  const service = new MerchantService(prisma);
+  
+  try {
+    const staff = await service.assignStoreStaff(id, user.id, staffId);
     return c.json(staff, 200);
   } catch (error: any) {
     return c.json({ error: error.message }, 400) as any;

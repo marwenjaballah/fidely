@@ -612,6 +612,17 @@ export const fr: Record<TranslationKey, string> = {
   staff_toast_pwd_desc: "Nouveau mot de passe configuré pour '{name}'.",
   staff_toast_removed: 'Caissier Supprimé',
   staff_toast_removed_desc: "'{name}' a été retiré de {storeName}.",
+  staff_tab_new: 'Nouveau caissier',
+  staff_tab_existing: "D'autres succursales",
+  staff_existing_desc: "Sélectionnez un caissier travaillant déjà dans l'une de vos autres succursales pour lui donner accès à {storeName}.",
+  staff_search_existing_placeholder: "Rechercher des caissiers d'autres succursales...",
+  staff_no_available_existing: 'Aucun caissier disponible à affecter',
+  staff_no_available_existing_desc: 'Tous les caissiers de vos autres succursales sont déjà affectés à cette boutique, ou aucun autre caissier n’existe encore.',
+  staff_btn_assign: 'Affecter à cette boutique',
+  staff_btn_assigning: 'Affectation...',
+  staff_currently_at: 'Actif à',
+  staff_toast_assigned: 'Caissier affecté',
+  staff_toast_assigned_desc: "'{name}' peut désormais accéder à {storeName} avec ses identifiants habituels.",
 
   // Analytics Page
   analytics_title: 'Analyses',

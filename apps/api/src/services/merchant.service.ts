@@ -131,6 +131,101 @@ export class MerchantService {
     })) || [];
   }
 
+  async getAvailableStoreStaff(storeId: string, merchantId: string) {
+    // Verify ownership
+    const store = await this.prisma.store.findFirst({
+      where: { id: storeId, ownerId: merchantId },
+    });
+
+    if (!store) {
+      throw new Error('Store not found or unauthorized');
+    }
+
+    // Find all cashiers who belong to any store owned by this merchant,
+    // but are NOT yet assigned to this store
+    const availableCashiers = await this.prisma.user.findMany({
+      where: {
+        role: 'CASHIER',
+        cashierStores: {
+          some: { ownerId: merchantId },
+          none: { id: storeId },
+        },
+      },
+      select: {
+        id: true,
+        fullName: true,
+        email: true,
+        phone: true,
+        createdAt: true,
+        cashierStores: {
+          where: { ownerId: merchantId },
+          select: { id: true, name: true },
+        },
+      },
+      orderBy: { fullName: 'asc' },
+    });
+
+    return availableCashiers.map((c) => ({
+      id: c.id,
+      fullName: c.fullName,
+      email: c.email,
+      phone: c.phone,
+      createdAt: c.createdAt.toISOString(),
+      assignedStores: c.cashierStores,
+    }));
+  }
+
+  async assignStoreStaff(storeId: string, merchantId: string, staffId: string) {
+    // Verify ownership of the store
+    const store = await this.prisma.store.findFirst({
+      where: { id: storeId, ownerId: merchantId },
+      include: {
+        cashiers: { where: { id: staffId } },
+      },
+    });
+
+    if (!store) {
+      throw new Error('Store not found or unauthorized');
+    }
+
+    if (store.cashiers.length > 0) {
+      throw new Error('Cashier is already assigned to this store');
+    }
+
+    // Verify cashier exists and belongs to at least one store owned by this merchant
+    const staffUser = await this.prisma.user.findFirst({
+      where: {
+        id: staffId,
+        role: 'CASHIER',
+        cashierStores: {
+          some: { ownerId: merchantId },
+        },
+      },
+    });
+
+    if (!staffUser) {
+      throw new Error('Cashier not found in any of your stores or unauthorized');
+    }
+
+    // Connect cashier to the target store
+    await this.prisma.store.update({
+      where: { id: storeId },
+      data: {
+        cashiers: {
+          connect: { id: staffId },
+        },
+      },
+    });
+
+    return {
+      id: staffUser.id,
+      fullName: staffUser.fullName,
+      email: staffUser.email,
+      phone: staffUser.phone,
+      createdAt: staffUser.createdAt.toISOString(),
+    };
+  }
+
   async createStoreStaff(
     storeId: string,
     merchantId: string,
