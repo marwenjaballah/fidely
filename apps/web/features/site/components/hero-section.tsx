@@ -39,16 +39,16 @@ export function HeroSection() {
     : "/auth/sign-up"
 
   return (
-    <section className="relative overflow-hidden pt-10 pb-20 md:pt-16 md:pb-28 border-b border-border/60 bg-background">
-      <div className="container relative mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+    <section className="relative overflow-hidden min-h-[calc(100dvh-4rem)] flex flex-col justify-center items-center py-8 sm:py-12 border-b border-border/60 bg-background">
+      <div className="container relative mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 my-auto w-full">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-8 items-center">
           {/* Left Column: Bold Headline & Story */}
           <div className="lg:col-span-7 space-y-6 text-left">
             {/* Live Ticker Tag */}
             <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-primary/10 border border-primary/20 text-primary text-xs font-semibold shadow-2xs">
               <span className="flex h-2 w-2 rounded-full bg-primary animate-ping" />
-              <span>{t('landing_badge') || 'Modern Digital Loyalty'}</span>
-              <span className="text-muted-foreground hidden sm:inline">• Web Native</span>
+              <span>{t('landing_badge')}</span>
+              <span className="text-muted-foreground hidden sm:inline">• {t('landing_hero_web_native')}</span>
             </div>
 
             {/* High-Impact Punchy Title */}
@@ -85,7 +85,7 @@ export function HeroSection() {
               >
                 <a href="#how-it-works">
                   <Play className="h-4 w-4 mr-2 text-primary" />
-                  <span>See How It Works</span>
+                  <span>{t('landing_cta_see_how_it_works')}</span>
                 </a>
               </Button>
             </div>
@@ -94,15 +94,15 @@ export function HeroSection() {
             <div className="grid grid-cols-3 gap-6 pt-4 border-t border-border/50 max-w-lg">
               <div>
                 <div className="text-2xl sm:text-3xl font-black text-foreground font-mono">&lt; 1s</div>
-                <div className="text-xs text-muted-foreground font-medium">Checkout Scan</div>
+                <div className="text-xs text-muted-foreground font-medium">{t('landing_hero_stat_checkout')}</div>
               </div>
               <div>
                 <div className="text-2xl sm:text-3xl font-black text-primary font-mono">0</div>
-                <div className="text-xs text-muted-foreground font-medium">App Downloads</div>
+                <div className="text-xs text-muted-foreground font-medium">{t('landing_hero_stat_downloads')}</div>
               </div>
               <div>
                 <div className="text-2xl sm:text-3xl font-black text-amber-500 font-mono">100%</div>
-                <div className="text-xs text-muted-foreground font-medium">Hardware-Free</div>
+                <div className="text-xs text-muted-foreground font-medium">{t('landing_hero_stat_hardware')}</div>
               </div>
             </div>
           </div>
@@ -112,8 +112,8 @@ export function HeroSection() {
             {/* Ambient Store Glow Backdrop */}
             <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-80 h-80 rounded-full bg-gradient-to-tr from-amber-500/25 via-primary/20 to-emerald-500/15 blur-3xl -z-10 pointer-events-none" />
 
-            {/* Photorealistic iPhone Device Frame (Authentic iPhone 16 Pro Dimensions & Silhouette - Scaled Up) */}
-            <div className="relative w-[310px] sm:w-[335px] h-[650px] sm:h-[695px] rounded-[3.5rem] p-3 sm:p-3.5 bg-gradient-to-b from-zinc-800 via-zinc-900 to-zinc-950 shadow-[0_30px_70px_-15px_rgba(0,0,0,0.6)] ring-1 ring-white/15 dark:ring-white/10 select-none flex flex-col justify-between">
+            {/* Photorealistic iPhone Device Frame (Authentic iPhone 16 Pro Dimensions & Silhouette) */}
+            <div className="relative w-[295px] sm:w-[315px] h-[610px] sm:h-[640px] rounded-[3.25rem] p-3 bg-gradient-to-b from-zinc-800 via-zinc-900 to-zinc-950 shadow-[0_30px_70px_-15px_rgba(0,0,0,0.6)] ring-1 ring-white/15 dark:ring-white/10 select-none flex flex-col justify-between">
               {/* iPhone Hardware Side Buttons */}
               <div className="absolute -left-[3.5px] top-28 w-[3.5px] h-8 bg-zinc-700 rounded-l-xs" />
               <div className="absolute -left-[3.5px] top-40 w-[3.5px] h-12 bg-zinc-700 rounded-l-xs" />
@@ -158,16 +158,16 @@ export function HeroSection() {
                         </div>
                         <div className="min-w-0">
                           <p className="text-[9px] font-bold tracking-widest uppercase text-white/70 leading-none">
-                            Loyalty Pass
+                            {t('landing_hero_pass_badge')}
                           </p>
                           <h3 className="text-xs font-black tracking-tight truncate text-white mt-0.5">
-                            Artisan Coffee Lab
+                            {t('landing_hero_sample_store')}
                           </h3>
                         </div>
                       </div>
                       <div className="text-right shrink-0">
-                        <p className="text-[8px] font-bold uppercase tracking-wider text-white/70">Rate</p>
-                        <p className="text-[10px] font-extrabold text-white">3 pts / 1 TND</p>
+                        <p className="text-[8px] font-bold uppercase tracking-wider text-white/70">{t('landing_hero_rate_label')}</p>
+                        <p className="text-[10px] font-extrabold text-white">{t('landing_hero_rate_val')}</p>
                       </div>
                     </div>
 
@@ -175,19 +175,19 @@ export function HeroSection() {
                     <div className="px-4 py-2.5 flex items-baseline justify-between relative z-10">
                       <div>
                         <p className="text-[9px] font-bold uppercase tracking-widest text-white/75">
-                          Current Balance
+                          {t('landing_hero_current_balance')}
                         </p>
                         <div className="flex items-baseline gap-1.5 mt-0.5">
                           <span className="text-3xl font-black tracking-tight text-white font-mono drop-shadow-xs">
                             {customerPoints}
                           </span>
-                          <span className="text-xs font-bold uppercase tracking-wider text-white/80">PTS</span>
+                          <span className="text-xs font-bold uppercase tracking-wider text-white/80">{t('landing_hero_pts_unit')}</span>
                         </div>
                       </div>
                       <div className="text-right">
                         <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[9px] font-bold bg-white/20 text-white backdrop-blur-xs border border-white/20">
                           <Sparkles className="w-2.5 h-2.5 text-amber-300" />
-                          {customerPoints >= 300 ? "Reward Ready!" : "Gold Member"}
+                          {customerPoints >= 300 ? t('landing_hero_reward_ready') : t('landing_hero_gold_member')}
                         </span>
                       </div>
                     </div>
@@ -195,9 +195,9 @@ export function HeroSection() {
                     {/* Next Perk Goal Progress */}
                     <div className="px-4 pb-2.5 relative z-10 space-y-1">
                       <div className="flex items-center justify-between text-[10px] text-white/90">
-                        <span className="font-semibold">Target: Free Flat White</span>
+                        <span className="font-semibold">{t('landing_hero_target_perk')}</span>
                         <span className="font-mono font-bold text-[9px]">
-                          {customerPoints >= 300 ? "Unlocked! 🎉" : `${300 - customerPoints} pts left`}
+                          {customerPoints >= 300 ? t('landing_hero_unlocked') : t('landing_hero_pts_left', { count: 300 - customerPoints })}
                         </span>
                       </div>
                       <div className="w-full bg-black/25 h-1.5 rounded-full overflow-hidden">
@@ -231,11 +231,11 @@ export function HeroSection() {
                           includeMargin={false}
                         />
                         <p className="text-[8px] font-bold text-slate-800 tracking-wider uppercase mt-1">
-                          Sarah Mitchell • Member
+                          {t('landing_hero_sample_member')}
                         </p>
                       </div>
                       <p className="text-[10px] text-white/80 font-medium mt-2">
-                        Present at counter to scan & earn
+                        {t('landing_hero_present_hint')}
                       </p>
                     </div>
                   </div>
@@ -249,7 +249,7 @@ export function HeroSection() {
             </div>
 
             {/* Interactive "Simulate Scan" Controller */}
-            <div className="w-[310px] sm:w-[335px] pt-3.5 text-center space-y-1.5">
+            <div className="w-[295px] sm:w-[315px] pt-3 text-center space-y-1.5">
               <Button
                 type="button"
                 onClick={handleSimulateScan}
@@ -261,18 +261,18 @@ export function HeroSection() {
                 {justScanned ? (
                   <>
                     <Check className="w-4 h-4 animate-bounce" />
-                    <span>+25 Points Awarded!</span>
+                    <span>{t('landing_hero_scan_awarded')}</span>
                   </>
                 ) : (
                   <>
                     <Zap className="w-4 h-4 text-amber-400" />
-                    <span>Tap to Simulate Scan (+25 PTS)</span>
+                    <span>{t('landing_hero_simulate_scan')}</span>
                   </>
                 )}
               </Button>
               <p className="text-[11px] text-muted-foreground flex items-center justify-center gap-1.5">
                 <Smartphone className="w-3.5 h-3.5 opacity-70" />
-                <span>Interactive preview • Tap (i) on pass to flip</span>
+                <span>{t('landing_hero_interactive_hint')}</span>
               </p>
             </div>
           </div>

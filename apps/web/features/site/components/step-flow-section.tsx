@@ -3,58 +3,61 @@
 import Image from "next/image"
 import { Store, Printer, Smartphone, CheckCircle2 } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
-
-const STEPS = [
-  {
-    num: "01",
-    icon: Store,
-    title: "Brand Your Pass",
-    description: "Set your colors, upload your logo, and define your points ratio in 60 seconds.",
-    highlight: "60s Setup",
-    previewType: "card",
-  },
-  {
-    num: "02",
-    icon: Printer,
-    title: "Place Your Stand",
-    description: "Download your print-ready acrylic QR stand so walk-in customers can tap & join instantly.",
-    highlight: "Print-Ready",
-    previewType: "image",
-    image: "/images/acrylic-stand.jpg",
-    imageAlt: "Minimalist acrylic counter stand on cafe desk",
-  },
-  {
-    num: "03",
-    icon: Smartphone,
-    title: "Scan & Reward",
-    description: "Enter the purchase total and scan customer passes with any phone or tablet in under 1 second.",
-    highlight: "< 1s Speed",
-    previewType: "image",
-    image: "/images/barista-scan.jpg",
-    imageAlt: "Barista scanning customer loyalty pass with smartphone",
-  },
-]
+import { useI18n } from "@/lib/i18n"
 
 export function StepFlowSection() {
+  const { t } = useI18n()
+
+  const steps = [
+    {
+      num: "01",
+      icon: Store,
+      title: t('landing_step_1_title'),
+      description: t('landing_step_1_desc'),
+      highlight: t('landing_step_1_highlight'),
+      previewType: "card" as const,
+    },
+    {
+      num: "02",
+      icon: Printer,
+      title: t('landing_step_2_title'),
+      description: t('landing_step_2_desc'),
+      highlight: t('landing_step_2_highlight'),
+      previewType: "image" as const,
+      image: "/images/acrylic-stand.jpg",
+      imageAlt: t('landing_step_2_image_alt'),
+    },
+    {
+      num: "03",
+      icon: Smartphone,
+      title: t('landing_step_3_title'),
+      description: t('landing_step_3_desc'),
+      highlight: t('landing_step_3_highlight'),
+      previewType: "image" as const,
+      image: "/images/barista-scan.jpg",
+      imageAlt: t('landing_step_3_image_alt'),
+    },
+  ]
+
   return (
-    <section id="how-it-works" className="py-20 md:py-28 border-b border-border/60 bg-background relative">
-      <div className="container mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 space-y-16">
+    <section id="how-it-works" className="min-h-screen min-h-[100dvh] flex flex-col justify-center items-center py-16 sm:py-20 border-b border-border/60 bg-background relative scroll-mt-16">
+      <div className="container mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 space-y-12 my-auto w-full">
         {/* Section Header */}
         <div className="text-center max-w-2xl mx-auto space-y-3">
           <Badge variant="outline" className="bg-primary/10 text-primary border-primary/20 text-xs font-bold">
-            How It Works
+            {t('landing_steps_badge')}
           </Badge>
           <h2 className="text-3xl sm:text-4xl md:text-5xl font-black tracking-tight text-foreground">
-            Up and Running in 3 Steps
+            {t('landing_steps_title')}
           </h2>
           <p className="text-muted-foreground text-sm sm:text-base">
-            No expensive hardware. No complex training. Everything works right in the browser.
+            {t('landing_steps_subtitle')}
           </p>
         </div>
 
         {/* Steps Grid */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8 relative">
-          {STEPS.map((step, idx) => {
+          {steps.map((step, idx) => {
             const Icon = step.icon
             return (
               <div
@@ -95,11 +98,11 @@ export function StepFlowSection() {
                   ) : (
                     <div className="relative w-full h-44 rounded-2xl overflow-hidden border border-primary/20 mt-3 bg-gradient-to-br from-primary/10 via-primary/5 to-muted p-4 flex flex-col justify-between group-hover:scale-105 transition-transform duration-500">
                       <div className="flex items-center justify-between text-xs">
-                        <span className="font-bold tracking-wider uppercase text-foreground/80">Digital Pass</span>
-                        <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-primary/20 text-primary">Live</span>
+                        <span className="font-bold tracking-wider uppercase text-foreground/80">{t('landing_step_pass_label')}</span>
+                        <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-primary/20 text-primary">{t('landing_step_pass_live')}</span>
                       </div>
                       <div className="text-left space-y-1">
-                        <p className="text-xs text-muted-foreground font-mono">Regular Member</p>
+                        <p className="text-xs text-muted-foreground font-mono">{t('landing_step_pass_member')}</p>
                         <p className="text-2xl font-black text-foreground">240 PTS</p>
                       </div>
                       <div className="w-full bg-foreground/10 h-1.5 rounded-full overflow-hidden">

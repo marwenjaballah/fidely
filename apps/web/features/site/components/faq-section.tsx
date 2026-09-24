@@ -7,46 +7,49 @@ import {
   AccordionTrigger,
 } from "@/components/ui/accordion"
 import { Badge } from "@/components/ui/badge"
-
-const FAQS = [
-  {
-    q: "Do customers need to download an app from the App Store?",
-    a: "No. Customers simply point their camera at your counter QR stand. Their pass opens immediately in their mobile browser and can be saved to their home screen in one tap.",
-  },
-  {
-    q: "Do I need special POS hardware or barcode scanners?",
-    a: "Zero extra hardware. Any smartphone, iPad, tablet, or laptop camera acts as your cashier scanner with instant sub-second recognition.",
-  },
-  {
-    q: "How fast is checkout for cashiers and baristas?",
-    a: "Under 1 second. Enter the purchase total and point the camera at the customer's pass. An instant audio chime confirms the transaction.",
-  },
-  {
-    q: "How does fraud prevention work for free rewards?",
-    a: "Rewards generate cryptographic single-use voucher codes that burn instantly upon cashier scan, preventing duplicate claims or screenshot sharing.",
-  },
-]
+import { useI18n } from "@/lib/i18n"
 
 export function FaqSection() {
+  const { t } = useI18n()
+
+  const faqs = [
+    {
+      q: t('landing_faq_q1'),
+      a: t('landing_faq_a1'),
+    },
+    {
+      q: t('landing_faq_q2'),
+      a: t('landing_faq_a2'),
+    },
+    {
+      q: t('landing_faq_q3'),
+      a: t('landing_faq_a3'),
+    },
+    {
+      q: t('landing_faq_q4'),
+      a: t('landing_faq_a4'),
+    },
+  ]
+
   return (
-    <section id="faq" className="py-20 md:py-28 border-b border-border/60 bg-muted/20 relative">
-      <div className="container mx-auto max-w-3xl px-4 sm:px-6 lg:px-8 space-y-12">
+    <section id="faq" className="min-h-screen min-h-[100dvh] flex flex-col justify-center items-center py-16 sm:py-20 border-b border-border/60 bg-muted/20 relative scroll-mt-16">
+      <div className="container mx-auto max-w-3xl px-4 sm:px-6 lg:px-8 space-y-10 my-auto w-full">
         {/* Section Header */}
         <div className="text-center max-w-xl mx-auto space-y-3">
           <Badge variant="outline" className="bg-primary/10 text-primary border-primary/20 text-xs font-bold">
-            FAQ
+            {t('landing_faq_badge')}
           </Badge>
           <h2 className="text-3xl sm:text-4xl md:text-5xl font-black tracking-tight text-foreground">
-            Frequently Asked Questions
+            {t('landing_faq_title')}
           </h2>
           <p className="text-muted-foreground text-sm sm:text-base">
-            Everything you need to know about setting up and running Fidely.
+            {t('landing_faq_subtitle')}
           </p>
         </div>
 
         {/* Accessible Accordion */}
         <Accordion type="single" collapsible className="w-full space-y-3">
-          {FAQS.map((faq, idx) => (
+          {faqs.map((faq, idx) => (
             <AccordionItem
               key={idx}
               value={`item-${idx}`}

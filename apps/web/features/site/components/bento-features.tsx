@@ -5,63 +5,74 @@ import {
   Zap,
   ShieldCheck,
   CheckCircle2,
-  Sparkles,
-  ArrowRight,
-  QrCode,
-  Coffee,
 } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
-
-const PILLARS = [
-  {
-    icon: Smartphone,
-    title: "Web-Native Loyalty Passes",
-    subtitle: "For Customers",
-    description: "Zero App Store downloads. Customers scan to join and save their branded card directly to their browser or phone home screen.",
-    badge: "0 App Installs",
-    badgeColor: "bg-primary/10 text-primary border-primary/20",
-    highlights: ["Instant browser access", "Live points balance", "Custom brand theme"],
-  },
-  {
-    icon: Zap,
-    title: "1-Second Camera Register",
-    subtitle: "For Cashiers & Baristas",
-    description: "Any phone, iPad, or laptop camera works as your high-speed scanner with instant audio chime confirmation at checkout.",
-    badge: "< 1s Scan Speed",
-    badgeColor: "bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/20",
-    highlights: ["Works on any device", "Instant chime confirmation", "Offline-resilient"],
-  },
-  {
-    icon: ShieldCheck,
-    title: "Fraud-Proof Single-Use Perks",
-    subtitle: "For Store Owners",
-    description: "Cryptographic 1-time vouchers burn instantly upon cashier scan, preventing duplicate claims or screenshot sharing.",
-    badge: "100% Tamper Proof",
-    badgeColor: "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20",
-    highlights: ["Auto-burning tokens", "Real-time ledger audit", "Multi-store protection"],
-  },
-]
+import { useI18n } from "@/lib/i18n"
 
 export function BentoFeatures() {
+  const { t } = useI18n()
+
+  const pillars = [
+    {
+      icon: Smartphone,
+      title: t('landing_bento_p1_title'),
+      subtitle: t('landing_bento_p1_subtitle'),
+      description: t('landing_bento_p1_desc'),
+      badge: t('landing_bento_p1_badge'),
+      badgeColor: "bg-primary/10 text-primary border-primary/20",
+      highlights: [
+        t('landing_bento_p1_h1'),
+        t('landing_bento_p1_h2'),
+        t('landing_bento_p1_h3'),
+      ],
+    },
+    {
+      icon: Zap,
+      title: t('landing_bento_p2_title'),
+      subtitle: t('landing_bento_p2_subtitle'),
+      description: t('landing_bento_p2_desc'),
+      badge: t('landing_bento_p2_badge'),
+      badgeColor: "bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/20",
+      highlights: [
+        t('landing_bento_p2_h1'),
+        t('landing_bento_p2_h2'),
+        t('landing_bento_p2_h3'),
+      ],
+    },
+    {
+      icon: ShieldCheck,
+      title: t('landing_bento_p3_title'),
+      subtitle: t('landing_bento_p3_subtitle'),
+      description: t('landing_bento_p3_desc'),
+      badge: t('landing_bento_p3_badge'),
+      badgeColor: "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20",
+      highlights: [
+        t('landing_bento_p3_h1'),
+        t('landing_bento_p3_h2'),
+        t('landing_bento_p3_h3'),
+      ],
+    },
+  ]
+
   return (
-    <section id="features" className="py-20 md:py-28 border-b border-border/60 bg-muted/20 relative">
-      <div className="container mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 space-y-12">
+    <section id="features" className="min-h-screen min-h-[100dvh] flex flex-col justify-center items-center py-16 sm:py-20 border-b border-border/60 bg-muted/20 relative scroll-mt-16">
+      <div className="container mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 space-y-12 my-auto w-full">
         {/* Section Header */}
         <div className="text-center max-w-2xl mx-auto space-y-3">
           <Badge variant="outline" className="bg-primary/10 text-primary border-primary/20 text-xs font-bold">
-            Built for Real-World Retail
+            {t('landing_features_badge')}
           </Badge>
           <h2 className="text-3xl sm:text-4xl md:text-5xl font-black tracking-tight text-foreground">
-            Everything You Need. Nothing You Don't.
+            {t('landing_features_title')}
           </h2>
           <p className="text-muted-foreground text-sm sm:text-base">
-            No bulky hardware, no customer friction, and no complex training.
+            {t('landing_features_subtitle')}
           </p>
         </div>
 
         {/* 3 High-Impact Product Pillars */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-          {PILLARS.map((pillar, idx) => {
+          {pillars.map((pillar, idx) => {
             const Icon = pillar.icon
             return (
               <div
