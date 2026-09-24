@@ -80,9 +80,17 @@ export function CustomerProfileDrawer({
       })
       onOpenChange(false)
     } catch (err: any) {
+      const isDuplicate =
+        err?.message?.toLowerCase().includes('already') ||
+        err?.message?.toLowerCase().includes('registered') ||
+        err?.message?.toLowerCase().includes('linked')
+      const errorMessage = isDuplicate
+        ? t('validation_phone_already_used') || err.message
+        : err.message || t('settings_profile_error') || 'Failed to update profile'
+
       toast({
         title: t('auth_generic_error') || 'Error',
-        description: err.message || 'Failed to update profile',
+        description: errorMessage,
         variant: 'destructive',
       })
     } finally {

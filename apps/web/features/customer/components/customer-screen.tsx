@@ -147,9 +147,17 @@ export function CustomerScreen({ isMerchant = false }: CustomerScreenProps) {
         description: t('profile_saved_desc') || 'Your phone number has been updated.',
       })
     } catch (err: any) {
+      const isDuplicate =
+        err?.message?.toLowerCase().includes('already') ||
+        err?.message?.toLowerCase().includes('registered') ||
+        err?.message?.toLowerCase().includes('linked')
+      const errorMessage = isDuplicate
+        ? t('validation_phone_already_used') || err.message
+        : err.message || t('settings_profile_error') || 'Failed to save phone number'
+
       toast({
         title: t('auth_generic_error') || 'Error',
-        description: err.message || 'Failed to save phone number',
+        description: errorMessage,
         variant: 'destructive',
       })
       throw err
@@ -173,13 +181,13 @@ export function CustomerScreen({ isMerchant = false }: CustomerScreenProps) {
           <div className="flex items-center gap-2">
             <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-bold bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/25">
               <ShieldCheck className="h-3.5 w-3.5" />
-              <span>Customer Passes Wallet</span>
+              <span>{t('merchant_customer_passes_banner') || 'Customer Passes Wallet'}</span>
             </span>
           </div>
           <Button asChild size="sm" variant="default" className="h-8 text-xs font-bold gap-1.5 rounded-full shadow-xs">
             <Link href="/merchant/overview">
               <ArrowLeft className="h-3.5 w-3.5 rtl:rotate-180" />
-              <span>{t('nav_dashboard') || 'Back to Dashboard'}</span>
+              <span>{t('nav_back_to_dashboard') || 'Back to Dashboard'}</span>
             </Link>
           </Button>
         </div>

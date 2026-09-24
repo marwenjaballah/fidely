@@ -76,6 +76,10 @@ export const ar: Record<TranslationKey, string> = {
   nav_switch_workspace: 'التبديل السريع',
   nav_pos_register: 'نقطة البيع (POS)',
   nav_customer_passes: 'بطاقاتي كزبون',
+  nav_back_to_dashboard: 'العودة إلى لوحة التحكم',
+  merchant_pos_terminal_banner: 'نقطة بيع التاجر',
+  merchant_customer_passes_banner: 'محفظة بطاقات العملاء',
+  validation_phone_already_used: 'رقم الهاتف هذا مسجل بالفعل لحساب آخر.',
 
   // Footer & Legal
   footer_privacy_policy: 'سياسة الخصوصية',

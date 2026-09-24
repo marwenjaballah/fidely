@@ -76,6 +76,10 @@ export const fr: Record<TranslationKey, string> = {
   nav_switch_workspace: 'Changement Rapide',
   nav_pos_register: 'Caisse POS',
   nav_customer_passes: 'Cartes Client',
+  nav_back_to_dashboard: 'Retour au tableau de bord',
+  merchant_pos_terminal_banner: 'Terminal POS Commerçant',
+  merchant_customer_passes_banner: 'Portefeuille Cartes Client',
+  validation_phone_already_used: 'Ce numéro de téléphone est déjà associé à un autre compte.',
 
   // Footer & Legal
   footer_privacy_policy: 'Politique de confidentialité',

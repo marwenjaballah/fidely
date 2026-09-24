@@ -74,6 +74,10 @@ export const en = {
   nav_switch_workspace: 'Quick Switch',
   nav_pos_register: 'POS Register',
   nav_customer_passes: 'Customer Passes',
+  nav_back_to_dashboard: 'Back to Dashboard',
+  merchant_pos_terminal_banner: 'Merchant POS Terminal',
+  merchant_customer_passes_banner: 'Customer Passes Wallet',
+  validation_phone_already_used: 'This phone number is already registered to another account.',
 
   // Footer & Legal
   footer_privacy_policy: 'Privacy Policy',

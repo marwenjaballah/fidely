@@ -276,13 +276,13 @@ export function CashierScreen({ isMerchant = false }: CashierScreenProps) {
           <div className="flex items-center gap-2">
             <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-bold bg-primary/10 text-primary border border-primary/25">
               <ShieldCheck className="h-3.5 w-3.5" />
-              <span>Merchant POS Terminal</span>
+              <span>{t('merchant_pos_terminal_banner') || 'Merchant POS Terminal'}</span>
             </span>
           </div>
           <Button asChild size="sm" variant="default" className="h-8 text-xs font-bold gap-1.5 rounded-full shadow-xs">
             <Link href="/merchant/overview">
               <ArrowLeft className="h-3.5 w-3.5 rtl:rotate-180" />
-              <span>{t('nav_dashboard') || 'Back to Dashboard'}</span>
+              <span>{t('nav_back_to_dashboard') || 'Back to Dashboard'}</span>
             </Link>
           </Button>
         </div>
