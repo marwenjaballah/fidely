@@ -7,14 +7,13 @@ import {
   LayoutDashboard,
   Palette,
   Users,
-  LineChart,
+  ShieldCheck,
   Store,
   Settings,
   LogOut,
   X,
   CreditCard,
   QrCode,
-  ShieldCheck,
 } from 'lucide-react'
 import {
   Drawer,
@@ -41,7 +40,7 @@ export function MerchantBottomNav() {
   const isOverview = pathname === '/merchant' || pathname === '/merchant/overview'
   const isCrm = pathname.startsWith('/merchant/crm')
   const isCards = pathname.startsWith('/merchant/customizer') || pathname.startsWith('/merchant/rewards')
-  const isAnalytics = pathname.startsWith('/merchant/analytics')
+  const isStaff = pathname.startsWith('/merchant/staff')
 
   const handleTabClick = (href: string) => {
     posHaptics.tap()
@@ -83,7 +82,7 @@ export function MerchantBottomNav() {
               <LayoutDashboard className="h-5 w-5" />
             </div>
             <span className="text-[10px] mt-0.5 tracking-tight font-medium truncate max-w-full">
-              {t('dashboard_overview') || 'Pulse'}
+              {t('nav_dashboard') || 'Dashboard'}
             </span>
           </button>
 
@@ -131,25 +130,25 @@ export function MerchantBottomNav() {
             </span>
           </button>
 
-          {/* Tab 4: Analytics */}
+          {/* Tab 4: Staff */}
           <button
             type="button"
-            onClick={() => handleTabClick('/merchant/analytics')}
+            onClick={() => handleTabClick('/merchant/staff')}
             className={`flex flex-1 flex-col items-center justify-center py-1.5 px-0.5 rounded-xl transition-all active:scale-95 ${
-              isAnalytics
+              isStaff
                 ? 'text-primary font-bold'
                 : 'text-muted-foreground hover:text-foreground'
             }`}
           >
             <div
               className={`p-1 rounded-xl transition-colors ${
-                isAnalytics ? 'bg-primary/15 text-primary' : ''
+                isStaff ? 'bg-primary/15 text-primary' : ''
               }`}
             >
-              <LineChart className="h-5 w-5" />
+              <ShieldCheck className="h-5 w-5" />
             </div>
             <span className="text-[10px] mt-0.5 tracking-tight font-medium truncate max-w-full">
-              {t('nav_analytics') || 'Analytics'}
+              {t('nav_staff') || 'Staff'}
             </span>
           </button>
 

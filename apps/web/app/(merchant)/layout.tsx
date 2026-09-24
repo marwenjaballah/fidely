@@ -80,7 +80,7 @@ export default function DashboardLayout({
 
         if (pathname === '/merchant' || pathname === '/merchant/overview') {
             items.push({
-                title: t('dashboard_overview'),
+                title: t('nav_dashboard'),
                 href: '/merchant/overview',
                 isLast: true,
             })
@@ -103,12 +103,6 @@ export default function DashboardLayout({
             items.push({
                 title: t('nav_staff'),
                 href: '/merchant/staff',
-                isLast: true,
-            })
-        } else if (pathname.startsWith('/merchant/analytics')) {
-            items.push({
-                title: t('nav_analytics'),
-                href: '/merchant/analytics',
                 isLast: true,
             })
         } else if (pathname.startsWith('/merchant/settings')) {

@@ -301,16 +301,14 @@ function NavItemComponent({
 
   const getNavTitle = (title: string): string => {
     switch (title) {
-      case 'Overview':
-        return t('nav_overview')
+      case 'Dashboard':
+        return t('nav_dashboard')
       case 'Customizer & Rewards':
         return t('nav_customizer')
       case 'CRM':
         return t('nav_crm')
       case 'Staff':
         return t('nav_staff')
-      case 'Analytics':
-        return t('nav_analytics')
       case 'Settings':
         return t('nav_merchant_settings')
       case 'Account':
