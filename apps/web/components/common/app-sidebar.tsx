@@ -120,7 +120,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                         size="default"
                         className="w-full text-sidebar-foreground hover:bg-sidebar-accent/50 hover:text-sidebar-accent-foreground transition-colors group"
                       >
-                        <Link href="/cashier" className="flex items-center gap-3 w-full">
+                        <Link href="/merchant/cashier" className="flex items-center gap-3 w-full">
                           <QrCode className="h-4 w-4 text-primary shrink-0 transition-transform group-hover:scale-110" />
                           {sidebarState !== "collapsed" && (
                             <div className="flex items-center justify-between flex-1 min-w-0">
@@ -153,7 +153,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                         size="default"
                         className="w-full text-sidebar-foreground hover:bg-sidebar-accent/50 hover:text-sidebar-accent-foreground transition-colors group"
                       >
-                        <Link href="/customer/overview" className="flex items-center gap-3 w-full">
+                        <Link href="/merchant/customer" className="flex items-center gap-3 w-full">
                           <CreditCard className="h-4 w-4 text-emerald-500 shrink-0 transition-transform group-hover:scale-110" />
                           {sidebarState !== "collapsed" && (
                             <span className="truncate text-sm font-medium">
@@ -253,13 +253,13 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                 </DropdownMenuLabel>
                 <DropdownMenuSeparator className="bg-sidebar-border/30" />
                 <DropdownMenuItem asChild className="cursor-pointer rounded-lg gap-2">
-                  <Link href="/cashier" className="flex items-center gap-2 w-full">
+                  <Link href="/merchant/cashier" className="flex items-center gap-2 w-full">
                     <QrCode className="h-4 w-4 text-primary shrink-0" />
                     <span>{t('nav_pos_register') || 'Open POS Register'}</span>
                   </Link>
                 </DropdownMenuItem>
                 <DropdownMenuItem asChild className="cursor-pointer rounded-lg gap-2">
-                  <Link href="/customer/overview" className="flex items-center gap-2 w-full">
+                  <Link href="/merchant/customer" className="flex items-center gap-2 w-full">
                     <CreditCard className="h-4 w-4 text-emerald-500 shrink-0" />
                     <span>{t('nav_customer_passes') || 'My Customer Passes'}</span>
                   </Link>

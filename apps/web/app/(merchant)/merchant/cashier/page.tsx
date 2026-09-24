@@ -2,6 +2,6 @@
 
 import { CashierScreen } from '@/features/cashier/components/cashier-screen';
 
-export default function CashierPage() {
-  return <CashierScreen isMerchant={false} />;
+export default function MerchantCashierPage() {
+  return <CashierScreen isMerchant={true} />;
 }

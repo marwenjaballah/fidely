@@ -151,6 +151,19 @@ export default function DashboardLayout({
         )
     }
 
+    const isStandaloneMerchantView =
+        pathname.startsWith('/merchant/cashier') ||
+        pathname.startsWith('/merchant/customer') ||
+        pathname.startsWith('/merchant/pos')
+
+    if (isStandaloneMerchantView) {
+        return (
+            <div className="min-h-svh">
+                {children}
+            </div>
+        )
+    }
+
     return (
         <div className="min-h-svh">
             <SidebarProvider>
@@ -164,7 +177,7 @@ export default function DashboardLayout({
                         logoUrl={activeStore?.logoUrl}
                         rightElement={
                             <Link
-                                href="/cashier"
+                                href="/merchant/cashier"
                                 className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-primary/10 text-primary hover:bg-primary/20 border border-primary/25 text-xs font-bold transition-all active:scale-95 shadow-2xs"
                                 title="Open POS Register"
                             >
