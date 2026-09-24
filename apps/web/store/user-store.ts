@@ -62,6 +62,7 @@ export const useUserStore = create<UserState>((set, get) => ({
       const message =
         err instanceof ApiError ? err.message : 'Failed to update profile. Please try again.'
       set({ error: message, loading: false })
+      throw err instanceof ApiError ? err : new Error(message)
     }
   },
 

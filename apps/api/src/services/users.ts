@@ -3,6 +3,9 @@ import { PrismaClient } from '@repo/database';
 import { AbstractServiceOptions } from '../types/services.js';
 import { getSupabaseServiceClient } from '../lib/supabase.js';
 
+import { HTTPException } from 'hono/http-exception';
+import { normalizePhone, getPhoneSignificantDigits } from '../utils/phone.js';
+
 export class UsersService {
   prisma: PrismaClient;
 
@@ -24,12 +27,53 @@ export class UsersService {
     });
   }
 
-  async updateLoggedUserData(id: string, data: { fullName?: string; phone?: string }) {
+  async updateLoggedUserData(id: string, data: { fullName?: string; phone?: string | null }) {
+    let normalizedPhone: string | null | undefined = undefined;
+
+    if (data.phone !== undefined) {
+      if (data.phone === null || data.phone.trim() === '') {
+        normalizedPhone = null;
+      } else {
+        const normalized = normalizePhone(data.phone);
+        if (!normalized) {
+          normalizedPhone = null;
+        } else {
+          const rawDigits = normalized.replace(/\D/g, '');
+          if (rawDigits.length < 6) {
+            throw new HTTPException(400, {
+              message: 'Please enter a valid phone number with at least 6 digits.',
+            });
+          }
+
+          // Verify phone number is unique across all client accounts
+          const significantDigits = getPhoneSignificantDigits(normalized);
+          const existingUser = await this.prisma.user.findFirst({
+            where: {
+              id: { not: id },
+              OR: [
+                { phone: normalized },
+                { phone: { endsWith: significantDigits } },
+              ],
+            },
+            select: { id: true, email: true },
+          });
+
+          if (existingUser) {
+            throw new HTTPException(409, {
+              message: 'This phone number is already registered to another account.',
+            });
+          }
+
+          normalizedPhone = normalized;
+        }
+      }
+    }
+
     const updated = await this.prisma.user.update({
       where: { id },
       data: {
         ...(data.fullName !== undefined ? { fullName: data.fullName } : {}),
-        ...(data.phone !== undefined ? { phone: data.phone } : {}),
+        ...(normalizedPhone !== undefined ? { phone: normalizedPhone } : {}),
       },
       select: {
         id: true,

@@ -139,12 +139,21 @@ export function CustomerScreen({ isMerchant = false }: CustomerScreenProps) {
   }
 
   const handleSavePhone = async (phone: string) => {
-    await updateProfile({ phone })
-    await revalidateSession()
-    toast({
-      title: t('profile_saved_title') || 'Phone Saved',
-      description: t('profile_saved_desc') || 'Your phone number has been updated.',
-    })
+    try {
+      await updateProfile({ phone })
+      await revalidateSession()
+      toast({
+        title: t('profile_saved_title') || 'Phone Saved',
+        description: t('profile_saved_desc') || 'Your phone number has been updated.',
+      })
+    } catch (err: any) {
+      toast({
+        title: t('auth_generic_error') || 'Error',
+        description: err.message || 'Failed to save phone number',
+        variant: 'destructive',
+      })
+      throw err
+    }
   }
 
   if (loading && memberships.length === 0) {

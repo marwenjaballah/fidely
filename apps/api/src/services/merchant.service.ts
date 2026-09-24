@@ -1,6 +1,7 @@
 import type { PrismaClient } from '@repo/database';
 import { getSupabaseServiceClient } from '../lib/supabase.js';
 import { generateUniqueSlug } from '../lib/slug.js';
+import { normalizePhone, getPhoneSignificantDigits } from '../utils/phone.js';
 
 export class MerchantService {
   constructor(private prisma: PrismaClient, private supabaseAdmin?: any) {}
@@ -144,6 +145,29 @@ export class MerchantService {
       throw new Error('Store not found or unauthorized');
     }
 
+    // Validate phone number uniqueness if provided
+    let normalizedPhone: string | null | undefined = undefined;
+    if (data.phone) {
+      const normalized = normalizePhone(data.phone);
+      if (normalized) {
+        const significantDigits = getPhoneSignificantDigits(normalized);
+        const existingWithPhone = await this.prisma.user.findFirst({
+          where: {
+            OR: [
+              { phone: normalized },
+              { phone: { endsWith: significantDigits } },
+            ],
+          },
+          select: { id: true, email: true },
+        });
+
+        if (existingWithPhone && existingWithPhone.email !== data.email) {
+          throw new Error('This phone number is already registered to another account.');
+        }
+        normalizedPhone = normalized;
+      }
+    }
+
     const serviceClient = getSupabaseServiceClient();
     let authUserId: string | null = null;
     const initialPassword = data.password || 'Cashier@123456';
@@ -222,7 +246,7 @@ export class MerchantService {
       update: {
         role: 'CASHIER',
         fullName: data.fullName,
-        phone: data.phone ?? undefined,
+        phone: normalizedPhone ?? undefined,
         cashierStores: {
           connect: { id: storeId },
         },
@@ -231,7 +255,7 @@ export class MerchantService {
         id: authUserId,
         email: data.email,
         fullName: data.fullName,
-        phone: data.phone ?? undefined,
+        phone: normalizedPhone ?? undefined,
         role: 'CASHIER',
         cashierStores: {
           connect: { id: storeId },
@@ -264,12 +288,39 @@ export class MerchantService {
       throw new Error('Cashier not found in this store or unauthorized');
     }
 
+    let normalizedPhone: string | null | undefined = undefined;
+    if (data.phone !== undefined) {
+      if (data.phone === null || data.phone.trim() === '') {
+        normalizedPhone = null;
+      } else {
+        const normalized = normalizePhone(data.phone);
+        if (normalized) {
+          const significantDigits = getPhoneSignificantDigits(normalized);
+          const existingWithPhone = await this.prisma.user.findFirst({
+            where: {
+              id: { not: staffId },
+              OR: [
+                { phone: normalized },
+                { phone: { endsWith: significantDigits } },
+              ],
+            },
+            select: { id: true },
+          });
+
+          if (existingWithPhone) {
+            throw new Error('This phone number is already registered to another account.');
+          }
+          normalizedPhone = normalized;
+        }
+      }
+    }
+
     // Update in Prisma
     const updatedUser = await this.prisma.user.update({
       where: { id: staffId },
       data: {
         ...(data.fullName !== undefined ? { fullName: data.fullName } : {}),
-        ...(data.phone !== undefined ? { phone: data.phone } : {}),
+        ...(normalizedPhone !== undefined ? { phone: normalizedPhone } : {}),
       },
     });
 
