@@ -1,46 +1,31 @@
-"use client"
-
 import React, { useState } from "react"
 import Link from "next/link"
 import {
-  Sparkles,
   ArrowRight,
   Play,
-  CheckCircle2,
-  Coffee,
   Smartphone,
   Zap,
-  TrendingUp,
   Check,
-  Plus,
-  Flame,
-  Award,
+  Signal,
+  Wifi,
+  Battery,
+  Lock,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
-import { Badge } from "@/components/ui/badge"
 import { useAuth } from "@/features/auth/hooks/use-auth"
 import { posAudio } from "@/features/cashier/lib/pos-audio"
-
+import { AppleWalletPass } from "@/components/common/apple-wallet-card"
 import { useI18n } from "@/lib/i18n"
-
-const QUICK_MENU = [
-  { id: "1", name: "Store Order #1", price: "14.00", pts: 42, icon: "🛍️" },
-  { id: "2", name: "Premium Combo", price: "24.50", pts: 75, icon: "✨" },
-  { id: "3", name: "Special Offer", price: "10.00", pts: 30, icon: "🎁" },
-]
 
 export function HeroSection() {
   const { isAuthenticated, profile } = useAuth()
   const { t } = useI18n()
-  const [selectedItem, setSelectedItem] = useState(QUICK_MENU[0])
   const [customerPoints, setCustomerPoints] = useState(240)
   const [justScanned, setJustScanned] = useState(false)
-  const [scanCount, setScanCount] = useState(14)
 
   const handleSimulateScan = () => {
     posAudio.playSuccess()
-    setCustomerPoints((prev) => prev + selectedItem.pts)
-    setScanCount((prev) => prev + 1)
+    setCustomerPoints((prev) => prev + 25)
     setJustScanned(true)
     setTimeout(() => setJustScanned(false), 2400)
   }
@@ -53,7 +38,6 @@ export function HeroSection() {
 
   return (
     <section className="relative overflow-hidden pt-10 pb-20 md:pt-16 md:pb-28 border-b border-border/60 bg-background">
-
       <div className="container relative mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-8 items-center">
           {/* Left Column: Bold Headline & Story */}
@@ -121,129 +105,95 @@ export function HeroSection() {
             </div>
           </div>
 
-          {/* Right Column: Live Interactive POS + Fidely Wallet Device Mockup */}
-          <div className="lg:col-span-5 flex justify-center relative">
-            {/* Floating Live Notification Badge */}
-            <div className="absolute -top-6 -left-4 sm:-left-8 z-20 bg-background/90 backdrop-blur-md border border-border/80 rounded-2xl p-3 shadow-xl flex items-center gap-3 animate-in fade-in slide-in-from-bottom-2 duration-500">
-              <div className="w-10 h-10 rounded-xl bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 flex items-center justify-center font-bold text-lg">
-                🎉
-              </div>
-              <div>
-                <div className="text-xs font-bold text-foreground">Free Flat White Unlocked!</div>
-                <div className="text-[10px] text-muted-foreground">Sarah just reached 300 PTS</div>
-              </div>
-            </div>
+          {/* Right Column: In-App Code-Generated Mobile Screenshot (Customer Digital Pass) */}
+          <div className="lg:col-span-5 flex flex-col items-center relative">
+            {/* Ambient Store Glow Backdrop */}
+            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-80 h-80 rounded-full bg-gradient-to-tr from-amber-500/25 via-primary/20 to-emerald-500/15 blur-3xl -z-10 pointer-events-none" />
 
-            {/* Floating Live Ticker Bottom */}
-            <div className="absolute -bottom-5 -right-4 sm:-right-6 z-20 bg-background/90 backdrop-blur-md border border-border/80 rounded-2xl px-3.5 py-2.5 shadow-xl flex items-center gap-2.5">
-              <div className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse" />
-              <div className="text-xs font-bold text-foreground">
-                {scanCount} scans today at Counter 01
-              </div>
-            </div>
-
-            {/* Interactive Phone Frame */}
-            <div className="relative w-full max-w-[340px] sm:max-w-[360px] bg-card border-4 border-foreground/15 rounded-[2.5rem] p-5 shadow-2xl shadow-black/20 space-y-4">
-              {/* Phone Speaker & Dynamic Island */}
-              <div className="w-24 h-4 bg-foreground/10 rounded-full mx-auto" />
-
-              {/* Barista Terminal Header */}
-              <div className="flex items-center justify-between border-b border-border/60 pb-3">
-                <div className="flex items-center gap-2">
-                  <div className="w-8 h-8 rounded-xl bg-primary/10 text-primary flex items-center justify-center font-bold">
-                    <Coffee className="w-4 h-4" />
+            {/* Photorealistic iPhone Device Frame */}
+            <div className="relative w-full max-w-[340px] sm:max-w-[355px] rounded-[3rem] p-3 sm:p-3.5 bg-gradient-to-b from-zinc-800 via-zinc-900 to-zinc-950 shadow-[0_25px_60px_-15px_rgba(0,0,0,0.5)] ring-1 ring-white/20 dark:ring-white/10 select-none">
+              {/* Inner Screen */}
+              <div className="relative rounded-[2.4rem] overflow-hidden bg-background border border-black/20 dark:border-white/10 flex flex-col">
+                {/* iOS Status Bar */}
+                <div className="h-10 px-5 pt-2 flex items-center justify-between text-[11px] font-semibold text-foreground/80 bg-background/80 backdrop-blur-md select-none border-b border-border/30">
+                  <span>9:41</span>
+                  {/* Dynamic Island */}
+                  <div className="h-4 w-20 bg-black rounded-full flex items-center justify-end px-2">
+                    <div className="w-1.5 h-1.5 rounded-full bg-zinc-800" />
                   </div>
-                  <div>
-                    <div className="text-xs font-black text-foreground">Artisan Coffee Lab</div>
-                    <div className="text-[10px] text-muted-foreground">Barista Quick Register</div>
-                  </div>
-                </div>
-                <Badge variant="outline" className="text-[10px] font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 border-emerald-500/20">
-                  Ready
-                </Badge>
-              </div>
-
-              {/* Live Menu Selector (Interactive) */}
-              <div className="space-y-1.5">
-                <div className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">
-                  Tap to Add to Order:
-                </div>
-                <div className="grid grid-cols-3 gap-1.5">
-                  {QUICK_MENU.map((item) => {
-                    const isSelected = selectedItem.id === item.id
-                    return (
-                      <button
-                        key={item.id}
-                        type="button"
-                        onClick={() => {
-                          posAudio.playClick()
-                          setSelectedItem(item)
-                        }}
-                        className={`p-2 rounded-xl text-left border transition-all ${
-                          isSelected
-                            ? "bg-primary/10 border-primary text-foreground shadow-xs scale-105"
-                            : "bg-muted/40 border-border/60 text-muted-foreground hover:bg-muted"
-                        }`}
-                      >
-                        <div className="text-base">{item.icon}</div>
-                        <div className="text-[11px] font-bold truncate mt-1">{item.name}</div>
-                        <div className="text-[10px] font-extrabold text-foreground">{item.price} TND</div>
-                      </button>
-                    )
-                  })}
-                </div>
-              </div>
-
-              {/* Live Customer Digital Pass Widget */}
-              <div className="rounded-2xl bg-amber-600 p-4 text-white shadow-md space-y-3 relative overflow-hidden">
-                <div className="flex items-center justify-between text-xs">
-                  <span className="font-bold tracking-wider uppercase opacity-80">Fidely Wallet Pass</span>
-                  <Badge variant="outline" className="text-[10px] font-black bg-white/20 text-white border-none">
-                    Gold Member
-                  </Badge>
-                </div>
-
-                <div className="flex items-end justify-between pt-1">
-                  <div>
-                    <div className="text-[10px] opacity-80 uppercase">Sarah Mitchell</div>
-                    <div className="text-2xl font-black">{customerPoints} PTS</div>
-                  </div>
-                  <div className="text-right">
-                    <div className="text-[10px] opacity-80">Next: Free Coffee</div>
-                    <div className="text-xs font-bold">300 PTS</div>
+                  <div className="flex items-center gap-1.5 text-foreground/70">
+                    <Signal className="w-3 h-3" />
+                    <Wifi className="w-3 h-3" />
+                    <Battery className="w-3.5 h-3.5" />
                   </div>
                 </div>
 
-                {/* Progress bar */}
-                <div className="w-full bg-black/20 h-2 rounded-full overflow-hidden">
-                  <div
-                    className="bg-white h-full rounded-full transition-all duration-500"
-                    style={{ width: `${Math.min(100, (customerPoints / 300) * 100)}%` }}
+                {/* Minimal Web Pass URL Bar */}
+                <div className="flex items-center justify-between px-3.5 py-1.5 bg-muted/40 border-b border-border/40 text-[10px] text-muted-foreground">
+                  <div className="flex items-center gap-1.5 font-mono">
+                    <Lock className="w-2.5 h-2.5 text-emerald-500" />
+                    <span>fidely.app/pass/artisan</span>
+                  </div>
+                  <span className="font-bold text-[9px] uppercase tracking-wider text-primary bg-primary/10 px-1.5 py-0.5 rounded">
+                    Apple / Google Wallet
+                  </span>
+                </div>
+
+                {/* The In-App Digital Loyalty Pass */}
+                <div className="p-3 bg-muted/20 relative">
+                  {/* Optical Scanner Laser Simulation */}
+                  {justScanned && (
+                    <div className="absolute inset-0 pointer-events-none z-30 flex items-center justify-center">
+                      <div className="w-48 h-1 bg-emerald-400 rounded-full shadow-[0_0_20px_4px_rgba(52,211,153,0.9)] animate-pulse" />
+                    </div>
+                  )}
+
+                  <AppleWalletPass
+                    storeName="Artisan Coffee Lab"
+                    primaryColor="#B45309"
+                    pointsBalance={customerPoints}
+                    pointsPerTnd={3}
+                    qrCodeToken="FIDELY:PASS:SARAH-8921"
+                    memberName="Sarah Mitchell"
+                    memberSince="May 2024"
+                    rewardsCount={customerPoints >= 300 ? 1 : 0}
+                    nextRewardName="Free Flat White"
+                    nextRewardCost={300}
+                    showQr={true}
+                    interactive={true}
+                    className="shadow-none border-0"
                   />
                 </div>
               </div>
+            </div>
 
-              {/* Scan Action Button with Tactile Feedback */}
+            {/* Interactive "Simulate Scan" Controller */}
+            <div className="w-full max-w-[340px] sm:max-w-[355px] pt-3.5 text-center space-y-2">
               <Button
+                type="button"
                 onClick={handleSimulateScan}
-                className={`w-full h-12 rounded-xl font-black text-xs sm:text-sm shadow-md transition-all active:scale-95 gap-2 ${
+                className={`w-full h-12 rounded-2xl font-bold text-xs sm:text-sm shadow-lg transition-all active:scale-[0.98] gap-2 ${
                   justScanned
-                    ? "bg-emerald-600 hover:bg-emerald-700 text-white"
-                    : "bg-primary hover:bg-primary/90 text-primary-foreground"
+                    ? "bg-emerald-600 hover:bg-emerald-700 text-white shadow-emerald-500/25 ring-2 ring-emerald-500/30"
+                    : "bg-foreground hover:bg-foreground/90 text-background"
                 }`}
               >
                 {justScanned ? (
                   <>
                     <Check className="w-4 h-4 animate-bounce" />
-                    <span>+{selectedItem.pts} Points Credited!</span>
+                    <span>+25 Points Scanned & Awarded!</span>
                   </>
                 ) : (
                   <>
-                    <Zap className="w-4 h-4" />
-                    <span>Tap to Charge {selectedItem.price} TND & Award Points</span>
+                    <Zap className="w-4 h-4 text-amber-400" />
+                    <span>Tap to Simulate Cashier Scan (+25 PTS)</span>
                   </>
                 )}
               </Button>
+              <p className="text-[11px] text-muted-foreground flex items-center justify-center gap-1.5">
+                <Smartphone className="w-3.5 h-3.5 opacity-70" />
+                <span>Interactive app preview • Tap the (i) on pass to flip</span>
+              </p>
             </div>
           </div>
         </div>
