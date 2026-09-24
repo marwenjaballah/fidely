@@ -34,11 +34,6 @@ export function SiteFooter() {
             <div className="text-xs font-bold uppercase tracking-wider text-foreground">{t('footer_explore_title')}</div>
             <ul className="space-y-2 text-xs text-muted-foreground">
               <li>
-                <a href="/#interactive-playground" className="hover:text-foreground transition-colors">
-                  {t('nav_intro')}
-                </a>
-              </li>
-              <li>
                 <a href="/#features" className="hover:text-foreground transition-colors">
                   {t('nav_features')}
                 </a>
@@ -49,8 +44,8 @@ export function SiteFooter() {
                 </a>
               </li>
               <li>
-                <a href="/#reviews" className="hover:text-foreground transition-colors">
-                  {t('footer_reviews')}
+                <a href="/#faq" className="hover:text-foreground transition-colors">
+                  FAQ
                 </a>
               </li>
             </ul>

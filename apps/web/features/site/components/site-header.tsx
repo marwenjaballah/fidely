@@ -63,13 +63,8 @@ export function SiteHeader() {
         <Link href="/" className="flex items-center gap-2.5 group transition-opacity hover:opacity-90">
           <FidelyLogo size="md" variant="solid" className="transition-transform duration-200 group-hover:scale-105" />
           <div className="flex flex-col">
-            <div className="flex items-center gap-1.5">
-              <span className="text-lg font-black tracking-tight text-foreground">{t('app_name')}</span>
-              <span className="rounded-md bg-primary/10 px-1.5 py-0.5 text-[10px] font-bold text-primary">
-                PRO
-              </span>
-            </div>
-            <span className="text-[10px] font-medium text-muted-foreground -mt-1 hidden sm:block">
+            <span className="text-lg font-black tracking-tight text-foreground">{t('app_name')}</span>
+            <span className="text-[10px] font-medium text-muted-foreground -mt-0.5 hidden sm:block">
               {t('landing_badge')}
             </span>
           </div>
