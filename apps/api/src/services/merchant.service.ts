@@ -34,7 +34,7 @@ export class MerchantService {
         name: data.name,
         slug: uniqueSlug,
         primaryColor: data.primaryColor || '#000000',
-        currency: data.currency || 'TND',
+        currency: (data.currency && data.currency.trim()) ? data.currency.trim().toUpperCase() : 'TND',
         pointsPerTnd: data.pointsPerTnd || 10,
         welcomePoints: data.welcomePoints || 0,
         logoUrl: data.logoUrl ?? null,
