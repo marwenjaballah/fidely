@@ -7,6 +7,7 @@ export interface Store {
   name: string
   slug: string
   primaryColor: string
+  currency?: string
   pointsPerTnd: number
   welcomePoints?: number
   logoUrl?: string | null
@@ -70,10 +71,10 @@ export interface MerchantState {
   error: string | null
 
   fetchStores: () => Promise<void>
-  createStore: (name: string, slug?: string, primaryColor?: string, pointsPerTnd?: number) => Promise<Store>
+  createStore: (name: string, slug?: string, primaryColor?: string, pointsPerTnd?: number, currency?: string) => Promise<Store>
   setActiveStore: (storeId: string) => void
   updateStore: (storeId: string, data: Partial<Store>) => Promise<void>
-  fetchCustomers: (storeId: string) => Promise<void>
+  fetchCustomers: (storeId: string, query?: string) => Promise<void>
   fetchStaff: (storeId: string) => Promise<void>
   fetchAvailableStaff: (storeId: string) => Promise<AvailableStaff[]>
   createStaff: (storeId: string, data: { fullName: string; email: string; password?: string; phone?: string }) => Promise<Staff>
@@ -141,7 +142,7 @@ export const useMerchantStore = create<MerchantState>((set, get) => ({
     }
   },
 
-  createStore: async (name: string, slug?: string, primaryColor?: string, pointsPerTnd?: number) => {
+  createStore: async (name: string, slug?: string, primaryColor?: string, pointsPerTnd?: number, currency?: string) => {
     set({ loading: true, error: null })
     try {
       const client = getMerchantClient()
@@ -149,6 +150,7 @@ export const useMerchantStore = create<MerchantState>((set, get) => ({
         name,
         slug: slug || undefined,
         primaryColor: primaryColor || '#ff5722',
+        currency: currency || 'TND',
         pointsPerTnd: pointsPerTnd || 10,
       })
       const stores = [...get().stores, data]
@@ -194,11 +196,14 @@ export const useMerchantStore = create<MerchantState>((set, get) => ({
     }
   },
 
-  fetchCustomers: async (storeId: string) => {
+  fetchCustomers: async (storeId: string, query?: string) => {
     set({ loading: true, error: null })
     try {
       const client = getMerchantClient()
-      const { data } = await client.get<Customer[]>(`/api/v1/merchant/stores/${storeId}/customers`)
+      const url = query
+        ? `/api/v1/merchant/stores/${storeId}/customers?query=${encodeURIComponent(query)}`
+        : `/api/v1/merchant/stores/${storeId}/customers`
+      const { data } = await client.get<Customer[]>(url)
       set({ customers: data, loading: false, error: null })
     } catch (err) {
       const message = err instanceof ApiError ? err.message : 'Failed to load customers.'

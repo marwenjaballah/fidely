@@ -71,11 +71,11 @@ router.openapi(getRecentTransactionsRoute, async (c) => {
 router.openapi(issuePointsRoute, async (c) => {
   try {
     const user = requireUser(c);
-    const { qrToken, amountTnd, storeId } = c.req.valid('json');
+    const { qrToken, amountTnd, storeId, idempotencyKey } = c.req.valid('json');
     const prisma = c.get('prisma');
     const service = new TransactionsService(prisma);
 
-    const result = await service.issuePoints(user.id, user.role, qrToken, amountTnd, storeId);
+    const result = await service.issuePoints(user.id, user.role, qrToken, amountTnd, storeId, idempotencyKey);
     return c.json(result, 200);
   } catch (error: any) {
     const status = error.status || error.statusCode || 400;

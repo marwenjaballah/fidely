@@ -47,6 +47,7 @@ model Store {
   slug         String   @unique
   logoUrl      String?
   primaryColor String   @default("#000000")
+  currency     String   @default("TND")
   pointsPerTnd Decimal  @default(10.00) @db.Decimal(10, 2)
   welcomePoints Int     @default(0)
   active       Boolean  @default(true)
@@ -79,6 +80,7 @@ model CustomerMembership {
   vouchers     Voucher[]
 
   @@unique([customerId, storeId], name: "customerStoreIdx")
+  @@index([storeId, joinedAt(sort: Desc)])
   @@map("customer_memberships")
 }
 
@@ -95,6 +97,7 @@ model Reward {
   store    Store     @relation(fields: [storeId], references: [id])
   vouchers Voucher[]
 
+  @@index([storeId, active])
   @@map("rewards")
 }
 
@@ -106,12 +109,17 @@ model Transaction {
   type           String // 'earn' or 'redeem'
   amountTnd      Decimal? @db.Decimal(10, 3)
   pointsAffected Int
+  idempotencyKey String?  @unique
   createdAt      DateTime @default(now())
 
   // Relationships
   store      Store              @relation(fields: [storeId], references: [id])
   membership CustomerMembership @relation(fields: [membershipId], references: [id])
 
+  @@index([storeId, createdAt(sort: Desc)])
+  @@index([membershipId, createdAt(sort: Desc)])
+  @@index([cashierId, createdAt(sort: Desc)])
+  @@index([storeId, type])
   @@map("transactions")
 }
 
@@ -128,6 +136,8 @@ model Voucher {
   membership CustomerMembership @relation(fields: [membershipId], references: [id])
   reward     Reward             @relation(fields: [rewardId], references: [id])
 
+  @@index([membershipId, status])
+  @@index([rewardId])
   @@map("vouchers")
 }
 

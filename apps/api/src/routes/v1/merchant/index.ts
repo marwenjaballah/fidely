@@ -55,7 +55,9 @@ router.openapi(createStoreRoute, async (c) => {
       name: string
       slug?: string
       primaryColor?: string
+      currency?: string
       pointsPerTnd?: number
+      welcomePoints?: number
       logoUrl?: string | null
     });
     return c.json(store, 201);
@@ -80,7 +82,9 @@ router.openapi(updateStoreRoute, async (c) => {
       name?: string
       slug?: string
       primaryColor?: string
+      currency?: string
       pointsPerTnd?: number
+      welcomePoints?: number
       logoUrl?: string | null
     });
     return c.json(store, 200);
@@ -96,11 +100,12 @@ router.openapi(getStoreCustomersRoute, async (c) => {
   }
   
   const { id } = c.req.valid('param');
+  const query = c.req.valid('query');
   const prisma = c.get('prisma');
   const service = new MerchantService(prisma);
   
   try {
-    const customers = await service.getStoreCustomers(id, user.id);
+    const customers = await service.getStoreCustomers(id, user.id, query);
     return c.json(customers, 200);
   } catch (error: any) {
     return c.json({ error: error.message }, 400) as any;

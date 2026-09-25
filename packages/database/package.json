@@ -29,6 +29,7 @@
     "db:status:dev": "dotenv -e ../../.env.development -- prisma migrate status",
     "postinstall": "prisma generate",
     "build": "tsc && tsc-alias",
+    "check-types": "tsc --noEmit",
     "dev": "tsc --watch"
   },
   "dependencies": {

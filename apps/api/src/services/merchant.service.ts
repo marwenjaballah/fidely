@@ -15,6 +15,7 @@ export class MerchantService {
       name: s.name,
       slug: s.slug,
       primaryColor: s.primaryColor || '#000000',
+      currency: s.currency || 'TND',
       pointsPerTnd: Number(s.pointsPerTnd) || 10,
       welcomePoints: Number(s.welcomePoints) || 0,
       logoUrl: s.logoUrl || null,
@@ -23,7 +24,7 @@ export class MerchantService {
     }));
   }
 
-  async createStore(merchantId: string, data: { name: string; slug?: string; primaryColor?: string; pointsPerTnd?: number; welcomePoints?: number; logoUrl?: string | null }) {
+  async createStore(merchantId: string, data: { name: string; slug?: string; primaryColor?: string; currency?: string; pointsPerTnd?: number; welcomePoints?: number; logoUrl?: string | null }) {
     const candidate = data.slug && data.slug.trim() ? data.slug : data.name;
     const uniqueSlug = await generateUniqueSlug(this.prisma, candidate);
 
@@ -33,6 +34,7 @@ export class MerchantService {
         name: data.name,
         slug: uniqueSlug,
         primaryColor: data.primaryColor || '#000000',
+        currency: data.currency || 'TND',
         pointsPerTnd: data.pointsPerTnd || 10,
         welcomePoints: data.welcomePoints || 0,
         logoUrl: data.logoUrl ?? null,
@@ -41,12 +43,13 @@ export class MerchantService {
 
     return {
       ...store,
+      currency: store.currency || 'TND',
       pointsPerTnd: Number(store.pointsPerTnd) || 10,
       welcomePoints: Number((store as any).welcomePoints) || 0,
     };
   }
 
-  async updateStore(storeId: string, merchantId: string, data: { name?: string; slug?: string; primaryColor?: string; pointsPerTnd?: number; welcomePoints?: number; logoUrl?: string | null }) {
+  async updateStore(storeId: string, merchantId: string, data: { name?: string; slug?: string; primaryColor?: string; currency?: string; pointsPerTnd?: number; welcomePoints?: number; logoUrl?: string | null }) {
     // Verify ownership
     const store = await this.prisma.store.findFirst({
       where: { id: storeId, ownerId: merchantId },
@@ -69,6 +72,7 @@ export class MerchantService {
         ...(data.name !== undefined ? { name: data.name } : {}),
         slug: nextSlug,
         ...(data.primaryColor !== undefined ? { primaryColor: data.primaryColor } : {}),
+        ...(data.currency !== undefined ? { currency: data.currency } : {}),
         ...(data.pointsPerTnd !== undefined ? { pointsPerTnd: data.pointsPerTnd } : {}),
         ...(data.welcomePoints !== undefined ? { welcomePoints: data.welcomePoints } : {}),
         ...(data.logoUrl !== undefined ? { logoUrl: data.logoUrl } : {}),
@@ -77,12 +81,17 @@ export class MerchantService {
 
     return {
       ...updated,
+      currency: updated.currency || 'TND',
       pointsPerTnd: Number(updated.pointsPerTnd) || 10,
       welcomePoints: Number((updated as any).welcomePoints) || 0,
     };
   }
 
-  async getStoreCustomers(storeId: string, merchantId: string) {
+  async getStoreCustomers(
+    storeId: string,
+    merchantId: string,
+    options?: { page?: number; limit?: number; query?: string }
+  ) {
     // Verify ownership
     const store = await this.prisma.store.findFirst({
       where: { id: storeId, ownerId: merchantId },
@@ -92,10 +101,27 @@ export class MerchantService {
       throw new Error('Store not found or unauthorized');
     }
 
+    const where: any = { storeId };
+    if (options?.query && options.query.trim()) {
+      const q = options.query.trim();
+      where.customer = {
+        OR: [
+          { fullName: { contains: q, mode: 'insensitive' } },
+          { email: { contains: q, mode: 'insensitive' } },
+          { phone: { contains: q } },
+        ],
+      };
+    }
+
+    const take = options?.limit ? Math.min(Math.max(1, options.limit), 100) : undefined;
+    const skip = options?.page && take ? (Math.max(1, options.page) - 1) * take : undefined;
+
     const memberships = await this.prisma.customerMembership.findMany({
-      where: { storeId },
+      where,
       include: { customer: true },
       orderBy: { joinedAt: 'desc' },
+      ...(take ? { take } : {}),
+      ...(skip !== undefined ? { skip } : {}),
     });
 
     return memberships.map((m) => ({
@@ -507,29 +533,66 @@ export class MerchantService {
       throw new Error('Store not found or unauthorized');
     }
 
-    const totalMembers = await this.prisma.customerMembership.count({
+    // 1. Total members count
+    const totalMembersPromise = this.prisma.customerMembership.count({
       where: { storeId },
     });
 
-    // In a real application, you might use Prisma aggregates for this, but to keep it simple:
-    const transactions = await this.prisma.transaction.findMany({
+    // 2. High-performance database aggregate grouping for points issued and redeemed
+    const pointsTotalsPromise = this.prisma.transaction.groupBy({
+      by: ['type'],
       where: { storeId },
+      _sum: {
+        pointsAffected: true,
+      },
     });
 
-    const totalPointsIssued = transactions
-      .filter((t) => t.type === 'earn')
-      .reduce((sum, t) => sum + t.pointsAffected, 0);
+    // 3. Fetch recent transactions for timeline chart (capped at last 100 transactions)
+    const recentTxPromise = this.prisma.transaction.findMany({
+      where: { storeId },
+      orderBy: { createdAt: 'desc' },
+      take: 100,
+      select: {
+        createdAt: true,
+        type: true,
+        pointsAffected: true,
+      },
+    });
 
-    const totalPointsRedeemed = transactions
-      .filter((t) => t.type === 'redeem')
-      .reduce((sum, t) => sum + Math.abs(t.pointsAffected), 0);
+    const [totalMembers, pointsTotals, recentTx] = await Promise.all([
+      totalMembersPromise,
+      pointsTotalsPromise,
+      recentTxPromise,
+    ]);
 
-    // Basic recent transactions grouping by date (last 7 days could be calculated here)
-    const recentTransactions = transactions.slice(-10).map((t) => ({
-      date: t.createdAt.toISOString().split('T')[0],
-      issued: t.type === 'earn' ? t.pointsAffected : 0,
-      redeemed: t.type === 'redeem' ? Math.abs(t.pointsAffected) : 0,
-    }));
+    let totalPointsIssued = 0;
+    let totalPointsRedeemed = 0;
+
+    for (const item of pointsTotals) {
+      if (item.type === 'earn') {
+        totalPointsIssued = item._sum.pointsAffected || 0;
+      } else if (item.type === 'redeem') {
+        totalPointsRedeemed = Math.abs(item._sum.pointsAffected || 0);
+      }
+    }
+
+    // Group recent transactions chronologically by day
+    const dailyMap = new Map<string, { date: string; issued: number; redeemed: number }>();
+
+    for (const t of recentTx) {
+      const dateStr = t.createdAt.toISOString().split('T')[0] || '';
+      const existing = dailyMap.get(dateStr) || { date: dateStr, issued: 0, redeemed: 0 };
+      if (t.type === 'earn') {
+        existing.issued += t.pointsAffected;
+      } else if (t.type === 'redeem') {
+        existing.redeemed += Math.abs(t.pointsAffected);
+      }
+      dailyMap.set(dateStr, existing);
+    }
+
+    const recentTransactions = Array.from(dailyMap.values())
+      .sort((a, b) => a.date.localeCompare(b.date))
+      .slice(-14);
 
     return {
       totalMembers,

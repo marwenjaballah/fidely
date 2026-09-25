@@ -1,5 +1,6 @@
 import type { PrismaClient, Prisma, Store } from '@repo/database';
 import { HTTPException } from 'hono/http-exception';
+import { normalizePhone, getPhoneSignificantDigits } from '../utils/phone.js';
 
 export class TransactionsService {
   constructor(private prisma: PrismaClient) {}
@@ -18,6 +19,7 @@ export class TransactionsService {
         name: s.name,
         slug: s.slug,
         primaryColor: s.primaryColor,
+        currency: s.currency || 'TND',
         pointsPerTnd: Number(s.pointsPerTnd),
         isOwner: true,
       }));
@@ -39,6 +41,7 @@ export class TransactionsService {
       name: s.name,
       slug: s.slug,
       primaryColor: s.primaryColor,
+      currency: s.currency || 'TND',
       pointsPerTnd: Number(s.pointsPerTnd),
       isOwner: s.ownerId === userId,
     }));
@@ -113,45 +116,78 @@ export class TransactionsService {
   ) {
     let customerId: string | null = null;
     let qrStoreId: string | null = null;
+    const trimmedToken = qrToken.trim();
 
-    // Check format: "customerId:storeId"
-    if (qrToken.includes(':')) {
-      const parts = qrToken.split(':');
-      customerId = parts[0] || null;
-      qrStoreId = parts[1] || null;
+    // 1. First priority: Exact match on unique qrCodeToken in CustomerMembership
+    const membershipByToken = await this.prisma.customerMembership.findUnique({
+      where: { qrCodeToken: trimmedToken },
+      include: { customer: true, store: true },
+    });
+
+    if (membershipByToken) {
+      customerId = membershipByToken.customerId;
+      qrStoreId = membershipByToken.storeId;
     } else {
-      // Check if it's a raw qrCodeToken from CustomerMembership
-      const existingMembership = await this.prisma.customerMembership.findUnique({
-        where: { qrCodeToken: qrToken },
-        include: { customer: true, store: true },
-      });
+      // 2. Check if token format is "customerId:storeId" or "customerId:storeId:nonce"
+      if (trimmedToken.includes(':')) {
+        const parts = trimmedToken.split(':');
+        const candidateCustomerId = parts[0] || null;
+        const candidateStoreId = parts[1] || null;
 
-      if (existingMembership) {
-        customerId = existingMembership.customerId;
-        qrStoreId = existingMembership.storeId;
-      } else {
-        // Check if raw user ID
-        const customerById = await this.prisma.user.findUnique({
-          where: { id: qrToken },
-        });
-
-        if (customerById) {
-          customerId = customerById.id;
-        } else if (allowPhone) {
-          // Check if it's customer phone digits
-          const cleanedDigits = qrToken.replace(/\D/g, '');
-          if (cleanedDigits.length >= 3) {
-            const customerByPhone = await this.prisma.user.findFirst({
-              where: {
-                phone: {
-                  contains: cleanedDigits,
-                  mode: 'insensitive',
-                },
+        if (candidateCustomerId && candidateStoreId) {
+          const existing = await this.prisma.customerMembership.findUnique({
+            where: {
+              customerStoreIdx: {
+                customerId: candidateCustomerId,
+                storeId: candidateStoreId,
               },
-            });
-            if (customerByPhone) {
-              customerId = customerByPhone.id;
+            },
+          });
+
+          if (existing) {
+            // If the membership has an active rotated token that differs from the scanned token, reject as expired
+            if (existing.qrCodeToken && existing.qrCodeToken !== trimmedToken) {
+              throw new HTTPException(400, {
+                message: 'This loyalty QR pass is expired or has been regenerated. Please ask the customer to display their updated pass.',
+              });
             }
+            customerId = candidateCustomerId;
+            qrStoreId = candidateStoreId;
+          }
+        }
+      }
+
+      // 3. Fallback: Raw customer UUID
+      if (!customerId) {
+        const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(trimmedToken);
+        if (isUuid) {
+          const customerById = await this.prisma.user.findUnique({
+            where: { id: trimmedToken },
+          });
+          if (customerById) {
+            customerId = customerById.id;
+          }
+        }
+      }
+
+      // 4. Fallback: Phone number matching (only allowed for point earning, never for redemption)
+      if (!customerId && allowPhone) {
+        const normalized = normalizePhone(trimmedToken);
+        const digits = trimmedToken.replace(/\D/g, '');
+
+        // Require at least 8 digits to prevent prefix collisions
+        if (digits.length >= 8) {
+          const significantDigits = getPhoneSignificantDigits(digits);
+          const customerByPhone = await this.prisma.user.findFirst({
+            where: {
+              OR: [
+                ...(normalized ? [{ phone: normalized }] : []),
+                { phone: { endsWith: significantDigits } },
+              ],
+            },
+          });
+          if (customerByPhone) {
+            customerId = customerByPhone.id;
           }
         }
       }
@@ -163,7 +199,9 @@ export class TransactionsService {
           message: 'Invalid customer QR pass. Rewards can only be redeemed by scanning customer QR pass.',
         });
       }
-      throw new HTTPException(400, { message: 'Invalid customer pass or phone number.' });
+      throw new HTTPException(400, {
+        message: 'Invalid customer pass or phone number. For phone search, please enter at least 8 digits.',
+      });
     }
 
     // Verify customer exists
@@ -200,7 +238,8 @@ export class TransactionsService {
     cashierRole: string | undefined,
     qrToken: string,
     amountTnd: number,
-    storeId?: string
+    storeId?: string,
+    idempotencyKey?: string
   ) {
     if (amountTnd <= 0) {
       throw new HTTPException(400, { message: 'Transaction amount must be greater than 0.' });
@@ -209,10 +248,27 @@ export class TransactionsService {
     // 1. Authorize cashier and resolve store
     const store = await this.resolveAndValidateCashierStore(cashierId, cashierRole, storeId);
 
-    // 2. Validate customer and protect against cross-store card abuse
+    // 2. Check for duplicate offline-synced transaction if idempotencyKey is supplied
+    if (idempotencyKey && idempotencyKey.trim()) {
+      const existingTx = await this.prisma.transaction.findUnique({
+        where: { idempotencyKey: idempotencyKey.trim() },
+        include: { store: true, membership: { include: { customer: true } } },
+      });
+
+      if (existingTx) {
+        return {
+          newBalance: existingTx.membership.pointsBalance,
+          pointsIssued: existingTx.pointsAffected,
+          storeName: existingTx.store.name,
+          customerName: existingTx.membership.customer.fullName || existingTx.membership.customer.email,
+        };
+      }
+    }
+
+    // 3. Validate customer and protect against cross-store card abuse
     const { customer, customerId } = await this.resolveCustomerAndMembership(qrToken, store);
 
-    // 3. Calculate points according to this store's multiplier
+    // 4. Calculate points according to this store's multiplier
     const pointsPerTnd = Number(store.pointsPerTnd || 10);
     const pointsToIssue = Math.max(1, Math.round(amountTnd * pointsPerTnd));
 
@@ -238,15 +294,15 @@ export class TransactionsService {
         });
       }
 
-      // Add points
+      // Concurrency-safe atomic increment
       const updatedMembership = await tx.customerMembership.update({
         where: { id: membership.id },
         data: {
-          pointsBalance: membership.pointsBalance + pointsToIssue,
+          pointsBalance: { increment: pointsToIssue },
         },
       });
 
-      // Log transaction with exact store and cashier
+      // Log transaction with exact store, cashier, and idempotency key
       await tx.transaction.create({
         data: {
           storeId: store.id,
@@ -255,6 +311,7 @@ export class TransactionsService {
           type: 'earn',
           amountTnd,
           pointsAffected: pointsToIssue,
+          idempotencyKey: idempotencyKey ? idempotencyKey.trim() : null,
         },
       });
 
@@ -328,12 +385,25 @@ export class TransactionsService {
         });
       }
 
-      // Deduct points
-      const updatedMembership = await tx.customerMembership.update({
-        where: { id: membership.id },
-        data: {
-          pointsBalance: membership.pointsBalance - pointsCost,
+      // Concurrency-safe atomic deduction with positive-balance guard
+      const updateResult = await tx.customerMembership.updateMany({
+        where: {
+          id: membership.id,
+          pointsBalance: { gte: pointsCost },
         },
+        data: {
+          pointsBalance: { decrement: pointsCost },
+        },
+      });
+
+      if (updateResult.count === 0) {
+        throw new HTTPException(400, {
+          message: `Insufficient points or concurrent transaction in progress. Please refresh and try again.`,
+        });
+      }
+
+      const updatedMembership = await tx.customerMembership.findUniqueOrThrow({
+        where: { id: membership.id },
       });
 
       // Log transaction
@@ -439,16 +509,17 @@ export class TransactionsService {
   ) {
     const store = await this.resolveAndValidateCashierStore(userId, userRole, storeId);
     const cleanedDigits = phoneQuery.replace(/\D/g, '');
-    if (!cleanedDigits || cleanedDigits.length < 2) {
+    if (!cleanedDigits || cleanedDigits.length < 3) {
       return [];
     }
 
+    const significantDigits = getPhoneSignificantDigits(cleanedDigits);
     const users = await this.prisma.user.findMany({
       where: {
-        phone: {
-          contains: cleanedDigits,
-          mode: 'insensitive',
-        },
+        OR: [
+          { phone: { contains: cleanedDigits } },
+          { phone: { endsWith: significantDigits } },
+        ],
       },
       take: 8,
       include: {
@@ -460,18 +531,7 @@ export class TransactionsService {
 
     const results = [];
     for (const u of users) {
-      let membership = u.memberships[0];
-      if (!membership) {
-        membership = await this.prisma.customerMembership.create({
-          data: {
-            customerId: u.id,
-            storeId: store.id,
-            pointsBalance: (store as any).welcomePoints > 0 ? (store as any).welcomePoints : 0,
-            qrCodeToken: `${u.id}:${store.id}`,
-            joinSource: 'CASHIER_PHONE_SEARCH',
-          },
-        });
-      }
+      const membership = u.memberships[0];
 
       results.push({
         customerId: u.id,
@@ -479,10 +539,10 @@ export class TransactionsService {
         fullName: u.fullName,
         phone: u.phone,
         email: u.email,
-        membershipId: membership.id,
-        pointsBalance: membership.pointsBalance,
-        qrCodeToken: membership.qrCodeToken,
-        qrToken: membership.qrCodeToken || `${u.id}:${store.id}`,
+        membershipId: membership?.id || '',
+        pointsBalance: membership?.pointsBalance ?? 0,
+        qrCodeToken: membership?.qrCodeToken || `${u.id}:${store.id}`,
+        qrToken: membership?.qrCodeToken || `${u.id}:${store.id}`,
       });
     }
 

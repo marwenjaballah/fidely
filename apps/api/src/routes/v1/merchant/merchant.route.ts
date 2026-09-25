@@ -15,6 +15,7 @@ export const getStoresRoute = createRoute({
             name: z.string(),
             slug: z.string(),
             primaryColor: z.string(),
+            currency: z.string().default('TND'),
             pointsPerTnd: z.coerce.number(),
             welcomePoints: z.coerce.number().optional().default(0),
             logoUrl: z.string().nullable().optional(),
@@ -38,6 +39,7 @@ export const createStoreRoute = createRoute({
             name: z.string(),
             slug: z.string().optional(),
             primaryColor: z.string().optional().default('#000000'),
+            currency: z.string().optional().default('TND'),
             pointsPerTnd: z.coerce.number().positive().optional().default(10),
             welcomePoints: z.coerce.number().nonnegative().optional().default(0),
             logoUrl: z.string().nullable().optional(),
@@ -56,6 +58,7 @@ export const createStoreRoute = createRoute({
             name: z.string(),
             slug: z.string(),
             primaryColor: z.string(),
+            currency: z.string().default('TND'),
             pointsPerTnd: z.coerce.number(),
             welcomePoints: z.coerce.number().optional().default(0),
             logoUrl: z.string().nullable().optional(),
@@ -85,6 +88,7 @@ export const updateStoreRoute = createRoute({
             name: z.string().optional(),
             slug: z.string().optional(),
             primaryColor: z.string().optional(),
+            currency: z.string().optional(),
             pointsPerTnd: z.coerce.number().positive().optional(),
             welcomePoints: z.coerce.number().nonnegative().optional(),
             logoUrl: z.string().nullable().optional(),
@@ -103,6 +107,7 @@ export const updateStoreRoute = createRoute({
             name: z.string(),
             slug: z.string(),
             primaryColor: z.string(),
+            currency: z.string().default('TND'),
             pointsPerTnd: z.coerce.number(),
             welcomePoints: z.coerce.number().optional().default(0),
             logoUrl: z.string().nullable().optional(),
@@ -121,6 +126,11 @@ export const getStoreCustomersRoute = createRoute({
   request: {
     params: z.object({
       id: z.string(),
+    }),
+    query: z.object({
+      page: z.coerce.number().int().positive().optional(),
+      limit: z.coerce.number().int().positive().max(100).optional(),
+      query: z.string().optional(),
     }),
   },
   responses: {

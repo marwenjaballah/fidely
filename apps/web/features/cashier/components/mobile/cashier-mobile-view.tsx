@@ -23,7 +23,11 @@ import {
   Loader2,
   Delete,
   LogOut,
+  Wifi,
+  WifiOff,
+  RefreshCw,
 } from 'lucide-react'
+import { Switch } from '@/components/ui/switch'
 import { useI18n } from '@/lib/i18n'
 import { posHaptics } from '@/lib/haptics'
 import { posAudio } from '@/features/cashier/lib/pos-audio'
@@ -31,12 +35,20 @@ import { LanguageSwitcher } from '@/components/common/language-switcher'
 import { ThemeToggleButton } from '@/components/common/theme-toggle-button'
 import { PwaInstallRow } from '@/components/pwa/pwa-install-row'
 import { SearchedCustomer } from '../transaction-panel'
+import { PosOfflineSettings } from '../pos-offline-settings'
+import {
+  isOfflineModeEnabled,
+  setOfflineModeEnabled,
+  subscribeToQueueChanges,
+  syncOfflineQueue,
+} from '@/features/cashier/lib/offline-queue'
 
 export interface CashierStoreInfo {
   id: string
   name: string
   slug: string
   primaryColor: string
+  currency?: string
   pointsPerTnd: number
   isOwner: boolean
 }
@@ -102,9 +114,35 @@ export function CashierMobileView({
   const [isProcessing, setIsProcessing] = useState(false)
 
   const pointsPerTnd = activeStore?.pointsPerTnd || 10
+  const currency = activeStore?.currency || 'TND'
   const parsedSpend = parseFloat(spendAmount) || 0
   const estimatedPoints = Math.max(0, Math.round(parsedSpend * pointsPerTnd))
   const isBusy = isProcessing || externalProcessing || isFeedbackOpen
+
+  // Offline Resilience POS settings state
+  const [offlineEnabled, setOfflineEnabled] = useState(true)
+  const [pendingOfflineCount, setPendingOfflineCount] = useState(0)
+  const [isSyncingOffline, setIsSyncingOffline] = useState(false)
+  const [isNetworkOnline, setIsNetworkOnline] = useState(true)
+
+  React.useEffect(() => {
+    setOfflineEnabled(isOfflineModeEnabled())
+    setIsNetworkOnline(typeof navigator !== 'undefined' ? navigator.onLine : true)
+
+    const updateOnline = () => setIsNetworkOnline(navigator.onLine)
+    window.addEventListener('online', updateOnline)
+    window.addEventListener('offline', updateOnline)
+
+    const unsubscribe = subscribeToQueueChanges((cnt: number) => {
+      setPendingOfflineCount(cnt)
+    })
+
+    return () => {
+      window.removeEventListener('online', updateOnline)
+      window.removeEventListener('offline', updateOnline)
+      unsubscribe()
+    }
+  }, [])
 
   // Fetch store rewards when activeStore or tab changes
   React.useEffect(() => {
@@ -229,6 +267,7 @@ export function CashierMobileView({
         activeCashierStoreId={activeStore?.id}
         onSelectCashierStore={onSelectStore}
         shiftActive={true}
+        rightElement={<PosOfflineSettings apiClient={apiClient} />}
       />
 
       {/* ── MAIN SCENE CONTAINER ── */}
@@ -324,11 +363,11 @@ export function CashierMobileView({
                 <div className="space-y-3">
                   <div className="text-center p-3 rounded-2xl bg-muted/40 border border-border/50">
                     <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
-                      Order Amount (TND)
+                      Order Amount ({currency})
                     </p>
                     <div className="text-3xl font-black font-mono tracking-tight text-foreground mt-0.5">
                       {spendAmount || '0.00'}{' '}
-                      <span className="text-xs font-semibold text-muted-foreground">TND</span>
+                      <span className="text-xs font-semibold text-muted-foreground">{currency}</span>
                     </div>
                     {estimatedPoints > 0 && (
                       <p className="text-xs font-bold text-primary mt-1 font-mono animate-in fade-in">
@@ -621,7 +660,7 @@ export function CashierMobileView({
                         </span>
                         {tx.amountTnd !== null && (
                           <p className="text-[10px] text-muted-foreground font-mono">
-                            {tx.amountTnd.toFixed(2)} TND
+                            {tx.amountTnd.toFixed(2)} {currency}
                           </p>
                         )}
                       </div>
@@ -648,7 +687,7 @@ export function CashierMobileView({
               </div>
               <div className="space-y-1">
                 <p className="text-base font-bold text-foreground">{activeStore?.name || 'No Store Selected'}</p>
-                <p className="text-xs text-muted-foreground font-mono">Rate: {pointsPerTnd} pts / 1 TND</p>
+                <p className="text-xs text-muted-foreground font-mono">Rate: {pointsPerTnd} pts / 1 {currency}</p>
                 {cashierEmail && (
                   <p className="text-xs text-muted-foreground pt-1 flex items-center gap-1.5 font-mono">
                     <span>Cashier:</span>
@@ -656,6 +695,83 @@ export function CashierMobileView({
                   </p>
                 )}
               </div>
+            </div>
+
+            {/* Offline Resilience Settings */}
+            <div className="p-4 rounded-3xl bg-card border border-border/70 shadow-sm space-y-3.5">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  {isNetworkOnline ? (
+                    <Wifi className="h-4 w-4 text-emerald-500" />
+                  ) : (
+                    <WifiOff className="h-4 w-4 text-amber-500" />
+                  )}
+                  <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
+                    {t('cashier_offline_resilience_card')}
+                  </p>
+                </div>
+                <Badge
+                  variant={isNetworkOnline ? 'outline' : 'secondary'}
+                  className="text-[10px] font-mono"
+                >
+                  {isNetworkOnline ? t('cashier_online_status') : t('cashier_offline_status')}
+                </Badge>
+              </div>
+
+              {/* Offline Queue Toggle */}
+              <div className="flex items-center justify-between">
+                <div className="space-y-0.5 max-w-[75%]">
+                  <p className="text-xs font-bold text-foreground">{t('cashier_offline_mode_option')}</p>
+                  <p className="text-[10px] text-muted-foreground">
+                    {t('cashier_offline_mode_option_desc')}
+                  </p>
+                </div>
+                <Switch
+                  checked={offlineEnabled}
+                  onCheckedChange={(checked) => {
+                    setOfflineEnabled(checked)
+                    setOfflineModeEnabled(checked)
+                  }}
+                />
+              </div>
+
+              {/* Pending Queue & Manual Sync */}
+              {offlineEnabled && (
+                <>
+                  <div className="h-px bg-border/50" />
+                  <div className="flex items-center justify-between pt-0.5">
+                    <div>
+                      <p className="text-xs font-semibold text-foreground">
+                        {pendingOfflineCount} {t('cashier_pending_tx_count', { count: pendingOfflineCount })}
+                      </p>
+                      <p className="text-[10px] text-muted-foreground font-mono">
+                        {t('cashier_stored_in_indexeddb')}
+                      </p>
+                    </div>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      disabled={isSyncingOffline || pendingOfflineCount === 0 || !isNetworkOnline}
+                      onClick={async () => {
+                        setIsSyncingOffline(true)
+                        try {
+                          await syncOfflineQueue(apiClient)
+                        } finally {
+                          setIsSyncingOffline(false)
+                        }
+                      }}
+                      className="h-8 text-xs font-semibold gap-1.5"
+                    >
+                      {isSyncingOffline ? (
+                        <Loader2 className="h-3 w-3 animate-spin" />
+                      ) : (
+                        <RefreshCw className="h-3 w-3" />
+                      )}
+                      {t('cashier_sync_now_btn')}
+                    </Button>
+                  </div>
+                </>
+              )}
             </div>
 
             {/* Preferences (Theme & Language) */}

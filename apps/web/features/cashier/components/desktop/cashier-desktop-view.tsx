@@ -30,6 +30,7 @@ import {
 } from 'lucide-react'
 import { useI18n } from '@/lib/i18n'
 import { CashierStoreInfo, RecentTx } from '../mobile/cashier-mobile-view'
+import { PosOfflineSettings } from '../pos-offline-settings'
 
 interface CashierDesktopViewProps {
   stores: CashierStoreInfo[]
@@ -55,6 +56,7 @@ interface CashierDesktopViewProps {
   }
   onScanSuccess: (decodedToken: string) => void
   onCancelScan: () => void
+  apiClient?: any
   isProcessing?: boolean
   isFeedbackOpen?: boolean
 }
@@ -71,6 +73,7 @@ export function CashierDesktopView({
   scanMode,
   onScanSuccess,
   onCancelScan,
+  apiClient,
   isProcessing = false,
   isFeedbackOpen = false,
 }: CashierDesktopViewProps) {
@@ -113,6 +116,9 @@ export function CashierDesktopView({
               </Select>
             </div>
           )}
+
+          {/* Offline POS Resilience & Sync Controller */}
+          <PosOfflineSettings apiClient={apiClient} />
 
           <LanguageSwitcher />
           <ThemeToggleButton />
@@ -208,7 +214,7 @@ export function CashierDesktopView({
                         </span>
                         {tx.amountTnd !== null && (
                           <p className="text-[10px] text-muted-foreground font-mono">
-                            {tx.amountTnd.toFixed(2)} TND
+                            {tx.amountTnd.toFixed(2)} {activeStore?.currency || 'TND'}
                           </p>
                         )}
                       </div>
@@ -224,6 +230,7 @@ export function CashierDesktopView({
             <TransactionPanel
               storeId={activeStore?.id}
               storeName={activeStore?.name}
+              currency={activeStore?.currency}
               pointsPerTnd={activeStore?.pointsPerTnd}
               onProcess={onProcess}
             />

@@ -46,6 +46,7 @@ export interface SearchedCustomer {
 interface TransactionPanelProps {
   storeId?: string;
   storeName?: string;
+  currency?: string;
   pointsPerTnd?: number;
   controlledTab?: 'issue' | 'redeem';
   onTabChange?: (tab: 'issue' | 'redeem') => void;
@@ -78,6 +79,7 @@ function getApiClient() {
 export function TransactionPanel({
   storeId,
   storeName,
+  currency = 'TND',
   pointsPerTnd = 10,
   controlledTab,
   onTabChange,
@@ -409,8 +411,8 @@ export function TransactionPanel({
                   dir="ltr"
                   required
                 />
-                <span className="absolute end-4 top-1/2 -translate-y-1/2 text-sm font-bold text-muted-foreground">
-                  TND
+                <span className="absolute end-4 top-1/2 -translate-y-1/2 text-sm font-bold text-muted-foreground font-mono">
+                  {currency}
                 </span>
               </div>
             </div>
@@ -515,7 +517,7 @@ export function TransactionPanel({
               ) : (
                 <>
                   <QrCode className="w-5 h-5" />
-                  {t('cashier_scan_pass_action', { amount: parsedSpend > 0 ? `${parsedSpend} TND` : '0 TND' })}
+                  {t('cashier_scan_pass_action', { amount: parsedSpend > 0 ? `${parsedSpend} ${currency}` : `0 ${currency}` })}
                 </>
               )}
             </Button>

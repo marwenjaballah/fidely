@@ -14,6 +14,11 @@ import { AUTH_ROUTES } from '@/features/auth/services/auth-service';
 import { useI18n } from '@/lib/i18n';
 import { ResponsiveCashierView } from '@/features/cashier/components/responsive-cashier-view';
 import { CashierStoreInfo, RecentTx } from '@/features/cashier/components/mobile/cashier-mobile-view';
+import {
+  isOfflineModeEnabled,
+  queueOfflineTransaction,
+  syncOfflineQueue,
+} from '@/features/cashier/lib/offline-queue';
 
 const baseURL = (process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3000').replace(/\/$/, '');
 let apiClient: ReturnType<typeof createCookieAuthApiClient> | null = null;
@@ -127,6 +132,26 @@ export function CashierScreen({ isMerchant = false }: CashierScreenProps) {
     }
   }, [activeStore?.id, fetchRecentTransactions]);
 
+  // Automatically flush offline transaction queue whenever internet connectivity resumes
+  useEffect(() => {
+    const handleOnline = async () => {
+      if (isOfflineModeEnabled()) {
+        try {
+          const client = getCashierApiClient();
+          const res = await syncOfflineQueue(client);
+          if (res.success > 0 && activeStore?.id) {
+            fetchRecentTransactions(activeStore.id);
+          }
+        } catch (err) {
+          console.error('Auto sync offline queue error:', err);
+        }
+      }
+    };
+
+    window.addEventListener('online', handleOnline);
+    return () => window.removeEventListener('online', handleOnline);
+  }, [activeStore?.id, fetchRecentTransactions]);
+
   const handleSelectStore = (storeId: string) => {
     const found = stores.find((s) => s.id === storeId) || null;
     setActiveStore(found);
@@ -162,37 +187,111 @@ export function CashierScreen({ isMerchant = false }: CashierScreenProps) {
       const client = getCashierApiClient();
 
       if (type === 'issue') {
-        const { data } = await client.post<{
-          newBalance: number;
-          pointsIssued: number;
-          storeName: string;
-          customerName: string;
-        }>('/api/v1/transactions/issue', {
-          qrToken,
-          amountTnd: Number(value),
-          storeId: activeStore.id,
-        });
+        const isOffline = typeof navigator !== 'undefined' && !navigator.onLine;
 
-        posAudio.playSuccess();
-        posHaptics.pointsIssued();
-        const customerDisplayName = data.customerName || t('cashier_customer_label') || 'Customer';
-        setFeedback({
-          state: 'success',
-          type: 'issue',
-          title: t('cashier_tx_issue_title') || 'Points Awarded!',
-          message:
-            t('pos_points_awarded_feedback', {
-              points: data.pointsIssued,
-              name: customerDisplayName,
-            }) || `+${data.pointsIssued} points awarded to ${customerDisplayName}`,
-          points: data.pointsIssued,
-          customerName: customerDisplayName,
-          newBalance: data.newBalance,
-          storeName: data.storeName,
-        });
+        if (isOffline) {
+          if (!isOfflineModeEnabled()) {
+            posAudio.playError();
+            posHaptics.error();
+            setFeedback({
+              state: 'error',
+              title: 'Terminal Offline',
+              message: 'Terminal is currently offline. Enable Offline Mode in POS Settings to queue transactions.',
+            });
+            return false;
+          }
 
-        fetchRecentTransactions(activeStore.id);
-        return true;
+          const multiplier = Number(activeStore.pointsPerTnd || 10);
+          const pts = Math.max(1, Math.round(Number(value) * multiplier));
+          await queueOfflineTransaction({
+            qrToken,
+            amountTnd: Number(value),
+            storeId: activeStore.id,
+            storeName: activeStore.name,
+            pointsToIssue: pts,
+          });
+
+          posAudio.playSuccess();
+          posHaptics.pointsIssued();
+          setFeedback({
+            state: 'success',
+            type: 'issue',
+            title: t('cashier_feedback_offline_queued') || 'Points Queued (Offline)',
+            message: t('cashier_feedback_offline_desc') || `Recorded +${pts} pts offline. Will automatically sync when reconnected.`,
+            points: pts,
+            customerName: t('cashier_customer_label') || 'Customer',
+            newBalance: 0,
+            storeName: activeStore.name,
+          });
+          return true;
+        }
+
+        try {
+          const { data } = await client.post<{
+            newBalance: number;
+            pointsIssued: number;
+            storeName: string;
+            customerName: string;
+          }>('/api/v1/transactions/issue', {
+            qrToken,
+            amountTnd: Number(value),
+            storeId: activeStore.id,
+          });
+
+          posAudio.playSuccess();
+          posHaptics.pointsIssued();
+          const customerDisplayName = data.customerName || t('cashier_customer_label') || 'Customer';
+          setFeedback({
+            state: 'success',
+            type: 'issue',
+            title: t('cashier_tx_issue_title') || 'Points Awarded!',
+            message:
+              t('pos_points_awarded_feedback', {
+                points: data.pointsIssued,
+                name: customerDisplayName,
+              }) || `+${data.pointsIssued} points awarded to ${customerDisplayName}`,
+            points: data.pointsIssued,
+            customerName: customerDisplayName,
+            newBalance: data.newBalance,
+            storeName: data.storeName,
+          });
+
+          fetchRecentTransactions(activeStore.id);
+          return true;
+        } catch (apiErr: any) {
+          const isNetworkError =
+            apiErr?.code === 'ERR_NETWORK' ||
+            apiErr?.message?.includes('Network Error') ||
+            apiErr?.message?.includes('timeout') ||
+            (typeof navigator !== 'undefined' && !navigator.onLine);
+
+          if (isNetworkError && isOfflineModeEnabled()) {
+            const multiplier = Number(activeStore.pointsPerTnd || 10);
+            const pts = Math.max(1, Math.round(Number(value) * multiplier));
+            await queueOfflineTransaction({
+              qrToken,
+              amountTnd: Number(value),
+              storeId: activeStore.id,
+              storeName: activeStore.name,
+              pointsToIssue: pts,
+            });
+
+            posAudio.playSuccess();
+            posHaptics.pointsIssued();
+            setFeedback({
+              state: 'success',
+              type: 'issue',
+              title: t('cashier_feedback_offline_queued') || 'Points Queued (Offline)',
+              message: t('cashier_feedback_offline_desc') || `Recorded +${pts} pts offline. Will automatically sync when reconnected.`,
+              points: pts,
+              customerName: t('cashier_customer_label') || 'Customer',
+              newBalance: 0,
+              storeName: activeStore.name,
+            });
+            return true;
+          }
+          throw apiErr;
+        }
       } else if (type === 'redeem') {
         const { data } = await client.post<{
           newBalance: number;

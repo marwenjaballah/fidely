@@ -9,7 +9,9 @@
     "start": "next start",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "check-types": "tsc --noEmit",
+    "lint": "eslint app components features lib store"
   },
   "dependencies": {
     "@ai-sdk/openai": "^2.0.88",

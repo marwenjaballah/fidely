@@ -16,6 +16,7 @@ export const getCashierStoresRoute = createRoute({
               name: z.string(),
               slug: z.string(),
               primaryColor: z.string(),
+              currency: z.string().default('TND'),
               pointsPerTnd: z.number(),
               isOwner: z.boolean(),
             })
@@ -40,6 +41,7 @@ export const issuePointsRoute = createRoute({
             qrToken: z.string().describe('The scanned QR code token of the customer'),
             amountTnd: z.number().positive().describe('The amount of TND spent'),
             storeId: z.string().optional().describe('Target store ID where the transaction takes place'),
+            idempotencyKey: z.string().optional().describe('Unique idempotency key for offline sync deduplication'),
           }),
         },
       },
