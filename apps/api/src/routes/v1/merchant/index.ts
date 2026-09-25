@@ -17,6 +17,7 @@ import {
   createStoreRewardRoute,
   updateStoreRewardRoute,
   deleteStoreRewardRoute,
+  getStoreTransactionsRoute,
 } from './merchant.route.js';
 import { MerchantService } from '../../../services/merchant.service.js';
 import { requireUser } from '../../../utils/auth.js';
@@ -346,6 +347,25 @@ router.openapi(deleteStoreRewardRoute, async (c) => {
   try {
     const result = await service.deleteStoreReward(id, user.id, rewardId);
     return c.json(result, 200);
+  } catch (error: any) {
+    return c.json({ error: error.message }, 400) as any;
+  }
+});
+
+router.openapi(getStoreTransactionsRoute, async (c) => {
+  const user = requireUser(c);
+  if (user.role !== 'MERCHANT' && user.role !== 'SUPER_ADMIN') {
+    return c.json({ error: 'Unauthorized' }, 401) as any;
+  }
+
+  const { id } = c.req.valid('param');
+  const query = c.req.valid('query');
+  const prisma = c.get('prisma');
+  const service = new MerchantService(prisma);
+
+  try {
+    const data = await service.getStoreTransactions(id, user.id, query);
+    return c.json(data, 200);
   } catch (error: any) {
     return c.json({ error: error.message }, 400) as any;
   }

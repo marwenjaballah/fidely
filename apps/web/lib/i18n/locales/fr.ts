@@ -22,6 +22,7 @@ export const fr: Record<TranslationKey, string> = {
   copy: 'Copier',
   copied: 'Copié dans le presse-papiers !',
   actions: 'Actions',
+  error: 'Erreur',
   status: 'Statut',
   date: 'Date',
   all: 'Tous',
@@ -488,6 +489,11 @@ export const fr: Record<TranslationKey, string> = {
   overview_quick_crm_desc: 'Consulter les membres fidélité',
   overview_quick_staff_title: 'Équipe & Caissiers',
   overview_quick_staff_desc: 'Gérer les accès caisse',
+  overview_traces_title: 'Activité récente & traces caissiers',
+  overview_traces_desc: 'Flux de transactions en direct avec attribution au caissier',
+  overview_traces_view_staff: 'Auditer par caissier',
+  overview_traces_col_cashier: 'Traité par',
+  overview_traces_empty: 'Aucune transaction enregistrée pour ce magasin.',
 
   // Merchant Settings Page
   merchant_settings_title: 'Paramètres Commerçant',
@@ -900,6 +906,16 @@ export const fr: Record<TranslationKey, string> = {
   cashier_pending_tx_count: '{count} transaction(s) en attente',
   cashier_sync_success_msg: '{count} transactions hors ligne synchronisées avec succès.',
   cashier_sync_partial_msg: '{success} transactions synchronisées. {failed} ont échoué.',
+  cashier_tx_earn: 'Gain',
+  cashier_tx_redeem: 'Utilisation',
+  cashier_scan_anon_cust: 'Client',
+  cashier_no_tx: 'Aucune transaction enregistrée',
+  staff_action_history: 'Historique d’audit',
+  staff_history_dialog_title: 'Journal d’activité du caissier',
+  staff_history_dialog_desc: 'Traçabilité détaillée de toutes les transactions traitées par ce caissier.',
+  staff_stat_total_txs: 'Total des scans',
+  staff_stat_pts_issued: 'Points attribués',
+  staff_stat_volume: 'Volume traité',
 
   // Super Admin Console
   admin_console_title: 'Console Super Admin',

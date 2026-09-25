@@ -52,8 +52,13 @@ import {
   Loader2,
   Store,
   Users,
+  History,
+  ArrowUpRight,
+  ArrowDownLeft,
+  Clock,
 } from 'lucide-react'
 import { useI18n } from '@/lib/i18n'
+import type { StoreTransactionsResponse } from '@/store/merchant-store'
 
 export default function StaffPage() {
   const {
@@ -67,6 +72,7 @@ export default function StaffPage() {
     updateStaff,
     changeStaffPassword,
     deleteStaff,
+    fetchTransactions,
     loading,
   } = useMerchantStore()
   const { toast } = useToast()
@@ -83,6 +89,29 @@ export default function StaffPage() {
   const [editTarget, setEditTarget] = useState<Staff | null>(null)
   const [passwordTarget, setPasswordTarget] = useState<Staff | null>(null)
   const [deleteTarget, setDeleteTarget] = useState<Staff | null>(null)
+  const [historyTarget, setHistoryTarget] = useState<Staff | null>(null)
+  const [historyData, setHistoryData] = useState<StoreTransactionsResponse | null>(null)
+  const [historyLoading, setHistoryLoading] = useState(false)
+
+  // Fetch cashier audit history
+  useEffect(() => {
+    if (!historyTarget || !activeStore?.id) {
+      setHistoryData(null)
+      return
+    }
+    setHistoryLoading(true)
+    fetchTransactions(activeStore.id, { cashierId: historyTarget.id, limit: 30 })
+      .then((data) => setHistoryData(data))
+      .catch((err) => {
+        console.error('Failed to fetch cashier transactions:', err)
+        toast({
+          title: t('error'),
+          description: err instanceof Error ? err.message : 'Failed to fetch cashier history',
+          variant: 'destructive',
+        })
+      })
+      .finally(() => setHistoryLoading(false))
+  }, [historyTarget, activeStore?.id, fetchTransactions, toast, t])
 
   // Form States - Add
   const [addFullName, setAddFullName] = useState('')
@@ -457,6 +486,13 @@ export default function StaffPage() {
                             <DropdownMenuContent align="end" className="w-48">
                               <DropdownMenuLabel className="text-xs">{t('staff_menu_title')}</DropdownMenuLabel>
                               <DropdownMenuItem
+                                onClick={() => setHistoryTarget(cashier)}
+                                className="cursor-pointer gap-2"
+                              >
+                                <History className="h-4 w-4 text-primary" />
+                                <span>{t('staff_action_history')}</span>
+                              </DropdownMenuItem>
+                              <DropdownMenuItem
                                 onClick={() => handleEditOpen(cashier)}
                                 className="cursor-pointer gap-2"
                               >
@@ -524,6 +560,13 @@ export default function StaffPage() {
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end" className="w-48">
                         <DropdownMenuLabel className="text-xs">{t('staff_menu_title')}</DropdownMenuLabel>
+                        <DropdownMenuItem
+                          onClick={() => setHistoryTarget(cashier)}
+                          className="cursor-pointer gap-2"
+                        >
+                          <History className="h-4 w-4 text-primary" />
+                          <span>{t('staff_action_history')}</span>
+                        </DropdownMenuItem>
                         <DropdownMenuItem
                           onClick={() => handleEditOpen(cashier)}
                           className="cursor-pointer gap-2"
@@ -1055,6 +1098,147 @@ export default function StaffPage() {
                   {t('staff_dialog_confirm_remove')}
                 </>
               )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+      {/* 5. CASHIER AUDIT / TRANSACTION HISTORY DIALOG */}
+      <Dialog open={!!historyTarget} onOpenChange={(open) => !open && setHistoryTarget(null)}>
+        <DialogContent className="sm:max-w-[650px] max-h-[85vh] flex flex-col p-0 overflow-hidden">
+          <DialogHeader className="p-6 pb-4 border-b border-border/60">
+            <div className="flex items-center gap-3">
+              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10 text-primary">
+                <History className="h-5 w-5" />
+              </div>
+              <div>
+                <DialogTitle className="text-lg font-bold">
+                  {t('staff_history_dialog_title')}
+                </DialogTitle>
+                <DialogDescription className="text-xs mt-0.5">
+                  {historyTarget?.fullName || historyTarget?.email} &bull; {activeStore.name}
+                </DialogDescription>
+              </div>
+            </div>
+          </DialogHeader>
+
+          {/* Quick Metrics Bar */}
+          <div className="grid grid-cols-3 gap-2 px-6 py-3 bg-muted/30 border-b border-border/50 text-center">
+            <div className="p-2 rounded-lg bg-background border border-border/40">
+              <span className="text-[10px] text-muted-foreground uppercase font-semibold block">
+                {t('staff_stat_total_txs')}
+              </span>
+              <span className="text-base font-bold text-foreground">
+                {historyLoading ? '...' : (historyData?.summary.totalTransactions ?? 0)}
+              </span>
+            </div>
+            <div className="p-2 rounded-lg bg-background border border-border/40">
+              <span className="text-[10px] text-muted-foreground uppercase font-semibold block">
+                {t('staff_stat_pts_issued')}
+              </span>
+              <span className="text-base font-bold text-emerald-600">
+                {historyLoading ? '...' : (historyData?.summary.totalPointsIssued ?? 0).toLocaleString()}
+              </span>
+            </div>
+            <div className="p-2 rounded-lg bg-background border border-border/40">
+              <span className="text-[10px] text-muted-foreground uppercase font-semibold block">
+                {t('staff_stat_volume')}
+              </span>
+              <span className="text-base font-bold text-foreground">
+                {historyLoading
+                  ? '...'
+                  : `${(historyData?.summary.totalAmount ?? 0).toFixed(2)} ${activeStore.currency || 'TND'}`}
+              </span>
+            </div>
+          </div>
+
+          {/* Transaction Ledger List */}
+          <div className="flex-1 overflow-y-auto p-6 space-y-2.5 max-h-[420px]">
+            {historyLoading ? (
+              <div className="flex flex-col items-center justify-center py-12 text-muted-foreground gap-2">
+                <Loader2 className="h-6 w-6 animate-spin text-primary" />
+                <span className="text-xs">{t('loading')}</span>
+              </div>
+            ) : !historyData?.transactions.length ? (
+              <div className="flex flex-col items-center justify-center py-12 text-center text-muted-foreground">
+                <Clock className="h-8 w-8 mb-2 opacity-40" />
+                <p className="text-sm font-medium">{t('cashier_no_tx') || 'No transactions recorded yet'}</p>
+                <p className="text-xs text-muted-foreground/80 mt-1 max-w-xs">
+                  {t('staff_history_dialog_desc')}
+                </p>
+              </div>
+            ) : (
+              historyData.transactions.map((tx) => (
+                <div
+                  key={tx.id}
+                  className="flex items-center justify-between p-3 rounded-xl border border-border/60 bg-card hover:bg-muted/30 transition-colors gap-3"
+                >
+                  <div className="flex items-center gap-3 min-w-0">
+                    <div
+                      className={`h-9 w-9 rounded-xl flex items-center justify-center shrink-0 ${
+                        tx.type === 'EARN'
+                          ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400'
+                          : 'bg-rose-500/10 text-rose-600 dark:text-rose-400'
+                      }`}
+                    >
+                      {tx.type === 'EARN' ? (
+                        <ArrowUpRight className="h-4 w-4" />
+                      ) : (
+                        <ArrowDownLeft className="h-4 w-4" />
+                      )}
+                    </div>
+                    <div className="min-w-0 space-y-0.5">
+                      <div className="flex items-center gap-1.5 flex-wrap">
+                        <span className="font-semibold text-xs text-foreground truncate max-w-[140px] sm:max-w-[200px]">
+                          {tx.customerName || t('cashier_scan_anon_cust') || 'Customer'}
+                        </span>
+                        <Badge
+                          variant="outline"
+                          className={`text-[9px] px-1.5 py-0 h-4 border ${
+                            tx.type === 'EARN'
+                              ? 'bg-emerald-500/5 text-emerald-600 border-emerald-500/20'
+                              : 'bg-rose-500/5 text-rose-600 border-rose-500/20'
+                          }`}
+                        >
+                          {tx.type === 'EARN' ? t('cashier_tx_earn') : t('cashier_tx_redeem')}
+                        </Badge>
+                      </div>
+                      <p className="text-[11px] text-muted-foreground flex items-center gap-2">
+                        <span>{format(new Date(tx.createdAt), 'MMM d, yyyy · HH:mm')}</span>
+                        {tx.amountTnd != null && tx.amountTnd > 0 && (
+                          <span className="font-mono font-medium">
+                            · {tx.amountTnd.toFixed(2)} {activeStore.currency || 'TND'}
+                          </span>
+                        )}
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="text-end shrink-0">
+                    <span
+                      className={`font-mono font-bold text-xs ${
+                        tx.type === 'EARN'
+                          ? 'text-emerald-600 dark:text-emerald-400'
+                          : 'text-rose-600 dark:text-rose-400'
+                      }`}
+                    >
+                      {tx.type === 'EARN' ? '+' : '-'}
+                      {Math.abs(tx.pointsAffected)} {t('pts')}
+                    </span>
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
+
+          <DialogFooter className="p-4 border-t border-border/60 bg-muted/10">
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={() => setHistoryTarget(null)}
+              className="text-xs"
+            >
+              {t('close') || 'Close'}
             </Button>
           </DialogFooter>
         </DialogContent>

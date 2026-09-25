@@ -696,4 +696,126 @@ export class MerchantService {
 
     return { message: 'Reward deleted successfully' };
   }
+
+  async getStoreTransactions(
+    storeId: string,
+    merchantId: string,
+    options?: {
+      page?: number;
+      limit?: number;
+      cashierId?: string;
+      type?: 'earn' | 'redeem';
+      query?: string;
+    }
+  ) {
+    const store = await this.prisma.store.findFirst({
+      where: { id: storeId, ownerId: merchantId },
+    });
+
+    if (!store) {
+      throw new Error('Store not found or unauthorized');
+    }
+
+    const page = Math.max(1, options?.page || 1);
+    const limit = Math.min(100, Math.max(1, options?.limit || 20));
+    const skip = (page - 1) * limit;
+
+    const where: any = {
+      storeId,
+      ...(options?.cashierId ? { cashierId: options.cashierId } : {}),
+      ...(options?.type ? { type: options.type } : {}),
+    };
+
+    if (options?.query && options.query.trim()) {
+      const q = options.query.trim();
+      where.membership = {
+        customer: {
+          OR: [
+            { fullName: { contains: q, mode: 'insensitive' } },
+            { email: { contains: q, mode: 'insensitive' } },
+            { phone: { contains: q } },
+          ],
+        },
+      };
+    }
+
+    const [total, transactions, sumStats] = await Promise.all([
+      this.prisma.transaction.count({ where }),
+      this.prisma.transaction.findMany({
+        where,
+        orderBy: { createdAt: 'desc' },
+        skip,
+        take: limit,
+        include: {
+          membership: {
+            include: {
+              customer: {
+                select: {
+                  id: true,
+                  fullName: true,
+                  email: true,
+                  phone: true,
+                },
+              },
+            },
+          },
+          cashier: {
+            select: {
+              id: true,
+              fullName: true,
+              email: true,
+            },
+          },
+        },
+      }),
+      this.prisma.transaction.groupBy({
+        by: ['type'],
+        where,
+        _sum: {
+          pointsAffected: true,
+          amountTnd: true,
+        },
+      }),
+    ]);
+
+    let totalPointsIssued = 0;
+    let totalPointsRedeemed = 0;
+    let totalAmount = 0;
+
+    sumStats.forEach((group: any) => {
+      if (group.type === 'earn') {
+        totalPointsIssued = group._sum.pointsAffected || 0;
+        totalAmount += Number(group._sum.amountTnd || 0);
+      } else if (group.type === 'redeem') {
+        totalPointsRedeemed = group._sum.pointsAffected || 0;
+      }
+    });
+
+    return {
+      transactions: transactions.map((t: any) => ({
+        id: t.id,
+        type: t.type,
+        amountTnd: t.amountTnd ? Number(t.amountTnd) : null,
+        pointsAffected: t.pointsAffected,
+        createdAt: t.createdAt.toISOString(),
+        customerName: t.membership?.customer?.fullName || t.membership?.customer?.email?.split('@')[0] || 'Customer',
+        customerPhone: t.membership?.customer?.phone || null,
+        cashierId: t.cashierId,
+        cashierName: t.cashier?.fullName || t.cashier?.email?.split('@')[0] || 'Unknown Staff',
+        cashierEmail: t.cashier?.email || '',
+      })),
+      pagination: {
+        total,
+        page,
+        limit,
+        totalPages: Math.ceil(total / limit) || 1,
+      },
+      summary: {
+        totalTransactions: total,
+        totalPointsIssued,
+        totalPointsRedeemed,
+        totalAmount: Number(totalAmount.toFixed(3)),
+      },
+    };
+  }
 }

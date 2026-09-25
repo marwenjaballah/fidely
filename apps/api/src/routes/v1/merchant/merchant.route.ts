@@ -573,3 +573,61 @@ export const deleteStoreRewardRoute = createRoute({
     400: { description: 'Bad request or reward not found' },
   },
 });
+
+export const getStoreTransactionsRoute = createRoute({
+  method: 'get',
+  path: '/stores/{id}/transactions',
+  tags: ['Merchant'],
+  security: [{ bearerAuth: [] }],
+  request: {
+    params: z.object({
+      id: z.string(),
+    }),
+    query: z.object({
+      page: z.coerce.number().int().positive().optional().default(1),
+      limit: z.coerce.number().int().positive().max(100).optional().default(20),
+      cashierId: z.string().optional().describe('Filter transactions by specific cashier'),
+      type: z.enum(['earn', 'redeem']).optional().describe('Filter by transaction type'),
+      query: z.string().optional().describe('Search customer by name, email, or phone'),
+    }),
+  },
+  responses: {
+    200: {
+      description: 'Store transaction ledger with cashier attribution',
+      content: {
+        'application/json': {
+          schema: z.object({
+            transactions: z.array(
+              z.object({
+                id: z.string(),
+                type: z.string(),
+                amountTnd: z.number().nullable(),
+                pointsAffected: z.number(),
+                createdAt: z.string(),
+                customerName: z.string(),
+                customerPhone: z.string().nullable(),
+                cashierId: z.string(),
+                cashierName: z.string(),
+                cashierEmail: z.string(),
+              })
+            ),
+            pagination: z.object({
+              total: z.number(),
+              page: z.number(),
+              limit: z.number(),
+              totalPages: z.number(),
+            }),
+            summary: z.object({
+              totalTransactions: z.number(),
+              totalPointsIssued: z.number(),
+              totalPointsRedeemed: z.number(),
+              totalAmount: z.number(),
+            }),
+          }),
+        },
+      },
+    },
+    400: { description: 'Bad request or unauthorized' },
+    401: { description: 'Unauthorized' },
+  },
+});

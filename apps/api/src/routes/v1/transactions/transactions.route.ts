@@ -194,6 +194,8 @@ export const getRecentTransactionsRoute = createRoute({
               pointsAffected: z.number(),
               createdAt: z.string(),
               customerName: z.string(),
+              cashierId: z.string().optional(),
+              cashierName: z.string().optional(),
             })
           ),
         },

@@ -48,6 +48,35 @@ export interface Reward {
   createdAt: string
 }
 
+export interface StoreTransaction {
+  id: string
+  type: string
+  amountTnd: number | null
+  pointsAffected: number
+  createdAt: string
+  customerName: string
+  customerPhone: string | null
+  cashierId: string
+  cashierName: string
+  cashierEmail: string
+}
+
+export interface StoreTransactionsResponse {
+  transactions: StoreTransaction[]
+  pagination: {
+    total: number
+    page: number
+    limit: number
+    totalPages: number
+  }
+  summary: {
+    totalTransactions: number
+    totalPointsIssued: number
+    totalPointsRedeemed: number
+    totalAmount: number
+  }
+}
+
 export interface Analytics {
   totalMembers: number
   totalPointsIssued: number
@@ -88,6 +117,10 @@ export interface MerchantState {
   updateReward: (storeId: string, rewardId: string, data: { name?: string; description?: string; pointsCost?: number; active?: boolean }) => Promise<Reward>
   deleteReward: (storeId: string, rewardId: string) => Promise<void>
   fetchAnalytics: (storeId: string) => Promise<void>
+  fetchTransactions: (
+    storeId: string,
+    params?: { page?: number; limit?: number; cashierId?: string; type?: 'earn' | 'redeem'; query?: string }
+  ) => Promise<StoreTransactionsResponse>
 }
 
 const baseURL = (process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3000').replace(/\/$/, '')
@@ -378,5 +411,14 @@ export const useMerchantStore = create<MerchantState>((set, get) => ({
       const message = err instanceof ApiError ? err.message : 'Failed to load analytics.'
       set({ error: message, loading: false })
     }
+  },
+
+  fetchTransactions: async (storeId, params) => {
+    const client = getMerchantClient()
+    const { data } = await client.get<StoreTransactionsResponse>(
+      `/api/v1/merchant/stores/${storeId}/transactions`,
+      { params }
+    )
+    return data
   },
 }))

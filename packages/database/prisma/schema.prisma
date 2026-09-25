@@ -24,10 +24,11 @@ model User {
   updatedAt         DateTime             @updatedAt
 
   // Relationships
-  stores          Store[]              @relation("StoreOwner")
-  cashierStores   Store[]              @relation("StoreCashiers")
-  memberships     CustomerMembership[]
-  referredByStore Store?               @relation("StoreReferrals", fields: [referredByStoreId], references: [id])
+  stores              Store[]              @relation("StoreOwner")
+  cashierStores       Store[]              @relation("StoreCashiers")
+  memberships         CustomerMembership[]
+  cashierTransactions Transaction[]       @relation("CashierTransactions")
+  referredByStore     Store?               @relation("StoreReferrals", fields: [referredByStoreId], references: [id])
 
   @@index([email])
   @@map("users")
@@ -114,6 +115,7 @@ model Transaction {
 
   // Relationships
   store      Store              @relation(fields: [storeId], references: [id])
+  cashier    User               @relation("CashierTransactions", fields: [cashierId], references: [id])
   membership CustomerMembership @relation(fields: [membershipId], references: [id])
 
   @@index([storeId, createdAt(sort: Desc)])

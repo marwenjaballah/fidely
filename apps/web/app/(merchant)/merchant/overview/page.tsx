@@ -7,8 +7,11 @@ import { useI18n } from '@/lib/i18n'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card'
 import {
   Users, Zap, TrendingUp, Award, Plus, Store, Check, Loader2,
-  ArrowRight, Sparkles, Activity, BarChart3,
+  ArrowRight, Sparkles, Activity, BarChart3, Clock, History,
+  ArrowUpRight, ArrowDownLeft,
 } from 'lucide-react'
+import { format } from 'date-fns'
+import type { StoreTransactionsResponse } from '@/store/merchant-store'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Input } from '@/components/ui/input'
@@ -108,7 +111,7 @@ function RedemptionGauge({ rate }: { rate: number }) {
 
 export default function OverviewPage() {
   const { profile } = useAuth()
-  const { fetchStores, activeStore, stores, createStore, setActiveStore, fetchAnalytics, analytics, loading, error } = useMerchantStore()
+  const { fetchStores, activeStore, stores, createStore, setActiveStore, fetchAnalytics, fetchTransactions, analytics, loading, error } = useMerchantStore()
   const { toast } = useToast()
   const { t } = useI18n()
 
@@ -119,6 +122,8 @@ export default function OverviewPage() {
   const [isCreating, setIsCreating] = useState(false)
   const [storeName, setStoreName] = useState('')
   const [storeSlug, setStoreSlug] = useState('')
+  const [recentTxData, setRecentTxData] = useState<StoreTransactionsResponse | null>(null)
+  const [recentTxLoading, setRecentTxLoading] = useState(false)
 
   useEffect(() => {
     fetchStores()
@@ -127,8 +132,13 @@ export default function OverviewPage() {
   useEffect(() => {
     if (activeStore) {
       fetchAnalytics(activeStore.id)
+      setRecentTxLoading(true)
+      fetchTransactions(activeStore.id, { limit: 8 })
+        .then((data) => setRecentTxData(data))
+        .catch((err) => console.error('Failed to load recent transactions for overview:', err))
+        .finally(() => setRecentTxLoading(false))
     }
-  }, [activeStore, fetchAnalytics])
+  }, [activeStore, fetchAnalytics, fetchTransactions])
 
   const handleCreateStore = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -626,6 +636,112 @@ export default function OverviewPage() {
                 </div>
               </div>
             </div>
+
+            {/* ── RECENT ACTIVITY & CASHIER TRACES ────────────────────── */}
+            <Card className="border border-border/60">
+              <CardHeader className="flex flex-row items-center justify-between pb-3">
+                <div className="space-y-0.5">
+                  <CardTitle className="text-sm font-semibold flex items-center gap-2">
+                    <History className="h-4 w-4 text-primary" />
+                    {t('overview_traces_title')}
+                  </CardTitle>
+                  <CardDescription className="text-xs">
+                    {t('overview_traces_desc')}
+                  </CardDescription>
+                </div>
+                <Button variant="outline" size="sm" asChild className="text-xs gap-1.5 h-8">
+                  <Link href="/merchant/staff">
+                    <Users className="h-3.5 w-3.5 text-muted-foreground" />
+                    <span>{t('overview_traces_view_staff')}</span>
+                  </Link>
+                </Button>
+              </CardHeader>
+              <CardContent className="pt-0">
+                {recentTxLoading && !recentTxData ? (
+                  <div className="flex items-center justify-center py-8 text-xs text-muted-foreground gap-2">
+                    <Loader2 className="h-4 w-4 animate-spin text-primary" />
+                    {t('loading')}
+                  </div>
+                ) : !recentTxData?.transactions?.length ? (
+                  <div className="flex flex-col items-center justify-center py-8 text-center text-muted-foreground">
+                    <Clock className="h-7 w-7 mb-2 opacity-40" />
+                    <p className="text-xs font-medium">{t('overview_traces_empty')}</p>
+                  </div>
+                ) : (
+                  <div className="divide-y divide-border/50">
+                    {recentTxData.transactions.map((tx) => (
+                      <div
+                        key={tx.id}
+                        className="py-3 flex items-center justify-between gap-3 text-xs"
+                      >
+                        <div className="flex items-center gap-3 min-w-0">
+                          <div
+                            className={`h-8 w-8 rounded-lg flex items-center justify-center shrink-0 ${
+                              tx.type === 'EARN'
+                                ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400'
+                                : 'bg-rose-500/10 text-rose-600 dark:text-rose-400'
+                            }`}
+                          >
+                            {tx.type === 'EARN' ? (
+                              <ArrowUpRight className="h-4 w-4" />
+                            ) : (
+                              <ArrowDownLeft className="h-4 w-4" />
+                            )}
+                          </div>
+                          <div className="min-w-0 space-y-0.5">
+                            <div className="flex items-center gap-1.5 flex-wrap">
+                              <span className="font-semibold text-foreground truncate max-w-[130px] sm:max-w-[180px]">
+                                {tx.customerName || t('cashier_scan_anon_cust') || 'Customer'}
+                              </span>
+                              <Badge
+                                variant="outline"
+                                className={`text-[9px] px-1.5 py-0 h-4 border ${
+                                  tx.type === 'EARN'
+                                    ? 'bg-emerald-500/5 text-emerald-600 border-emerald-500/20'
+                                    : 'bg-rose-500/5 text-rose-600 border-rose-500/20'
+                                }`}
+                              >
+                                {tx.type === 'EARN' ? t('cashier_tx_earn') : t('cashier_tx_redeem')}
+                              </Badge>
+                            </div>
+                            <p className="text-[11px] text-muted-foreground flex items-center gap-1.5 flex-wrap">
+                              <span>{format(new Date(tx.createdAt), 'MMM d, HH:mm')}</span>
+                              {tx.amountTnd != null && tx.amountTnd > 0 && (
+                                <span className="font-mono font-medium">
+                                  &bull; {tx.amountTnd.toFixed(2)} {activeStore?.currency || 'TND'}
+                                </span>
+                              )}
+                            </p>
+                          </div>
+                        </div>
+
+                        {/* Cashier attribution & Points */}
+                        <div className="flex items-center gap-4 shrink-0 text-end">
+                          <div className="hidden sm:flex flex-col items-end">
+                            <span className="text-[10px] text-muted-foreground uppercase font-semibold">
+                              {t('overview_traces_col_cashier')}
+                            </span>
+                            <span className="text-xs font-medium text-foreground max-w-[120px] truncate">
+                              {tx.cashierName}
+                            </span>
+                          </div>
+                          <span
+                            className={`font-mono font-bold text-xs ${
+                              tx.type === 'EARN'
+                                ? 'text-emerald-600 dark:text-emerald-400'
+                                : 'text-rose-600 dark:text-rose-400'
+                            }`}
+                          >
+                            {tx.type === 'EARN' ? '+' : '-'}
+                            {Math.abs(tx.pointsAffected)} {t('pts')}
+                          </span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
 
             {/* ── QUICK ACTIONS ─────────────────────────────────────────── */}
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-2">

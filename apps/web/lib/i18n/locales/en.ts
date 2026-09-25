@@ -20,6 +20,7 @@ export const en = {
   copy: 'Copy',
   copied: 'Copied to clipboard!',
   actions: 'Actions',
+  error: 'Error',
   status: 'Status',
   date: 'Date',
   all: 'All',
@@ -486,6 +487,11 @@ export const en = {
   overview_quick_crm_desc: 'View loyalty members',
   overview_quick_staff_title: 'Staff & Cashiers',
   overview_quick_staff_desc: 'Manage POS terminal access',
+  overview_traces_title: 'Recent Activity & Cashier Traces',
+  overview_traces_desc: 'Real-time transaction feed with cashier attribution',
+  overview_traces_view_staff: 'Audit by Cashier',
+  overview_traces_col_cashier: 'Processed By',
+  overview_traces_empty: 'No transactions recorded yet for this store.',
 
   // Merchant Settings Page
   merchant_settings_title: 'Merchant Settings',
@@ -898,6 +904,16 @@ export const en = {
   cashier_pending_tx_count: '{count} pending transactions',
   cashier_sync_success_msg: 'Successfully synchronized {count} offline transactions.',
   cashier_sync_partial_msg: 'Synchronized {success} transactions. {failed} failed.',
+  cashier_tx_earn: 'Earn',
+  cashier_tx_redeem: 'Redeem',
+  cashier_scan_anon_cust: 'Customer',
+  cashier_no_tx: 'No transactions recorded yet',
+  staff_action_history: 'Audit History',
+  staff_history_dialog_title: 'Cashier Activity Ledger',
+  staff_history_dialog_desc: 'Detailed audit trail of all transactions processed by this cashier.',
+  staff_stat_total_txs: 'Total Scans',
+  staff_stat_pts_issued: 'Points Awarded',
+  staff_stat_volume: 'Processed Volume',
 
   // Super Admin Console
   admin_console_title: 'Super Admin Console',

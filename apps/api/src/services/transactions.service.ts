@@ -470,8 +470,15 @@ export class TransactionsService {
     limit: number = 10
   ) {
     const store = await this.resolveAndValidateCashierStore(userId, userRole, storeId);
+    
+    // Each cashier has their own shift history: filter by cashierId for CASHIER role
+    const where: Prisma.TransactionWhereInput = { storeId: store.id };
+    if (userRole === 'CASHIER') {
+      where.cashierId = userId;
+    }
+
     const transactions = await this.prisma.transaction.findMany({
-      where: { storeId: store.id },
+      where,
       orderBy: { createdAt: 'desc' },
       take: limit,
       include: {
@@ -485,6 +492,13 @@ export class TransactionsService {
             },
           },
         },
+        cashier: {
+          select: {
+            id: true,
+            fullName: true,
+            email: true,
+          },
+        },
       },
     });
 
@@ -495,6 +509,8 @@ export class TransactionsService {
       pointsAffected: t.pointsAffected,
       createdAt: t.createdAt.toISOString(),
       customerName: t.membership?.customer?.fullName || t.membership?.customer?.email?.split('@')[0] || 'Customer',
+      cashierId: t.cashierId,
+      cashierName: t.cashier?.fullName || t.cashier?.email?.split('@')[0] || 'Cashier',
     }));
   }
 

@@ -22,6 +22,7 @@ export const ar: Record<TranslationKey, string> = {
   copy: 'نسخ',
   copied: 'تم النسخ إلى الحافظة!',
   actions: 'الإجراءات',
+  error: 'خطأ',
   status: 'الحالة',
   date: 'التاريخ',
   all: 'الكل',
@@ -488,6 +489,11 @@ export const ar: Record<TranslationKey, string> = {
   overview_quick_crm_desc: 'عرض أعضاء الولاء',
   overview_quick_staff_title: 'فريق العمل والكاشير',
   overview_quick_staff_desc: 'إدارة صلاحيات نقاط البيع',
+  overview_traces_title: 'النشاط الأخير وسجل الكاشير',
+  overview_traces_desc: 'موجز المعاملات المباشر مع تحديد الكاشير المنفذ',
+  overview_traces_view_staff: 'تدقيق حسب الكاشير',
+  overview_traces_col_cashier: 'تمت المعالجة بواسطة',
+  overview_traces_empty: 'لا توجد معاملات مسجلة بعد لهذا المتجر.',
 
   // Merchant Settings Page
   merchant_settings_title: 'إعدادات التاجر',
@@ -900,6 +906,16 @@ export const ar: Record<TranslationKey, string> = {
   cashier_pending_tx_count: '{count} معاملة معلقة',
   cashier_sync_success_msg: 'تمت مزامنة {count} معاملة دون اتصال بنجاح.',
   cashier_sync_partial_msg: 'تمت مزامنة {success} معاملة. فشل {failed}.',
+  cashier_tx_earn: 'كسب',
+  cashier_tx_redeem: 'استبدال',
+  cashier_scan_anon_cust: 'عميل',
+  cashier_no_tx: 'لا توجد معاملات مسجلة بعد',
+  staff_action_history: 'سجل التدقيق',
+  staff_history_dialog_title: 'سجل نشاط أمين الصندوق',
+  staff_history_dialog_desc: 'تتبع تدقيق مفصل لجميع المعاملات التي تمت معالجتها بواسطة أمين الصندوق هذا.',
+  staff_stat_total_txs: 'إجمالي العمليات',
+  staff_stat_pts_issued: 'النقاط الممنوحة',
+  staff_stat_volume: 'حجم المبيعات المعالج',
 
   // Super Admin Console
   admin_console_title: 'لوحة تحكم المدير العام',
