@@ -307,7 +307,9 @@ function SignUpForm() {
                         {t('auth_notice_no_account_title')}
                       </h3>
                       <p className="text-xs text-muted-foreground leading-relaxed">
-                        {email ? t('auth_notice_no_account_desc_email', { email }) : t('auth_notice_no_account_desc')}
+                        {paramEmail || email
+                          ? t('auth_notice_no_account_desc_email', { email: paramEmail || email })
+                          : t('auth_notice_no_account_desc')}
                       </p>
                     </div>
                   </div>
@@ -481,6 +483,23 @@ function SignUpForm() {
                       : t('auth_signup_step2_merchant_desc')}
                   </p>
                 </div>
+
+                {/* Account Not Found Notice Banner on Step 2 */}
+                {notice === 'no_account' && (
+                  <div className="bg-amber-500/10 border border-amber-500/25 rounded-2xl p-4 sm:p-5 flex items-start gap-3.5 text-amber-600 dark:text-amber-400 animate-in fade-in slide-in-from-top-2 duration-300">
+                    <AlertCircle className="w-5 h-5 shrink-0 mt-0.5 text-amber-500" />
+                    <div className="space-y-1 text-left">
+                      <h3 className="text-sm font-bold text-foreground">
+                        {t('auth_notice_no_account_title')}
+                      </h3>
+                      <p className="text-xs text-muted-foreground leading-relaxed">
+                        {paramEmail || email
+                          ? t('auth_notice_no_account_desc_email', { email: paramEmail || email })
+                          : t('auth_notice_no_account_desc')}
+                      </p>
+                    </div>
+                  </div>
+                )}
 
                 {/* Store Referral Banner */}
                 {storeInfo && (

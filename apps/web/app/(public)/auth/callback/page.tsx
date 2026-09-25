@@ -104,15 +104,31 @@ function CallbackContent() {
         clearOAuthContext()
         console.error("OAuth callback error:", err)
 
-        if (err instanceof ApiError && (err.status === 404 || err.message === 'ACCOUNT_NOT_FOUND')) {
-          const errorData = (err.data as any)?.error || (err.data as any) || {}
+        const errAny = err as any
+        const isAccountNotFound =
+          errAny?.status === 404 ||
+          errAny?.response?.status === 404 ||
+          errAny?.message === 'ACCOUNT_NOT_FOUND' ||
+          errAny?.code === 'ACCOUNT_NOT_FOUND' ||
+          errAny?.data?.error?.code === 'ACCOUNT_NOT_FOUND' ||
+          errAny?.data?.error?.message === 'ACCOUNT_NOT_FOUND' ||
+          errAny?.response?.data?.error?.code === 'ACCOUNT_NOT_FOUND' ||
+          errAny?.response?.data?.error?.message === 'ACCOUNT_NOT_FOUND'
+
+        if (isAccountNotFound) {
+          const errorData =
+            errAny?.data?.error ||
+            errAny?.data ||
+            errAny?.response?.data?.error ||
+            errAny?.response?.data ||
+            {}
           const email = errorData.email || ''
           const fullName = errorData.fullName || ''
           const params = new URLSearchParams()
           params.set('notice', 'no_account')
           if (email) params.set('email', email)
           if (fullName) params.set('name', fullName)
-          handlersRef.current.router.replace(`/auth/sign-up?${params.toString()}`)
+          window.location.replace(`/auth/sign-up?${params.toString()}`)
           return
         }
 
