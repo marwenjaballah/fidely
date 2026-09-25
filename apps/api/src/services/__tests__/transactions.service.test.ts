@@ -47,7 +47,7 @@ describe('TransactionsService Security & Loyalty Engine', () => {
       transaction: {
         create: vi.fn().mockResolvedValue({ id: 'tx-1' }),
       },
-      $transaction: vi.fn(async (cb) => cb(mockPrisma)),
+      $transaction: vi.fn(async (cb: (tx: any) => Promise<any>) => cb(mockPrisma)),
     };
 
     service = new TransactionsService(mockPrisma);
