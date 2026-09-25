@@ -535,6 +535,7 @@ export const en = {
   customizer_save_button: 'Save Store Branding',
   customizer_saving: 'Saving Changes...',
   customizer_saved_no_changes: 'Saved (No Changes)',
+  customizer_saved_success: 'Store settings and currency updated successfully.',
   customizer_simulator_title: 'Fidely Wallet Pass Simulator',
   customizer_live_preview: 'Live Preview',
   customizer_simulator_desc: "This Fidely Wallet pass updates in real-time on your customer's device when they collect or redeem points.",

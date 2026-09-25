@@ -537,6 +537,7 @@ export const ar: Record<TranslationKey, string> = {
   customizer_save_button: 'حفظ هوية المتجر',
   customizer_saving: 'جارٍ حفظ التغييرات...',
   customizer_saved_no_changes: 'محفوظ (لا توجد تغييرات)',
+  customizer_saved_success: 'تم تحديث إعدادات وعملة المتجر بنجاح.',
   customizer_simulator_title: 'محاكي بطاقة Fidely Wallet',
   customizer_live_preview: 'معاينة حية',
   customizer_simulator_desc: 'تتحدث بطاقة Fidely Wallet هذه فورياً على هواتف عملائك عند كسب أو استبدال النقاط.',

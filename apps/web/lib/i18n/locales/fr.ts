@@ -537,6 +537,7 @@ export const fr: Record<TranslationKey, string> = {
   customizer_save_button: 'Enregistrer l\'identité du commerce',
   customizer_saving: 'Enregistrement...',
   customizer_saved_no_changes: 'Enregistré (Aucun changement)',
+  customizer_saved_success: 'Paramètres et devise du magasin mis à jour avec succès.',
   customizer_simulator_title: 'Simulateur de Pass Fidely Wallet',
   customizer_live_preview: 'Aperçu en Direct',
   customizer_simulator_desc: 'Ce pass Fidely Wallet se met à jour en temps réel sur le smartphone de votre client lorsqu\'il gagne ou utilise des points.',

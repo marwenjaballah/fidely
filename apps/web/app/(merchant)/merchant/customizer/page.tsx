@@ -229,7 +229,7 @@ export default function CustomizerAndRewardsPage() {
       } else {
         toast({
           title: t('customizer_save_button'),
-          description: t('customizer_saved_no_changes'),
+          description: t('customizer_saved_success'),
         })
       }
     } catch (err: any) {
@@ -306,6 +306,8 @@ export default function CustomizerAndRewardsPage() {
   const hasChanges = Boolean(
     activeStore &&
       (name.trim() !== (activeStore.name || '').trim() ||
+        slug.trim() !== (activeStore.slug || '').trim() ||
+        currency.trim().toUpperCase() !== (activeStore.currency || 'TND').toUpperCase() ||
         primaryColor.toLowerCase() !== (activeStore.primaryColor || '#D97706').toLowerCase() ||
         Number(pointsPerTnd) !== (Number(activeStore.pointsPerTnd) || 10) ||
         Number(welcomePoints) !== (Number((activeStore as any).welcomePoints) || 0) ||
