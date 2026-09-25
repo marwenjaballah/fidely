@@ -72,7 +72,7 @@ export class MerchantService {
         ...(data.name !== undefined ? { name: data.name } : {}),
         slug: nextSlug,
         ...(data.primaryColor !== undefined ? { primaryColor: data.primaryColor } : {}),
-        ...(data.currency !== undefined ? { currency: data.currency } : {}),
+        ...(data.currency !== undefined ? { currency: data.currency.trim().toUpperCase() || 'TND' } : {}),
         ...(data.pointsPerTnd !== undefined ? { pointsPerTnd: data.pointsPerTnd } : {}),
         ...(data.welcomePoints !== undefined ? { welcomePoints: data.welcomePoints } : {}),
         ...(data.logoUrl !== undefined ? { logoUrl: data.logoUrl } : {}),

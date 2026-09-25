@@ -55,6 +55,8 @@ const COLOR_PRESETS = [
   { name: 'Charcoal', color: '#18181B' },
 ]
 
+const CURRENCY_PRESETS = ['TND', 'EUR', 'USD', 'GBP', 'SAR', 'AED', 'CAD']
+
 const MULTIPLIER_PRESETS = [5, 10, 15, 20, 25]
 
 /**
@@ -124,6 +126,7 @@ export default function CustomizerAndRewardsPage() {
   const [slug, setSlug] = useState('')
   const [isAutoSyncSlug, setIsAutoSyncSlug] = useState(true)
   const [primaryColor, setPrimaryColor] = useState('#D97706')
+  const [currency, setCurrency] = useState('TND')
   const [pointsPerTnd, setPointsPerTnd] = useState(10)
   const [welcomePoints, setWelcomePoints] = useState(0)
   const [logoUrl, setLogoUrl] = useState<string | null>(null)
@@ -146,6 +149,7 @@ export default function CustomizerAndRewardsPage() {
       setSlug(activeStore.slug)
       setIsAutoSyncSlug(true)
       setPrimaryColor(activeStore.primaryColor || '#D97706')
+      setCurrency(activeStore.currency || 'TND')
       setPointsPerTnd(Number(activeStore.pointsPerTnd) || 10)
       setWelcomePoints(Number((activeStore as any).welcomePoints) || 0)
       setLogoUrl(activeStore.logoUrl || null)
@@ -208,6 +212,7 @@ export default function CustomizerAndRewardsPage() {
         name,
         slug: slug.trim() || undefined,
         primaryColor,
+        currency: currency.trim().toUpperCase() || 'TND',
         pointsPerTnd: Number(pointsPerTnd),
         welcomePoints: Number(welcomePoints),
         logoUrl,
@@ -590,11 +595,59 @@ export default function CustomizerAndRewardsPage() {
 
                 <Separator />
 
+                {/* Store Operating Currency */}
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between">
+                    <Label className="flex items-center gap-1.5">
+                      <Coins className="h-4 w-4 text-primary" />
+                      {t('customizer_currency_label')}
+                    </Label>
+                    <Badge variant="outline" className="font-mono text-xs font-bold bg-primary/5 text-primary border-primary/20">
+                      {currency}
+                    </Badge>
+                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    {t('customizer_currency_desc')}
+                  </p>
+
+                  <div className="flex flex-wrap gap-2">
+                    {CURRENCY_PRESETS.map((curr) => (
+                      <button
+                        key={curr}
+                        type="button"
+                        onClick={() => setCurrency(curr)}
+                        className={`px-3 py-1.5 rounded-lg border text-xs font-semibold transition-all ${
+                          currency.toUpperCase() === curr
+                            ? 'bg-primary text-primary-foreground border-primary shadow-xs'
+                            : 'bg-muted/50 border-border/60 text-muted-foreground hover:bg-muted hover:text-foreground'
+                        }`}
+                      >
+                        {curr}
+                      </button>
+                    ))}
+                  </div>
+
+                  <div className="flex items-center gap-3 pt-1">
+                    <Input
+                      value={currency}
+                      onChange={(e) => setCurrency(e.target.value.toUpperCase().replace(/[^A-Z]/g, '').slice(0, 5))}
+                      placeholder={t('customizer_custom_currency_placeholder')}
+                      className="font-mono text-xs max-w-[140px] uppercase font-bold"
+                      maxLength={5}
+                    />
+                    <span className="text-xs text-muted-foreground">
+                      {t('customizer_custom_currency_placeholder')}
+                    </span>
+                  </div>
+                </div>
+
+                <Separator />
+
                 {/* Points Multiplier */}
                 <div className="space-y-3">
                   <Label className="flex items-center gap-1.5">
                     <Coins className="h-4 w-4 text-amber-500" />
-                    {t('customizer_multiplier_label')}
+                    {t('customizer_multiplier_label', { currency })}
                   </Label>
                   <p className="text-xs text-muted-foreground">
                     {t('customizer_multiplier_desc')}
@@ -612,7 +665,7 @@ export default function CustomizerAndRewardsPage() {
                             : 'bg-muted/50 border-border/60 text-muted-foreground hover:bg-muted hover:text-foreground'
                         }`}
                       >
-                        1 TND = {pts} {t('pts')}
+                        1 {currency} = {pts} {t('pts')}
                       </button>
                     ))}
                   </div>
@@ -627,7 +680,7 @@ export default function CustomizerAndRewardsPage() {
                       className="max-w-[120px]"
                     />
                     <span className="text-xs text-muted-foreground">
-                      {t('customizer_multiplier_example_bill')} <span className="font-semibold text-foreground">25 TND</span> ={' '}
+                      {t('customizer_multiplier_example_bill')} <span className="font-semibold text-foreground">25 {currency}</span> ={' '}
                       <span className="font-bold text-emerald-600 dark:text-emerald-400">
                         {25 * (Number(pointsPerTnd) || 10)} {t('points')}
                       </span>
