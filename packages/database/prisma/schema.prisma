@@ -12,7 +12,7 @@ model User {
   id            String   @id @default(uuid())
   email         String   @unique
   fullName      String?
-  phone         String?  @unique
+  phone         String?
   streetAddress String?
   city          String?
   state         String?
@@ -28,9 +28,11 @@ model User {
   cashierStores       Store[]              @relation("StoreCashiers")
   memberships         CustomerMembership[]
   cashierTransactions Transaction[]       @relation("CashierTransactions")
+  cashierOrders       ServiceOrder[]       @relation("CashierServiceOrders")
   referredByStore     Store?               @relation("StoreReferrals", fields: [referredByStoreId], references: [id])
 
   @@index([email])
+  @@index([phone])
   @@map("users")
 }
 
@@ -42,23 +44,26 @@ enum UserRole {
 }
 
 model Store {
-  id           String   @id @default(uuid())
-  ownerId      String
-  name         String
-  slug         String   @unique
-  logoUrl      String?
-  primaryColor String   @default("#000000")
-  currency     String   @default("TND")
-  pointsPerTnd Decimal  @default(10.00) @db.Decimal(10, 2)
-  welcomePoints Int     @default(0)
-  active       Boolean  @default(true)
-  createdAt    DateTime @default(now())
+  id                 String   @id @default(uuid())
+  ownerId            String
+  name               String
+  slug               String   @unique
+  logoUrl            String?
+  primaryColor       String   @default("#000000")
+  currency           String   @default("TND")
+  pointsPerTnd       Decimal  @default(10.00) @db.Decimal(10, 2)
+  welcomePoints      Int      @default(0)
+  selfServiceEnabled Boolean  @default(true)
+  active             Boolean  @default(true)
+  createdAt          DateTime @default(now())
 
   // Relationships
   owner         User                 @relation("StoreOwner", fields: [ownerId], references: [id])
   cashiers      User[]               @relation("StoreCashiers")
   memberships   CustomerMembership[]
   rewards       Reward[]
+  menuItems     MenuItem[]
+  serviceOrders ServiceOrder[]
   transactions  Transaction[]
   referredUsers User[]               @relation("StoreReferrals")
 
@@ -75,10 +80,11 @@ model CustomerMembership {
   joinedAt      DateTime @default(now())
 
   // Relationships
-  customer     User          @relation(fields: [customerId], references: [id])
-  store        Store         @relation(fields: [storeId], references: [id])
-  transactions Transaction[]
-  vouchers     Voucher[]
+  customer      User           @relation(fields: [customerId], references: [id])
+  store         Store          @relation(fields: [storeId], references: [id])
+  transactions  Transaction[]
+  vouchers      Voucher[]
+  serviceOrders ServiceOrder[]
 
   @@unique([customerId, storeId], name: "customerStoreIdx")
   @@index([storeId, joinedAt(sort: Desc)])
@@ -114,15 +120,67 @@ model Transaction {
   createdAt      DateTime @default(now())
 
   // Relationships
-  store      Store              @relation(fields: [storeId], references: [id])
-  cashier    User               @relation("CashierTransactions", fields: [cashierId], references: [id])
-  membership CustomerMembership @relation(fields: [membershipId], references: [id])
+  store        Store              @relation(fields: [storeId], references: [id])
+  cashier      User               @relation("CashierTransactions", fields: [cashierId], references: [id])
+  membership   CustomerMembership @relation(fields: [membershipId], references: [id])
+  serviceOrder ServiceOrder?
 
   @@index([storeId, createdAt(sort: Desc)])
   @@index([membershipId, createdAt(sort: Desc)])
   @@index([cashierId, createdAt(sort: Desc)])
   @@index([storeId, type])
   @@map("transactions")
+}
+
+model MenuItem {
+  id          String   @id @default(uuid())
+  storeId     String
+  name        String
+  description String?
+  category    String   @default("Coffee")
+  price       Decimal  @db.Decimal(10, 3)
+  imageUrl    String?
+  available   Boolean  @default(true)
+  sortOrder   Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relationships
+  store Store @relation(fields: [storeId], references: [id], onDelete: Cascade)
+
+  @@index([storeId, available, sortOrder])
+  @@map("menu_items")
+}
+
+enum ServiceOrderStatus {
+  PREPARING
+  READY
+  COMPLETED
+  CANCELLED
+}
+
+model ServiceOrder {
+  id            String             @id @default(uuid())
+  storeId       String
+  membershipId  String
+  cashierId     String
+  transactionId String?            @unique
+  orderNumber   Int
+  status        ServiceOrderStatus @default(PREPARING)
+  itemsSummary  String?
+  createdAt     DateTime           @default(now())
+  readyAt       DateTime?
+  completedAt   DateTime?
+
+  // Relationships
+  store       Store              @relation(fields: [storeId], references: [id], onDelete: Cascade)
+  membership  CustomerMembership @relation(fields: [membershipId], references: [id], onDelete: Cascade)
+  cashier     User               @relation("CashierServiceOrders", fields: [cashierId], references: [id])
+  transaction Transaction?       @relation(fields: [transactionId], references: [id], onDelete: SetNull)
+
+  @@index([storeId, status, createdAt(sort: Desc)])
+  @@index([membershipId, status])
+  @@map("service_orders")
 }
 
 model Voucher {

@@ -18,13 +18,14 @@ export class MerchantService {
       currency: s.currency || 'TND',
       pointsPerTnd: Number(s.pointsPerTnd) || 10,
       welcomePoints: Number(s.welcomePoints) || 0,
+      selfServiceEnabled: s.selfServiceEnabled !== undefined ? Boolean(s.selfServiceEnabled) : true,
       logoUrl: s.logoUrl || null,
       active: s.active,
       createdAt: s.createdAt,
     }));
   }
 
-  async createStore(merchantId: string, data: { name: string; slug?: string; primaryColor?: string; currency?: string; pointsPerTnd?: number; welcomePoints?: number; logoUrl?: string | null }) {
+  async createStore(merchantId: string, data: { name: string; slug?: string; primaryColor?: string; currency?: string; pointsPerTnd?: number; welcomePoints?: number; selfServiceEnabled?: boolean; logoUrl?: string | null }) {
     const candidate = data.slug && data.slug.trim() ? data.slug : data.name;
     const uniqueSlug = await generateUniqueSlug(this.prisma, candidate);
 
@@ -37,6 +38,7 @@ export class MerchantService {
         currency: (data.currency && data.currency.trim()) ? data.currency.trim().toUpperCase() : 'TND',
         pointsPerTnd: data.pointsPerTnd || 10,
         welcomePoints: data.welcomePoints || 0,
+        selfServiceEnabled: data.selfServiceEnabled !== undefined ? data.selfServiceEnabled : true,
         logoUrl: data.logoUrl ?? null,
       }
     });
@@ -46,10 +48,11 @@ export class MerchantService {
       currency: store.currency || 'TND',
       pointsPerTnd: Number(store.pointsPerTnd) || 10,
       welcomePoints: Number((store as any).welcomePoints) || 0,
+      selfServiceEnabled: (store as any).selfServiceEnabled !== undefined ? Boolean((store as any).selfServiceEnabled) : true,
     };
   }
 
-  async updateStore(storeId: string, merchantId: string, data: { name?: string; slug?: string; primaryColor?: string; currency?: string; pointsPerTnd?: number; welcomePoints?: number; logoUrl?: string | null }) {
+  async updateStore(storeId: string, merchantId: string, data: { name?: string; slug?: string; primaryColor?: string; currency?: string; pointsPerTnd?: number; welcomePoints?: number; selfServiceEnabled?: boolean; logoUrl?: string | null }) {
     // Verify ownership
     const store = await this.prisma.store.findFirst({
       where: { id: storeId, ownerId: merchantId },
@@ -75,6 +78,7 @@ export class MerchantService {
         ...(data.currency !== undefined ? { currency: data.currency.trim().toUpperCase() || 'TND' } : {}),
         ...(data.pointsPerTnd !== undefined ? { pointsPerTnd: data.pointsPerTnd } : {}),
         ...(data.welcomePoints !== undefined ? { welcomePoints: data.welcomePoints } : {}),
+        ...(data.selfServiceEnabled !== undefined ? { selfServiceEnabled: data.selfServiceEnabled } : {}),
         ...(data.logoUrl !== undefined ? { logoUrl: data.logoUrl } : {}),
       },
     });
@@ -84,6 +88,7 @@ export class MerchantService {
       currency: updated.currency || 'TND',
       pointsPerTnd: Number(updated.pointsPerTnd) || 10,
       welcomePoints: Number((updated as any).welcomePoints) || 0,
+      selfServiceEnabled: (updated as any).selfServiceEnabled !== undefined ? Boolean((updated as any).selfServiceEnabled) : true,
     };
   }
 
@@ -817,5 +822,177 @@ export class MerchantService {
         totalAmount: Number(totalAmount.toFixed(3)),
       },
     };
+  }
+
+  async getStoreMenu(storeId: string, merchantId: string) {
+    const store = await this.prisma.store.findFirst({
+      where: { id: storeId, ownerId: merchantId },
+    });
+
+    if (!store) {
+      throw new Error('Store not found or unauthorized');
+    }
+
+    const items = await this.prisma.menuItem.findMany({
+      where: { storeId },
+      orderBy: [{ sortOrder: 'asc' }, { category: 'asc' }, { name: 'asc' }],
+    });
+
+    return items.map((item) => ({
+      id: item.id,
+      storeId: item.storeId,
+      name: item.name,
+      description: item.description,
+      category: item.category,
+      price: Number(item.price),
+      imageUrl: item.imageUrl,
+      available: item.available,
+      sortOrder: item.sortOrder,
+      createdAt: item.createdAt.toISOString(),
+      updatedAt: item.updatedAt.toISOString(),
+    }));
+  }
+
+  async createStoreMenuItem(
+    storeId: string,
+    merchantId: string,
+    data: {
+      name: string;
+      description?: string | null;
+      category?: string;
+      price: number;
+      imageUrl?: string | null;
+      available?: boolean;
+      sortOrder?: number;
+    }
+  ) {
+    const store = await this.prisma.store.findFirst({
+      where: { id: storeId, ownerId: merchantId },
+    });
+
+    if (!store) {
+      throw new Error('Store not found or unauthorized');
+    }
+
+    if (!data.name || !data.name.trim()) {
+      throw new Error('Menu item name is required.');
+    }
+
+    if (data.price < 0 || Number.isNaN(Number(data.price))) {
+      throw new Error('Menu item price must be a non-negative number.');
+    }
+
+    const created = await this.prisma.menuItem.create({
+      data: {
+        storeId,
+        name: data.name.trim(),
+        description: data.description?.trim() || null,
+        category: data.category?.trim() || 'Coffee',
+        price: Number(data.price),
+        imageUrl: data.imageUrl || null,
+        available: data.available !== undefined ? data.available : true,
+        sortOrder: data.sortOrder ?? 0,
+      },
+    });
+
+    return {
+      id: created.id,
+      storeId: created.storeId,
+      name: created.name,
+      description: created.description,
+      category: created.category,
+      price: Number(created.price),
+      imageUrl: created.imageUrl,
+      available: created.available,
+      sortOrder: created.sortOrder,
+      createdAt: created.createdAt.toISOString(),
+      updatedAt: created.updatedAt.toISOString(),
+    };
+  }
+
+  async updateStoreMenuItem(
+    storeId: string,
+    merchantId: string,
+    menuItemId: string,
+    data: {
+      name?: string;
+      description?: string | null;
+      category?: string;
+      price?: number;
+      imageUrl?: string | null;
+      available?: boolean;
+      sortOrder?: number;
+    }
+  ) {
+    const store = await this.prisma.store.findFirst({
+      where: { id: storeId, ownerId: merchantId },
+    });
+
+    if (!store) {
+      throw new Error('Store not found or unauthorized');
+    }
+
+    const existing = await this.prisma.menuItem.findFirst({
+      where: { id: menuItemId, storeId },
+    });
+
+    if (!existing) {
+      throw new Error('Menu item not found');
+    }
+
+    if (data.price !== undefined && (data.price < 0 || Number.isNaN(Number(data.price)))) {
+      throw new Error('Menu item price must be a non-negative number.');
+    }
+
+    const updated = await this.prisma.menuItem.update({
+      where: { id: menuItemId },
+      data: {
+        ...(data.name !== undefined ? { name: data.name.trim() } : {}),
+        ...(data.description !== undefined ? { description: data.description?.trim() || null } : {}),
+        ...(data.category !== undefined ? { category: data.category.trim() || 'Coffee' } : {}),
+        ...(data.price !== undefined ? { price: Number(data.price) } : {}),
+        ...(data.imageUrl !== undefined ? { imageUrl: data.imageUrl || null } : {}),
+        ...(data.available !== undefined ? { available: data.available } : {}),
+        ...(data.sortOrder !== undefined ? { sortOrder: data.sortOrder } : {}),
+      },
+    });
+
+    return {
+      id: updated.id,
+      storeId: updated.storeId,
+      name: updated.name,
+      description: updated.description,
+      category: updated.category,
+      price: Number(updated.price),
+      imageUrl: updated.imageUrl,
+      available: updated.available,
+      sortOrder: updated.sortOrder,
+      createdAt: updated.createdAt.toISOString(),
+      updatedAt: updated.updatedAt.toISOString(),
+    };
+  }
+
+  async deleteStoreMenuItem(storeId: string, merchantId: string, menuItemId: string) {
+    const store = await this.prisma.store.findFirst({
+      where: { id: storeId, ownerId: merchantId },
+    });
+
+    if (!store) {
+      throw new Error('Store not found or unauthorized');
+    }
+
+    const existing = await this.prisma.menuItem.findFirst({
+      where: { id: menuItemId, storeId },
+    });
+
+    if (!existing) {
+      throw new Error('Menu item not found');
+    }
+
+    await this.prisma.menuItem.delete({
+      where: { id: menuItemId },
+    });
+
+    return { message: 'Menu item deleted successfully' };
   }
 }

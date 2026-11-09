@@ -47,6 +47,8 @@ export class CustomerService {
       console.warn('Auto-enroll in referral store notice:', e);
     }
 
+    const cutoffOrders = new Date(Date.now() - 12 * 60 * 60 * 1000); // last 12 hours
+
     const memberships = await this.prisma.customerMembership.findMany({
       where: { customerId },
       include: {
@@ -54,6 +56,10 @@ export class CustomerService {
           include: {
             rewards: {
               where: { active: true },
+            },
+            menuItems: {
+              where: { available: true },
+              orderBy: [{ sortOrder: 'asc' }, { category: 'asc' }, { name: 'asc' }],
             },
           },
         },
@@ -66,6 +72,13 @@ export class CustomerService {
         transactions: {
           orderBy: { createdAt: 'desc' },
           take: 10,
+        },
+        serviceOrders: {
+          where: {
+            status: { in: ['PREPARING', 'READY'] },
+            createdAt: { gte: cutoffOrders },
+          },
+          orderBy: { createdAt: 'desc' },
         },
       },
     });
@@ -93,19 +106,39 @@ export class CustomerService {
         storeName: m.store.name,
         storeSlug: m.store.slug,
         primaryColor: m.store.primaryColor,
-        pointsPerTnd: m.store.pointsPerTnd,
+        currency: m.store.currency || 'TND',
+        pointsPerTnd: Number(m.store.pointsPerTnd),
         logoUrl: m.store.logoUrl,
         pointsBalance: m.pointsBalance,
         qrCodeToken: m.qrCodeToken || `${customerId}:${m.storeId}`,
         joinedAt: m.joinedAt.toISOString(),
-        rewards: m.store.rewards.map((r) => ({
+        rewards: (m.store.rewards || []).map((r) => ({
           id: r.id,
           name: r.name,
           description: r.description,
           pointsCost: r.pointsCost,
           active: r.active,
         })),
-        vouchers: m.vouchers.map((v) => ({
+        menuItems: ((m.store as any).menuItems || []).map((item: any) => ({
+          id: item.id,
+          name: item.name,
+          description: item.description,
+          category: item.category,
+          price: Number(item.price),
+          imageUrl: item.imageUrl,
+          available: item.available,
+        })),
+        activeOrders: ((m as any).serviceOrders || []).map((o: any) => ({
+          id: o.id,
+          storeId: o.storeId,
+          storeName: m.store.name,
+          orderNumber: o.orderNumber,
+          status: o.status,
+          itemsSummary: o.itemsSummary,
+          createdAt: o.createdAt.toISOString(),
+          readyAt: o.readyAt ? o.readyAt.toISOString() : null,
+        })),
+        vouchers: (m.vouchers || []).map((v) => ({
           id: v.id,
           code: v.code,
           status: v.status,
@@ -114,7 +147,7 @@ export class CustomerService {
           rewardName: v.reward.name,
           pointsCost: v.reward.pointsCost,
         })),
-        transactions: m.transactions.map((t) => ({
+        transactions: (m.transactions || []).map((t) => ({
           id: t.id,
           type: t.type,
           amountTnd: t.amountTnd ? Number(t.amountTnd) : null,
@@ -127,7 +160,8 @@ export class CustomerService {
         name: s.name,
         slug: s.slug,
         primaryColor: s.primaryColor,
-        pointsPerTnd: s.pointsPerTnd,
+        currency: s.currency || 'TND',
+        pointsPerTnd: Number(s.pointsPerTnd),
         logoUrl: s.logoUrl,
         rewardsCount: s.rewards.length,
       })),
@@ -152,6 +186,10 @@ export class CustomerService {
           where: { active: true },
           orderBy: { pointsCost: 'asc' },
         },
+        menuItems: {
+          where: { available: true },
+          orderBy: [{ sortOrder: 'asc' }, { category: 'asc' }, { name: 'asc' }],
+        },
       },
     });
 
@@ -164,16 +202,97 @@ export class CustomerService {
       name: store.name,
       slug: store.slug,
       primaryColor: store.primaryColor,
-      pointsPerTnd: store.pointsPerTnd,
+      currency: store.currency || 'TND',
+      pointsPerTnd: Number(store.pointsPerTnd),
       welcomePoints: (store as any).welcomePoints ?? 0,
+      selfServiceEnabled: (store as any).selfServiceEnabled !== undefined ? Boolean((store as any).selfServiceEnabled) : true,
       logoUrl: store.logoUrl,
-      rewards: store.rewards.map((r) => ({
+      rewards: (store.rewards || []).map((r) => ({
         id: r.id,
         name: r.name,
         description: r.description,
         pointsCost: r.pointsCost,
         active: r.active,
       })),
+      menuItems: ((store as any).menuItems || []).map((item: any) => ({
+        id: item.id,
+        name: item.name,
+        description: item.description,
+        category: item.category,
+        price: Number(item.price),
+        imageUrl: item.imageUrl,
+        available: item.available,
+      })),
+    };
+  }
+
+  /**
+   * Retrieves active self-service orders (PREPARING / READY) for the authenticated customer across all stores.
+   */
+  async getCustomerActiveOrders(customerId: string) {
+    const cutoff = new Date(Date.now() - 12 * 60 * 60 * 1000);
+    const orders = await this.prisma.serviceOrder.findMany({
+      where: {
+        membership: { customerId },
+        status: { in: ['PREPARING', 'READY'] },
+        createdAt: { gte: cutoff },
+      },
+      orderBy: { createdAt: 'desc' },
+      include: {
+        store: {
+          select: {
+            id: true,
+            name: true,
+            slug: true,
+            primaryColor: true,
+            logoUrl: true,
+          },
+        },
+      },
+    });
+
+    return orders.map((o) => ({
+      id: o.id,
+      storeId: o.storeId,
+      storeName: o.store.name,
+      storeSlug: o.store.slug,
+      primaryColor: o.store.primaryColor,
+      logoUrl: o.store.logoUrl,
+      orderNumber: o.orderNumber,
+      status: o.status,
+      itemsSummary: o.itemsSummary,
+      createdAt: o.createdAt.toISOString(),
+      readyAt: o.readyAt ? o.readyAt.toISOString() : null,
+    }));
+  }
+
+  /**
+   * Allows a customer to acknowledge/dismiss a READY order once they pick it up.
+   */
+  async acknowledgeOrder(customerId: string, orderId: string) {
+    const order = await this.prisma.serviceOrder.findFirst({
+      where: {
+        id: orderId,
+        membership: { customerId },
+      },
+    });
+
+    if (!order) {
+      throw new HTTPException(404, { message: 'Order not found for this customer.' });
+    }
+
+    const updated = await this.prisma.serviceOrder.update({
+      where: { id: orderId },
+      data: {
+        status: 'COMPLETED',
+        completedAt: new Date(),
+      },
+    });
+
+    return {
+      id: updated.id,
+      status: updated.status,
+      completedAt: updated.completedAt ? updated.completedAt.toISOString() : new Date().toISOString(),
     };
   }
 

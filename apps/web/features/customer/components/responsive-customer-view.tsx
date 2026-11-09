@@ -4,12 +4,14 @@ import React from 'react'
 import { ResponsiveView } from '@/components/common/responsive-view'
 import { CustomerMobileView } from './mobile/customer-mobile-view'
 import { CustomerDesktopView } from './desktop/customer-desktop-view'
-import { CustomerMembership, AvailableStore } from '@/store/customer-store'
+import { CustomerMembership, AvailableStore, CustomerActiveOrder } from '@/store/customer-store'
 
 interface ResponsiveCustomerViewProps {
   memberships: CustomerMembership[]
   activeMembership: CustomerMembership | null
   availableStores: AvailableStore[]
+  activeOrders?: CustomerActiveOrder[]
+  onAcknowledgeOrder?: (orderId: string) => Promise<void> | void
   onSelectMembership: (id: string) => void
   onRefreshQr: (id: string) => Promise<void> | void
   onJoinStore: (storeId: string) => Promise<void>

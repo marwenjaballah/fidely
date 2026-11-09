@@ -47,6 +47,16 @@ describe('TransactionsService Security & Loyalty Engine', () => {
       transaction: {
         create: vi.fn().mockResolvedValue({ id: 'tx-1' }),
       },
+      menuItem: {
+        findMany: vi.fn().mockResolvedValue([]),
+      },
+      serviceOrder: {
+        findFirst: vi.fn().mockResolvedValue(null),
+        create: vi.fn(),
+        findMany: vi.fn().mockResolvedValue([]),
+        findUnique: vi.fn(),
+        update: vi.fn(),
+      },
       $transaction: vi.fn(async (cb: (tx: any) => Promise<any>) => cb(mockPrisma)),
     };
 
@@ -156,6 +166,98 @@ describe('TransactionsService Security & Loyalty Engine', () => {
       await expect(
         service.redeemReward('cashier-1', 'CASHIER', 'customer-1:store-1:token', '50', 'store-1')
       ).rejects.toThrow(/Insufficient points or concurrent transaction/);
+    });
+  });
+
+  describe('Self-Service Order Queue & Buzzer Notifications', () => {
+    it('creates a ServiceOrder in PREPARING status with sequential orderNumber when trackOrder is true', async () => {
+      const activeToken = 'customer-1:store-1:nonce123';
+      const mockMem = {
+        id: 'mem-1',
+        customerId: 'customer-1',
+        storeId: 'store-1',
+        pointsBalance: 50,
+        qrCodeToken: activeToken,
+      };
+
+      mockPrisma.customerMembership.findUnique
+        .mockResolvedValueOnce(mockMem)
+        .mockResolvedValueOnce(mockMem);
+
+      mockPrisma.customerMembership.update.mockResolvedValueOnce({
+        id: 'mem-1',
+        pointsBalance: 135,
+      });
+
+      mockPrisma.serviceOrder.findFirst.mockResolvedValueOnce({ orderNumber: 103 });
+      mockPrisma.serviceOrder.create.mockResolvedValueOnce({
+        id: 'order-1',
+        storeId: 'store-1',
+        membershipId: 'mem-1',
+        cashierId: 'cashier-1',
+        transactionId: 'tx-1',
+        orderNumber: 104,
+        status: 'PREPARING',
+        itemsSummary: '1x Iced Spanish Latte, 1x Croissant',
+        createdAt: new Date('2026-11-09T10:00:00Z'),
+        readyAt: null,
+      });
+
+      const result = await service.issuePoints(
+        'cashier-1',
+        'CASHIER',
+        activeToken,
+        8.5,
+        'store-1',
+        undefined,
+        {
+          trackOrder: true,
+          itemsSummary: '1x Iced Spanish Latte, 1x Croissant',
+        }
+      );
+
+      expect(result.pointsIssued).toBe(85);
+      expect(result.serviceOrder).toBeDefined();
+      expect(result.serviceOrder?.orderNumber).toBe(104);
+      expect(result.serviceOrder?.status).toBe('PREPARING');
+      expect(result.serviceOrder?.itemsSummary).toBe('1x Iced Spanish Latte, 1x Croissant');
+      expect(mockPrisma.serviceOrder.create).toHaveBeenCalledTimes(1);
+    });
+
+    it('transitions order from PREPARING to READY and sets readyAt timestamp', async () => {
+      mockPrisma.serviceOrder.findUnique.mockResolvedValueOnce({
+        id: 'order-1',
+        storeId: 'store-1',
+        membershipId: 'mem-1',
+        cashierId: 'cashier-1',
+        orderNumber: 104,
+        status: 'PREPARING',
+        itemsSummary: '1x Iced Spanish Latte',
+        membership: {
+          customer: {
+            fullName: 'Jane Doe',
+            email: 'jane@example.com',
+          },
+        },
+      });
+
+      const now = new Date();
+      mockPrisma.serviceOrder.update.mockResolvedValueOnce({
+        id: 'order-1',
+        storeId: 'store-1',
+        orderNumber: 104,
+        status: 'READY',
+        itemsSummary: '1x Iced Spanish Latte',
+        createdAt: new Date(now.getTime() - 120000),
+        readyAt: now,
+        completedAt: null,
+      });
+
+      const updated = await service.updateOrderStatus('cashier-1', 'CASHIER', 'order-1', 'READY');
+      expect(updated.status).toBe('READY');
+      expect(updated.orderNumber).toBe(104);
+      expect(updated.customerName).toBe('Jane Doe');
+      expect(updated.readyAt).toBeTruthy();
     });
   });
 });

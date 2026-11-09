@@ -1,21 +1,24 @@
 'use client'
 
 import React, { useState } from 'react'
-import { CustomerMembership, AvailableStore } from '@/store/customer-store'
+import { CustomerMembership, AvailableStore, CustomerActiveOrder } from '@/store/customer-store'
 import { MobileHeader } from '@/components/mobile/mobile-header'
 import { CustomerMobileNav, CustomerMobileTab } from './customer-mobile-nav'
 import { CustomerWalletTab } from './tabs/customer-wallet-tab'
 import { CustomerRewardsTab } from './tabs/customer-rewards-tab'
 import { CustomerExploreTab } from './tabs/customer-explore-tab'
 import { CustomerProfileDrawer } from './customer-profile-drawer'
-import { User, QrCode } from 'lucide-react'
+import { User, QrCode, BellRing, Check } from 'lucide-react'
 import { Button } from '@/components/ui/button'
+import { Badge } from '@/components/ui/badge'
 import { posHaptics } from '@/lib/haptics'
 
 interface CustomerMobileViewProps {
   memberships: CustomerMembership[]
   activeMembership: CustomerMembership | null
   availableStores: AvailableStore[]
+  activeOrders?: CustomerActiveOrder[]
+  onAcknowledgeOrder?: (orderId: string) => Promise<void> | void
   onSelectMembership: (id: string) => void
   onRefreshQr: (id: string) => Promise<void> | void
   onJoinStore: (storeId: string) => Promise<void>
@@ -32,6 +35,8 @@ export function CustomerMobileView({
   memberships,
   activeMembership,
   availableStores,
+  activeOrders = [],
+  onAcknowledgeOrder,
   onSelectMembership,
   onRefreshQr,
   onJoinStore,
@@ -83,6 +88,74 @@ export function CustomerMobileView({
 
       {/* ── MAIN SCENE CONTAINER ── */}
       <main className="flex-1 p-3.5 pb-28 space-y-4 max-w-md mx-auto w-full">
+        {/* ── LIVE SELF-SERVICE ORDER BUZZER BANNER ── */}
+        {activeOrders.length > 0 && (
+          <div className="space-y-2">
+            {activeOrders.map((order) => {
+              const isReady = order.status === 'READY'
+              return (
+                <div
+                  key={order.id}
+                  className={`p-3.5 rounded-2xl border flex items-center justify-between gap-3 transition-all text-start shadow-sm ${
+                    isReady
+                      ? 'border-emerald-500/50 bg-emerald-500/15 animate-pulse'
+                      : 'border-amber-500/40 bg-amber-500/10'
+                  }`}
+                >
+                  <div className="flex items-center gap-3 min-w-0 flex-1">
+                    <div
+                      className={`h-10 w-10 rounded-xl flex items-center justify-center shrink-0 font-mono font-black text-xs ${
+                        isReady
+                          ? 'bg-emerald-500 text-white shadow-md shadow-emerald-500/30'
+                          : 'bg-amber-500/20 text-amber-600 dark:text-amber-400'
+                      }`}
+                    >
+                      #{order.orderNumber}
+                    </div>
+                    <div className="min-w-0">
+                      <div className="flex items-center gap-1.5 flex-wrap">
+                        <p className="text-xs font-extrabold tracking-tight text-foreground truncate">
+                          {isReady
+                            ? `Order #${order.orderNumber} is READY!`
+                            : `Order #${order.orderNumber} • Preparing`}
+                        </p>
+                        <Badge
+                          variant={isReady ? 'default' : 'secondary'}
+                          className={`text-[9px] font-bold px-1.5 py-0 ${
+                            isReady
+                              ? 'bg-emerald-600 text-white'
+                              : 'bg-amber-500/20 text-amber-700 dark:text-amber-300'
+                          }`}
+                        >
+                          {isReady ? 'PICKUP NOW' : 'IN QUEUE'}
+                        </Badge>
+                      </div>
+                      <p className="text-[11px] text-muted-foreground truncate mt-0.5">
+                        {order.itemsSummary
+                          ? `${order.itemsSummary}`
+                          : isReady
+                          ? 'Collect your order at the counter!'
+                          : "We'll buzz your phone when ready."}
+                      </p>
+                    </div>
+                  </div>
+
+                  {isReady && onAcknowledgeOrder && (
+                    <Button
+                      size="sm"
+                      onClick={() => onAcknowledgeOrder(order.id)}
+                      className="h-8 rounded-xl text-[11px] font-bold gap-1 bg-emerald-600 hover:bg-emerald-700 text-white shrink-0 px-2.5 shadow-xs"
+                    >
+                      <Check className="w-3.5 h-3.5" />
+                      <span>Picked Up</span>
+                    </Button>
+                  )}
+                </div>
+              )
+            })}
+          </div>
+        )}
+
         {activeTab === 'wallet' && (
           <CustomerWalletTab
             memberships={memberships}

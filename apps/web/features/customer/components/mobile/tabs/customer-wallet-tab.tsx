@@ -1,10 +1,11 @@
 'use client'
 
 import React from 'react'
+import Link from 'next/link'
 import { CustomerMembership } from '@/store/customer-store'
 import { SwipeablePassCarousel } from '@/components/mobile/swipeable-pass-carousel'
 import { Button } from '@/components/ui/button'
-import { QrCode, Compass, Gift, ChevronRight, Sparkles } from 'lucide-react'
+import { QrCode, Compass, Gift, ChevronRight, Sparkles, UtensilsCrossed } from 'lucide-react'
 import { FidelyLogo } from '@/components/common/fidely-logo'
 import { useI18n } from '@/lib/i18n'
 import { posHaptics } from '@/lib/haptics'
@@ -97,6 +98,30 @@ export function CustomerWalletTab({
       <p className="text-center text-[11px] text-muted-foreground">
         {t('customer_show_code') || 'Present this barcode to cashier to earn & redeem points'}
       </p>
+
+      {/* Quick Store Menu & Prices Banner */}
+      {activeMembership && (activeMembership.menuItems?.length || 0) > 0 && (
+        <Link
+          href={`/store/${activeMembership.storeSlug}?tab=menu`}
+          onClick={() => posHaptics.tap()}
+          className="w-full flex items-center justify-between p-3.5 rounded-2xl border border-border/70 bg-card hover:bg-muted/40 text-start active:scale-[0.98] transition-all shadow-2xs"
+        >
+          <div className="flex items-center gap-2.5">
+            <div className="w-8 h-8 rounded-xl bg-primary/15 text-primary flex items-center justify-center shrink-0">
+              <UtensilsCrossed className="w-4 h-4" />
+            </div>
+            <div>
+              <p className="text-xs font-bold text-foreground">
+                {activeMembership.storeName} Menu &amp; Prices
+              </p>
+              <p className="text-[11px] text-muted-foreground">
+                Browse {activeMembership.menuItems?.length} items &amp; points earned
+              </p>
+            </div>
+          </div>
+          <ChevronRight className="w-4 h-4 text-muted-foreground rtl:rotate-180 shrink-0" />
+        </Link>
+      )}
 
       {/* Quick Perk Redeem Banner if perks are reachable */}
       {reachableRewards.length > 0 && (

@@ -26,6 +26,10 @@ import {
   Wifi,
   WifiOff,
   RefreshCw,
+  Bell,
+  BellRing,
+  UtensilsCrossed,
+  Clock,
 } from 'lucide-react'
 import { Switch } from '@/components/ui/switch'
 import { useI18n } from '@/lib/i18n'
@@ -50,7 +54,21 @@ export interface CashierStoreInfo {
   primaryColor: string
   currency?: string
   pointsPerTnd: number
+  selfServiceEnabled?: boolean
   isOwner: boolean
+}
+
+export interface CashierServiceOrder {
+  id: string
+  storeId: string
+  storeName: string
+  orderNumber: number
+  status: 'PREPARING' | 'READY' | 'COMPLETED' | 'CANCELLED'
+  itemsSummary: string | null
+  customerName: string
+  customerPhone: string | null
+  createdAt: string
+  readyAt: string | null
 }
 
 export interface RecentTx {
@@ -72,10 +90,18 @@ interface CashierMobileViewProps {
     rewardId?: string,
     rewardName?: string,
     customerQrToken?: string,
-    customerName?: string
+    customerName?: string,
+    trackOrder?: boolean,
+    itemsSummary?: string
   ) => Promise<boolean>
   recentTxs: RecentTx[]
   isLoadingRecent: boolean
+  activeOrders?: CashierServiceOrder[]
+  isUpdatingOrderId?: string | null
+  onUpdateOrderStatus?: (
+    orderId: string,
+    status: 'PREPARING' | 'READY' | 'COMPLETED' | 'CANCELLED'
+  ) => Promise<void>
   onLogout: () => void
   cashierEmail?: string
   apiClient: any
@@ -90,6 +116,9 @@ export function CashierMobileView({
   onProcess,
   recentTxs,
   isLoadingRecent,
+  activeOrders = [],
+  isUpdatingOrderId = null,
+  onUpdateOrderStatus,
   onLogout,
   cashierEmail,
   apiClient,
@@ -110,8 +139,15 @@ export function CashierMobileView({
   const [spendAmount, setSpendAmount] = useState('')
   const [customDeductPoints, setCustomDeductPoints] = useState('')
   const [rewards, setRewards] = useState<any[]>([])
+  const [storeMenuItems, setStoreMenuItems] = useState<any[]>([])
   const [selectedRewardId, setSelectedRewardId] = useState<string | null>(null)
   const [isProcessing, setIsProcessing] = useState(false)
+  const [trackOrder, setTrackOrder] = useState<boolean>(activeStore?.selfServiceEnabled ?? true)
+  const [itemsSummary, setItemsSummary] = useState('')
+
+  React.useEffect(() => {
+    setTrackOrder(activeStore?.selfServiceEnabled ?? true)
+  }, [activeStore?.id, activeStore?.selfServiceEnabled])
 
   const pointsPerTnd = activeStore?.pointsPerTnd || 10
   const currency = activeStore?.currency || 'TND'
@@ -143,6 +179,16 @@ export function CashierMobileView({
       unsubscribe()
     }
   }, [])
+
+  // Fetch store menu items when activeStore changes
+  React.useEffect(() => {
+    if (activeStore?.id) {
+      apiClient
+        .get('/api/v1/transactions/store-menu', { params: { storeId: activeStore.id } })
+        .then((res: any) => setStoreMenuItems(res.data || []))
+        .catch(() => setStoreMenuItems([]))
+    }
+  }, [activeStore?.id, apiClient])
 
   // Fetch store rewards when activeStore or tab changes
   React.useEffect(() => {
@@ -212,6 +258,16 @@ export function CashierMobileView({
     setSpendAmount((cur + amt).toString())
   }
 
+  const handleTapMenuItem = (item: { name: string; price: number }) => {
+    if (isBusy) return
+    posAudio.playClick()
+    posHaptics.tap()
+    const cur = parseFloat(spendAmount) || 0
+    const next = Math.round((cur + item.price) * 100) / 100
+    setSpendAmount(next.toString())
+    setItemsSummary((prev) => (prev ? `${prev}, ${item.name}` : item.name))
+  }
+
   const handleConfirmAward = async () => {
     if (!scannedCustomer || parsedSpend <= 0 || isBusy) return
     setIsProcessing(true)
@@ -222,11 +278,14 @@ export function CashierMobileView({
         undefined,
         undefined,
         scannedCustomer.token,
-        scannedCustomer.name
+        scannedCustomer.name,
+        trackOrder,
+        itemsSummary.trim() || undefined
       )
       if (success) {
         setScannedCustomer(null)
         setSpendAmount('')
+        setItemsSummary('')
       }
     } finally {
       setIsProcessing(false)
@@ -244,11 +303,14 @@ export function CashierMobileView({
         rewardId,
         rewardName,
         scannedCustomer.token,
-        scannedCustomer.name
+        scannedCustomer.name,
+        trackOrder,
+        itemsSummary.trim() || rewardName
       )
       if (success) {
         setScannedCustomer(null)
         setSelectedRewardId(null)
+        setItemsSummary('')
       }
     } finally {
       setIsProcessing(false)
@@ -272,6 +334,93 @@ export function CashierMobileView({
 
       {/* ── MAIN SCENE CONTAINER ── */}
       <main className="flex-1 p-3.5 pb-28 max-w-md mx-auto w-full space-y-4">
+        {/* ── ACTIVE SELF-SERVICE ORDERS QUEUE (LIVE BUZZER BOARD) ── */}
+        {activeOrders.length > 0 && mobileTab !== 'settings' && (
+          <div className="rounded-3xl border border-amber-500/40 bg-amber-500/5 p-3.5 shadow-sm space-y-2.5 text-start">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <BellRing className="w-4 h-4 text-amber-500 animate-bounce" />
+                <span className="text-xs font-extrabold uppercase tracking-wider text-foreground">
+                  Self-Service Queue ({activeOrders.length})
+                </span>
+              </div>
+              <Badge variant="outline" className="text-[10px] font-mono border-amber-500/30 text-amber-600 dark:text-amber-400">
+                Live Buzzer
+              </Badge>
+            </div>
+
+            <div className="space-y-2 max-h-48 overflow-y-auto pe-0.5">
+              {activeOrders.map((order) => {
+                const isReady = order.status === 'READY'
+                const isUpdating = isUpdatingOrderId === order.id
+                return (
+                  <div
+                    key={order.id}
+                    className={`p-2.5 rounded-2xl border flex items-center justify-between gap-2 transition-all ${
+                      isReady
+                        ? 'bg-emerald-500/10 border-emerald-500/40'
+                        : 'bg-background border-border/70'
+                    }`}
+                  >
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-center gap-1.5">
+                        <span className="font-mono font-black text-xs px-2 py-0.5 rounded-lg bg-primary/15 text-primary">
+                          #{order.orderNumber}
+                        </span>
+                        <span className="text-xs font-bold text-foreground truncate">
+                          {order.customerName}
+                        </span>
+                      </div>
+                      {order.itemsSummary && (
+                        <p className="text-[11px] text-muted-foreground truncate mt-0.5">
+                          {order.itemsSummary}
+                        </p>
+                      )}
+                    </div>
+
+                    <div className="flex items-center gap-1.5 shrink-0">
+                      {!isReady ? (
+                        <Button
+                          size="sm"
+                          disabled={isUpdating}
+                          onClick={() => onUpdateOrderStatus?.(order.id, 'READY')}
+                          className="h-8 rounded-xl text-[11px] font-bold gap-1 bg-amber-500 hover:bg-amber-600 text-white px-2.5 shadow-xs"
+                        >
+                          {isUpdating ? (
+                            <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                          ) : (
+                            <>
+                              <BellRing className="w-3.5 h-3.5" />
+                              <span>Notify Ready</span>
+                            </>
+                          )}
+                        </Button>
+                      ) : (
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          disabled={isUpdating}
+                          onClick={() => onUpdateOrderStatus?.(order.id, 'COMPLETED')}
+                          className="h-8 rounded-xl text-[11px] font-bold gap-1 border-emerald-500/50 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/15 px-2.5"
+                        >
+                          {isUpdating ? (
+                            <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                          ) : (
+                            <>
+                              <Check className="w-3.5 h-3.5" />
+                              <span>Picked Up</span>
+                            </>
+                          )}
+                        </Button>
+                      )}
+                    </div>
+                  </div>
+                )
+              })}
+            </div>
+          </div>
+        )}
+
         {/* ── TAB 1: SCAN / AWARD REGISTER ── */}
         {mobileTab === 'award' && (
           <div className="space-y-4">
@@ -352,6 +501,7 @@ export function CashierMobileView({
                     onClick={() => {
                       setScannedCustomer(null)
                       setSpendAmount('')
+                      setItemsSummary('')
                     }}
                     className="h-8 w-8 rounded-full disabled:opacity-50"
                   >
@@ -375,6 +525,46 @@ export function CashierMobileView({
                       </p>
                     )}
                   </div>
+
+                  {/* Quick Store Menu Picker */}
+                  {storeMenuItems.length > 0 && (
+                    <div className="space-y-1.5 text-start">
+                      <div className="flex items-center justify-between">
+                        <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1">
+                          <UtensilsCrossed className="w-3 h-3 text-primary" />
+                          Tap Menu Item to Add
+                        </span>
+                        {(spendAmount || itemsSummary) && (
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setSpendAmount('')
+                              setItemsSummary('')
+                            }}
+                            className="text-[10px] font-bold text-destructive hover:underline"
+                          >
+                            Reset
+                          </button>
+                        )}
+                      </div>
+                      <div className="flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-none">
+                        {storeMenuItems.map((item: any) => (
+                          <button
+                            key={item.id}
+                            type="button"
+                            disabled={isBusy}
+                            onClick={() => handleTapMenuItem({ name: item.name, price: Number(item.price) })}
+                            className="shrink-0 px-2.5 py-1.5 rounded-xl border border-border/60 bg-muted/30 hover:bg-primary/10 hover:border-primary/40 text-start active:scale-95 transition-all"
+                          >
+                            <p className="text-[11px] font-bold text-foreground whitespace-nowrap">{item.name}</p>
+                            <p className="text-[10px] font-mono font-bold text-primary">
+                              +{Number(item.price).toFixed(2)} {currency}
+                            </p>
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  )}
 
                   {/* Quick Preset Buttons */}
                   <div className="grid grid-cols-4 gap-1.5">
@@ -410,6 +600,31 @@ export function CashierMobileView({
                     ))}
                   </div>
 
+                  {/* Self-Service Order Ready Buzzer Toggle */}
+                  <div className="p-3 rounded-2xl border border-amber-500/30 bg-amber-500/5 space-y-2 text-start">
+                    <div className="flex items-center justify-between gap-2">
+                      <div className="flex items-center gap-2">
+                        <Bell className="w-4 h-4 text-amber-500 shrink-0" />
+                        <div>
+                          <p className="text-xs font-bold text-foreground">Notify when order is ready</p>
+                          <p className="text-[10px] text-muted-foreground">
+                            Self-service digital buzzer on customer phone
+                          </p>
+                        </div>
+                      </div>
+                      <Switch checked={trackOrder} onCheckedChange={setTrackOrder} />
+                    </div>
+                    {trackOrder && (
+                      <Input
+                        type="text"
+                        placeholder="Order items / note (e.g. 2x Iced Latte)"
+                        value={itemsSummary}
+                        onChange={(e) => setItemsSummary(e.target.value)}
+                        className="h-8 text-xs rounded-xl bg-background border-border/60"
+                      />
+                    )}
+                  </div>
+
                   {/* Confirm Action */}
                   <Button
                     onClick={handleConfirmAward}
@@ -424,7 +639,10 @@ export function CashierMobileView({
                     ) : (
                       <>
                         <Coins className="h-4 w-4" />
-                        <span>Award {estimatedPoints > 0 ? `+${estimatedPoints} Points` : 'Points'}</span>
+                        <span>
+                          Award {estimatedPoints > 0 ? `+${estimatedPoints} Points` : 'Points'}
+                          {trackOrder ? ' & Queue Buzzer' : ''}
+                        </span>
                       </>
                     )}
                   </Button>
@@ -496,6 +714,20 @@ export function CashierMobileView({
                   >
                     <X className="h-4 w-4" />
                   </Button>
+                </div>
+
+                {/* Self-Service Order Ready Buzzer Toggle for Redeemed Perks */}
+                <div className="p-3 rounded-2xl border border-amber-500/30 bg-amber-500/5 flex items-center justify-between gap-2 text-start">
+                  <div className="flex items-center gap-2">
+                    <Bell className="w-4 h-4 text-amber-500 shrink-0" />
+                    <div>
+                      <p className="text-xs font-bold text-foreground">Notify when order is ready</p>
+                      <p className="text-[10px] text-muted-foreground">
+                        Queue digital buzzer for redeemed reward
+                      </p>
+                    </div>
+                  </div>
+                  <Switch checked={trackOrder} onCheckedChange={setTrackOrder} />
                 </div>
 
                 {/* Rewards List */}

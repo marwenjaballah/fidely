@@ -1,15 +1,23 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { ArrowLeft, ShieldCheck, Loader2 } from 'lucide-react'
+import { ArrowLeft, ShieldCheck, Loader2, BellRing, Check, Coffee } from 'lucide-react'
 import { Button } from '@/components/ui/button'
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog'
 import { useAuth } from '@/features/auth/hooks/use-auth'
-import { useCustomerStore } from '@/store/customer-store'
+import { useCustomerStore, CustomerActiveOrder } from '@/store/customer-store'
 import { useUserStore } from '@/store/user-store'
 import { useToast } from '@/hooks/use-toast'
 import { useI18n } from '@/lib/i18n'
+import { posAudio } from '@/features/cashier/lib/pos-audio'
 import { ResponsiveCustomerView } from '@/features/customer/components/responsive-customer-view'
 
 export interface CustomerScreenProps {
@@ -27,8 +35,11 @@ export function CustomerScreen({ isMerchant = false }: CustomerScreenProps) {
     memberships,
     activeMembership,
     availableStores,
+    activeOrders,
     loading,
     fetchOverview,
+    fetchActiveOrders,
+    acknowledgeOrder,
     setActiveMembership,
     joinStore,
     joinStoreBySlug,
@@ -38,6 +49,8 @@ export function CustomerScreen({ isMerchant = false }: CustomerScreenProps) {
   const [joiningStoreId, setJoiningStoreId] = useState<string | null>(null)
   const [isJoiningSlug, setIsJoiningSlug] = useState(false)
   const [joinSlugError, setJoinSlugError] = useState<string | null>(null)
+  const [readyAlertOrder, setReadyAlertOrder] = useState<CustomerActiveOrder | null>(null)
+  const alertedOrderIdsRef = useRef<Set<string>>(new Set())
 
   // Auth redirect protection
   useEffect(() => {
@@ -80,6 +93,52 @@ export function CustomerScreen({ isMerchant = false }: CustomerScreenProps) {
       }
     }
   }, [isAuthenticated, fetchOverview, joinStoreBySlug, toast, t])
+
+  // Poll active self-service orders every 5s
+  useEffect(() => {
+    if (!isAuthenticated) return
+    const interval = setInterval(() => {
+      fetchActiveOrders()
+    }, 5000)
+    return () => clearInterval(interval)
+  }, [isAuthenticated, fetchActiveOrders])
+
+  // Trigger digital buzzer chime + vibration + modal when an order becomes READY
+  useEffect(() => {
+    const newlyReady = activeOrders.find(
+      (o) => o.status === 'READY' && !alertedOrderIdsRef.current.has(o.id)
+    )
+    if (newlyReady) {
+      alertedOrderIdsRef.current.add(newlyReady.id)
+      posAudio.playOrderReadyBuzzer()
+      setReadyAlertOrder(newlyReady)
+
+      if (typeof window !== 'undefined' && 'Notification' in window && Notification.permission === 'granted') {
+        try {
+          new Notification(`Order #${newlyReady.orderNumber} is Ready!`, {
+            body: `Your order at ${newlyReady.storeName || 'the counter'} is ready for pickup.`,
+          })
+        } catch {
+          // Ignore notification errors on unsupported browsers
+        }
+      }
+    }
+  }, [activeOrders])
+
+  const handleAcknowledgeOrder = async (orderId: string) => {
+    try {
+      await acknowledgeOrder(orderId)
+      if (readyAlertOrder?.id === orderId) {
+        setReadyAlertOrder(null)
+      }
+      toast({
+        title: 'Order Picked Up!',
+        description: 'Enjoy your order!',
+      })
+    } catch {
+      setReadyAlertOrder(null)
+    }
+  }
 
   const handleLogout = async () => {
     await signOut()
@@ -197,6 +256,8 @@ export function CustomerScreen({ isMerchant = false }: CustomerScreenProps) {
         memberships={memberships}
         activeMembership={activeMembership}
         availableStores={availableStores}
+        activeOrders={activeOrders}
+        onAcknowledgeOrder={handleAcknowledgeOrder}
         onSelectMembership={setActiveMembership}
         onRefreshQr={handleRefreshQr}
         onJoinStore={handleJoinStore}
@@ -210,6 +271,49 @@ export function CustomerScreen({ isMerchant = false }: CustomerScreenProps) {
         userPhone={profile?.phone || undefined}
         onSavePhone={handleSavePhone}
       />
+
+      {/* Celebratory Self-Service Order Ready Digital Buzzer Modal */}
+      <Dialog
+        open={Boolean(readyAlertOrder)}
+        onOpenChange={(open) => {
+          if (!open) setReadyAlertOrder(null)
+        }}
+      >
+        <DialogContent className="sm:max-w-[400px] rounded-3xl border-emerald-500/40 bg-card text-center p-6">
+          <DialogHeader className="items-center text-center space-y-3">
+            <div className="w-16 h-16 rounded-3xl bg-emerald-500/15 text-emerald-500 flex items-center justify-center mx-auto shadow-lg shadow-emerald-500/10 animate-bounce">
+              <BellRing className="w-8 h-8" />
+            </div>
+            <DialogTitle className="text-2xl font-black tracking-tight text-foreground">
+              Order #{readyAlertOrder?.orderNumber} is Ready!
+            </DialogTitle>
+            <DialogDescription className="text-sm text-muted-foreground">
+              Your order at{' '}
+              <span className="font-bold text-foreground">
+                {readyAlertOrder?.storeName || activeMembership?.storeName || 'the counter'}
+              </span>{' '}
+              is hot and ready for pickup at the counter!
+            </DialogDescription>
+          </DialogHeader>
+
+          {readyAlertOrder?.itemsSummary && (
+            <div className="p-3 rounded-2xl bg-muted/50 border border-border/60 text-xs font-semibold text-foreground flex items-center justify-center gap-2 my-2">
+              <Coffee className="w-4 h-4 text-primary shrink-0" />
+              <span>{readyAlertOrder.itemsSummary}</span>
+            </div>
+          )}
+
+          <div className="pt-2">
+            <Button
+              onClick={() => readyAlertOrder && handleAcknowledgeOrder(readyAlertOrder.id)}
+              className="w-full h-12 rounded-2xl font-bold text-sm gap-2 bg-emerald-600 hover:bg-emerald-700 text-white shadow-lg shadow-emerald-600/20"
+            >
+              <Check className="w-4 h-4" />
+              <span>Got It — Heading to Counter!</span>
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </>
   )
 }

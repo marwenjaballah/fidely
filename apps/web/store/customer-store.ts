@@ -10,6 +10,30 @@ export interface Reward {
   active: boolean
 }
 
+export interface StoreMenuItem {
+  id: string
+  name: string
+  description?: string | null
+  category: string
+  price: number
+  imageUrl?: string | null
+  available: boolean
+}
+
+export interface CustomerActiveOrder {
+  id: string
+  storeId: string
+  storeName: string
+  storeSlug?: string
+  primaryColor?: string
+  logoUrl?: string | null
+  orderNumber: number
+  status: 'PREPARING' | 'READY' | 'COMPLETED' | 'CANCELLED'
+  itemsSummary?: string | null
+  createdAt: string
+  readyAt?: string | null
+}
+
 export interface Voucher {
   id: string
   code: string
@@ -34,12 +58,15 @@ export interface CustomerMembership {
   storeName: string
   storeSlug: string
   primaryColor: string
+  currency?: string
   pointsPerTnd: number
   logoUrl?: string | null
   pointsBalance: number
   qrCodeToken: string
   joinedAt: string
   rewards: Reward[]
+  menuItems?: StoreMenuItem[]
+  activeOrders?: CustomerActiveOrder[]
   vouchers: Voucher[]
   transactions: Transaction[]
 }
@@ -49,6 +76,7 @@ export interface AvailableStore {
   name: string
   slug: string
   primaryColor: string
+  currency?: string
   pointsPerTnd: number
   logoUrl?: string | null
   rewardsCount: number
@@ -58,10 +86,13 @@ export interface CustomerState {
   memberships: CustomerMembership[]
   activeMembership: CustomerMembership | null
   availableStores: AvailableStore[]
+  activeOrders: CustomerActiveOrder[]
   loading: boolean
   error: string | null
 
   fetchOverview: () => Promise<void>
+  fetchActiveOrders: () => Promise<CustomerActiveOrder[]>
+  acknowledgeOrder: (orderId: string) => Promise<void>
   setActiveMembership: (membershipId: string) => void
   joinStore: (storeId: string) => Promise<void>
   joinStoreBySlug: (slugOrUrl: string) => Promise<any>
@@ -108,6 +139,7 @@ export const useCustomerStore = create<CustomerState>((set, get) => ({
   memberships: initialOffline.memberships,
   activeMembership: initialOffline.activeMembership,
   availableStores: initialOffline.availableStores,
+  activeOrders: [],
   loading: false,
   error: null,
 
@@ -125,6 +157,15 @@ export const useCustomerStore = create<CustomerState>((set, get) => ({
 
       const memberships = data.memberships || []
       const availableStores = data.availableStores || []
+      const activeOrders = memberships.flatMap((m) =>
+        (m.activeOrders || []).map((o) => ({
+          ...o,
+          storeName: o.storeName || m.storeName,
+          storeSlug: o.storeSlug || m.storeSlug,
+          primaryColor: o.primaryColor || m.primaryColor,
+          logoUrl: o.logoUrl ?? m.logoUrl,
+        }))
+      )
 
       const currentActiveId = get().activeMembership?.id
       const activeMembership =
@@ -144,6 +185,7 @@ export const useCustomerStore = create<CustomerState>((set, get) => ({
         memberships,
         activeMembership,
         availableStores,
+        activeOrders,
         loading: false,
         error: null,
       })
@@ -155,6 +197,61 @@ export const useCustomerStore = create<CustomerState>((set, get) => ({
       }
       const message = err instanceof ApiError ? err.message : 'Failed to load loyalty overview.'
       set({ error: message, loading: false })
+    }
+  },
+
+  fetchActiveOrders: async () => {
+    try {
+      const client = getCustomerClient()
+      const { data } = await client.get<CustomerActiveOrder[]>('/api/v1/customer/active-orders')
+      const orders = data || []
+      set((state) => {
+        const updatedMemberships = state.memberships.map((m) => ({
+          ...m,
+          activeOrders: orders.filter((o) => o.storeId === m.storeId),
+        }))
+        const updatedActive = state.activeMembership
+          ? {
+              ...state.activeMembership,
+              activeOrders: orders.filter((o) => o.storeId === state.activeMembership?.storeId),
+            }
+          : null
+        return {
+          activeOrders: orders,
+          memberships: updatedMemberships,
+          activeMembership: updatedActive,
+        }
+      })
+      return orders
+    } catch {
+      return get().activeOrders
+    }
+  },
+
+  acknowledgeOrder: async (orderId: string) => {
+    try {
+      const client = getCustomerClient()
+      await client.post(`/api/v1/customer/orders/${encodeURIComponent(orderId)}/acknowledge`)
+      set((state) => {
+        const remaining = state.activeOrders.filter((o) => o.id !== orderId)
+        const updatedMemberships = state.memberships.map((m) => ({
+          ...m,
+          activeOrders: (m.activeOrders || []).filter((o) => o.id !== orderId),
+        }))
+        const updatedActive = state.activeMembership
+          ? {
+              ...state.activeMembership,
+              activeOrders: (state.activeMembership.activeOrders || []).filter((o) => o.id !== orderId),
+            }
+          : null
+        return {
+          activeOrders: remaining,
+          memberships: updatedMemberships,
+          activeMembership: updatedActive,
+        }
+      })
+    } catch (err) {
+      console.error('Failed to acknowledge order:', err)
     }
   },
 

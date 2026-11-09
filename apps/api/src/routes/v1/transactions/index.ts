@@ -7,6 +7,9 @@ import {
   issuePointsRoute,
   redeemRewardRoute,
   lookupCustomerByPhoneRoute,
+  getCashierStoreMenuRoute,
+  getActiveOrdersRoute,
+  updateOrderStatusRoute,
 } from './transactions.route.js';
 import { TransactionsService } from '../../../services/transactions.service.js';
 import { requireUser } from '../../../utils/auth.js';
@@ -71,11 +74,14 @@ router.openapi(getRecentTransactionsRoute, async (c) => {
 router.openapi(issuePointsRoute, async (c) => {
   try {
     const user = requireUser(c);
-    const { qrToken, amountTnd, storeId, idempotencyKey } = c.req.valid('json');
+    const { qrToken, amountTnd, storeId, idempotencyKey, trackOrder, itemsSummary } = c.req.valid('json');
     const prisma = c.get('prisma');
     const service = new TransactionsService(prisma);
 
-    const result = await service.issuePoints(user.id, user.role, qrToken, amountTnd, storeId, idempotencyKey);
+    const result = await service.issuePoints(user.id, user.role, qrToken, amountTnd, storeId, idempotencyKey, {
+      trackOrder,
+      itemsSummary,
+    });
     return c.json(result, 200);
   } catch (error: any) {
     const status = error.status || error.statusCode || 400;
@@ -86,15 +92,61 @@ router.openapi(issuePointsRoute, async (c) => {
 router.openapi(redeemRewardRoute, async (c) => {
   try {
     const user = requireUser(c);
-    const { qrToken, rewardId, storeId } = c.req.valid('json');
+    const { qrToken, rewardId, storeId, trackOrder, itemsSummary } = c.req.valid('json');
     const prisma = c.get('prisma');
     const service = new TransactionsService(prisma);
 
-    const result = await service.redeemReward(user.id, user.role, qrToken, rewardId, storeId);
+    const result = await service.redeemReward(user.id, user.role, qrToken, rewardId, storeId, {
+      trackOrder,
+      itemsSummary,
+    });
     return c.json(result, 200);
   } catch (error: any) {
     const status = error.status || error.statusCode || 400;
     return c.json({ error: error.message }, status) as any;
+  }
+});
+
+router.openapi(getCashierStoreMenuRoute, async (c) => {
+  try {
+    const user = requireUser(c);
+    const { storeId } = c.req.valid('query');
+    const prisma = c.get('prisma');
+    const service = new TransactionsService(prisma);
+    const menuItems = await service.getStoreMenu(user.id, user.role, storeId);
+    return c.json(menuItems, 200);
+  } catch (error: any) {
+    const status = error.status || error.statusCode || 400;
+    return c.json({ error: error.message }, status) as any;
+  }
+});
+
+router.openapi(getActiveOrdersRoute, async (c) => {
+  try {
+    const user = requireUser(c);
+    const { storeId } = c.req.valid('query');
+    const prisma = c.get('prisma');
+    const service = new TransactionsService(prisma);
+    const orders = await service.getActiveOrders(user.id, user.role, storeId);
+    return c.json(orders, 200);
+  } catch (error: any) {
+    const status = error.status || error.statusCode || 400;
+    return c.json({ error: error.message }, status) as any;
+  }
+});
+
+router.openapi(updateOrderStatusRoute, async (c) => {
+  try {
+    const user = requireUser(c);
+    const { orderId } = c.req.valid('param');
+    const { status } = c.req.valid('json');
+    const prisma = c.get('prisma');
+    const service = new TransactionsService(prisma);
+    const updatedOrder = await service.updateOrderStatus(user.id, user.role, orderId, status);
+    return c.json(updatedOrder, 200);
+  } catch (error: any) {
+    const errStatus = error.status || error.statusCode || 400;
+    return c.json({ error: error.message }, errStatus) as any;
   }
 });
 

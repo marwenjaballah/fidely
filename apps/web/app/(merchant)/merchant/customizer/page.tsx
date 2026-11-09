@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useState, useRef } from 'react'
-import { useMerchantStore, Reward } from '@/store/merchant-store'
+import { useMerchantStore, Reward, MenuItem } from '@/store/merchant-store'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
@@ -41,8 +41,13 @@ import {
   X,
   Loader2,
   Globe,
+  UtensilsCrossed,
+  Share2,
+  BellRing,
 } from 'lucide-react'
 import { useI18n } from '@/lib/i18n'
+
+const MENU_CATEGORIES = ['Coffee', 'Iced Drinks', 'Tea & Matcha', 'Pastries', 'Sandwiches & Snacks', 'Specials']
 
 const COLOR_PRESETS = [
   { name: 'Espresso', color: '#4A2C2A' },
@@ -117,7 +122,21 @@ function slugifyClient(text: string): string {
 }
 
 export default function CustomizerAndRewardsPage() {
-  const { activeStore, updateStore, rewards, fetchRewards, createReward, updateReward, deleteReward, loading } = useMerchantStore()
+  const {
+    activeStore,
+    updateStore,
+    rewards,
+    fetchRewards,
+    createReward,
+    updateReward,
+    deleteReward,
+    menuItems,
+    fetchMenu,
+    createMenuItem,
+    updateMenuItem,
+    deleteMenuItem,
+    loading,
+  } = useMerchantStore()
   const { toast } = useToast()
   const { t } = useI18n()
 
@@ -129,10 +148,12 @@ export default function CustomizerAndRewardsPage() {
   const [currency, setCurrency] = useState('TND')
   const [pointsPerTnd, setPointsPerTnd] = useState(10)
   const [welcomePoints, setWelcomePoints] = useState(0)
+  const [selfServiceEnabled, setSelfServiceEnabled] = useState(true)
   const [logoUrl, setLogoUrl] = useState<string | null>(null)
   const [isOptimizingIcon, setIsOptimizingIcon] = useState(false)
   const [isSaving, setIsSaving] = useState(false)
   const [copiedLink, setCopiedLink] = useState(false)
+  const [copiedMenuLink, setCopiedMenuLink] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
   // Rewards Studio Modal State
@@ -143,6 +164,18 @@ export default function CustomizerAndRewardsPage() {
   const [rewardPoints, setRewardPoints] = useState(100)
   const [isSavingReward, setIsSavingReward] = useState(false)
 
+  // Menu Studio Modal State
+  const [isMenuModalOpen, setIsMenuModalOpen] = useState(false)
+  const [editingMenuItem, setEditingMenuItem] = useState<MenuItem | null>(null)
+  const [menuItemName, setMenuItemName] = useState('')
+  const [menuItemCategory, setMenuItemCategory] = useState('Coffee')
+  const [menuItemPrice, setMenuItemPrice] = useState('5.00')
+  const [menuItemDesc, setMenuItemDesc] = useState('')
+  const [menuItemImageUrl, setMenuItemImageUrl] = useState<string | null>(null)
+  const [isOptimizingMenuImg, setIsOptimizingMenuImg] = useState(false)
+  const [isSavingMenuItem, setIsSavingMenuItem] = useState(false)
+  const menuFileInputRef = useRef<HTMLInputElement>(null)
+
   useEffect(() => {
     if (activeStore) {
       setName(activeStore.name)
@@ -152,10 +185,12 @@ export default function CustomizerAndRewardsPage() {
       setCurrency(activeStore.currency || 'TND')
       setPointsPerTnd(Number(activeStore.pointsPerTnd) || 10)
       setWelcomePoints(Number((activeStore as any).welcomePoints) || 0)
+      setSelfServiceEnabled((activeStore as any).selfServiceEnabled !== undefined ? Boolean((activeStore as any).selfServiceEnabled) : true)
       setLogoUrl(activeStore.logoUrl || null)
       fetchRewards(activeStore.id)
+      fetchMenu(activeStore.id)
     }
-  }, [activeStore, fetchRewards])
+  }, [activeStore, fetchRewards, fetchMenu])
 
   const handleNameChange = (val: string) => {
     setName(val)
@@ -215,6 +250,7 @@ export default function CustomizerAndRewardsPage() {
         currency: currency.trim().toUpperCase() || 'TND',
         pointsPerTnd: Number(pointsPerTnd),
         welcomePoints: Number(welcomePoints),
+        selfServiceEnabled,
         logoUrl,
       })
 
@@ -311,8 +347,127 @@ export default function CustomizerAndRewardsPage() {
         primaryColor.toLowerCase() !== (activeStore.primaryColor || '#D97706').toLowerCase() ||
         Number(pointsPerTnd) !== (Number(activeStore.pointsPerTnd) || 10) ||
         Number(welcomePoints) !== (Number((activeStore as any).welcomePoints) || 0) ||
+        selfServiceEnabled !==
+          ((activeStore as any).selfServiceEnabled !== undefined ? Boolean((activeStore as any).selfServiceEnabled) : true) ||
         (logoUrl || null) !== (activeStore.logoUrl || null))
   )
+
+  const handleCopyMenuLink = () => {
+    if (!activeStore) return
+    const url = `${window.location.origin}/store/${activeStore.slug}?tab=menu`
+    navigator.clipboard.writeText(url)
+    setCopiedMenuLink(true)
+    setTimeout(() => setCopiedMenuLink(false), 2000)
+    toast({
+      title: 'Menu Link Copied!',
+      description: 'Customers can now browse your full menu and prices.',
+    })
+  }
+
+  const handleOpenAddMenuItem = () => {
+    setEditingMenuItem(null)
+    setMenuItemName('')
+    setMenuItemCategory('Coffee')
+    setMenuItemPrice('5.00')
+    setMenuItemDesc('')
+    setMenuItemImageUrl(null)
+    setIsMenuModalOpen(true)
+  }
+
+  const handleOpenEditMenuItem = (item: MenuItem) => {
+    setEditingMenuItem(item)
+    setMenuItemName(item.name)
+    setMenuItemCategory(item.category || 'Coffee')
+    setMenuItemPrice(item.price.toFixed(2))
+    setMenuItemDesc(item.description || '')
+    setMenuItemImageUrl(item.imageUrl || null)
+    setIsMenuModalOpen(true)
+  }
+
+  const handleMenuItemImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+    setIsOptimizingMenuImg(true)
+    try {
+      const optimized = await optimizeIcon(file, 160)
+      setMenuItemImageUrl(optimized)
+    } catch (err: any) {
+      toast({
+        title: 'Image Upload Failed',
+        description: err.message || 'Could not process image.',
+        variant: 'destructive',
+      })
+    } finally {
+      setIsOptimizingMenuImg(false)
+      if (menuFileInputRef.current) {
+        menuFileInputRef.current.value = ''
+      }
+    }
+  }
+
+  const handleSaveMenuItem = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!activeStore) return
+    const parsedPrice = parseFloat(menuItemPrice)
+    if (isNaN(parsedPrice) || parsedPrice < 0) return
+
+    setIsSavingMenuItem(true)
+    try {
+      if (editingMenuItem) {
+        await updateMenuItem(activeStore.id, editingMenuItem.id, {
+          name: menuItemName.trim(),
+          category: menuItemCategory.trim() || 'Coffee',
+          price: parsedPrice,
+          description: menuItemDesc.trim() || null,
+          imageUrl: menuItemImageUrl,
+        })
+        toast({ title: 'Menu Item Updated', description: menuItemName })
+      } else {
+        await createMenuItem(activeStore.id, {
+          name: menuItemName.trim(),
+          category: menuItemCategory.trim() || 'Coffee',
+          price: parsedPrice,
+          description: menuItemDesc.trim() || null,
+          imageUrl: menuItemImageUrl,
+          available: true,
+        })
+        toast({ title: 'Menu Item Added', description: menuItemName })
+      }
+      setIsMenuModalOpen(false)
+    } catch (err: any) {
+      toast({
+        title: 'Error',
+        description: err.message || 'Failed to save menu item.',
+        variant: 'destructive',
+      })
+    } finally {
+      setIsSavingMenuItem(false)
+    }
+  }
+
+  const handleToggleMenuItemAvailable = async (item: MenuItem) => {
+    if (!activeStore) return
+    try {
+      await updateMenuItem(activeStore.id, item.id, { available: !item.available })
+      toast({
+        title: item.available ? 'Marked Sold Out' : 'Available on Menu',
+        description: item.name,
+      })
+    } catch {
+      toast({ title: 'Error', description: 'Could not update availability.', variant: 'destructive' })
+    }
+  }
+
+  const handleDeleteMenuItem = async (item: MenuItem) => {
+    if (!activeStore) return
+    if (!confirm(`Are you sure you want to delete '${item.name}' from the menu?`)) return
+    try {
+      await deleteMenuItem(activeStore.id, item.id)
+      toast({ title: 'Menu Item Removed', description: item.name })
+    } catch {
+      toast({ title: 'Error', description: 'Failed to delete menu item.', variant: 'destructive' })
+    }
+  }
 
   const hasRewardChanges = editingReward
     ? (rewardName.trim() !== editingReward.name.trim() ||
@@ -746,6 +901,28 @@ export default function CustomizerAndRewardsPage() {
                     </span>
                   </div>
                 </div>
+
+                <Separator />
+
+                {/* Self-Service Order Ready Buzzer Toggle */}
+                <div className="rounded-xl border border-border/70 bg-muted/20 p-4 flex items-center justify-between gap-4">
+                  <div className="space-y-1">
+                    <div className="flex items-center gap-2">
+                      <BellRing className="h-4 w-4 text-primary" />
+                      <Label htmlFor="selfServiceSwitch" className="text-sm font-semibold text-foreground cursor-pointer">
+                        Self-Service &quot;Order Ready&quot; Digital Buzzer
+                      </Label>
+                    </div>
+                    <p className="text-xs text-muted-foreground leading-relaxed">
+                      Enable cashiers to queue coffee orders on scan and send real-time &quot;Order Ready&quot; alerts to the customer&apos;s phone.
+                    </p>
+                  </div>
+                  <Switch
+                    id="selfServiceSwitch"
+                    checked={selfServiceEnabled}
+                    onCheckedChange={setSelfServiceEnabled}
+                  />
+                </div>
               </CardContent>
               <CardFooter className="flex justify-end pt-4 border-t bg-muted/20">
                 <Button
@@ -920,6 +1097,267 @@ export default function CustomizerAndRewardsPage() {
           </div>
         )}
       </div>
+
+      <Separator />
+
+      {/* Store Menu & Pricing Studio (Shareable Menu) */}
+      <div className="space-y-6">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <h2 className="text-xl font-bold tracking-tight flex items-center gap-2">
+              <UtensilsCrossed className="h-5 w-5 text-primary" />
+              Store Menu &amp; Pricing Studio
+            </h2>
+            <p className="text-xs text-muted-foreground mt-0.5">
+              Set your store&apos;s menu with prices ({currency}). Customers can browse your menu via your public link, and cashiers can tap items on POS.
+            </p>
+          </div>
+          <div className="flex flex-wrap items-center gap-2">
+            <Button variant="outline" size="sm" onClick={handleCopyMenuLink} className="gap-1.5 text-xs">
+              {copiedMenuLink ? <Check className="h-3.5 w-3.5 text-emerald-500" /> : <Share2 className="h-3.5 w-3.5" />}
+              {copiedMenuLink ? 'Menu Link Copied!' : 'Share Menu Link'}
+            </Button>
+            <Button size="sm" asChild variant="secondary" className="gap-1.5 text-xs">
+              <a href={`/store/${activeStore.slug}?tab=menu`} target="_blank" rel="noopener noreferrer">
+                Preview Menu <ExternalLink className="h-3.5 w-3.5" />
+              </a>
+            </Button>
+            <Button onClick={handleOpenAddMenuItem} size="sm" className="gap-1.5 text-xs">
+              <Plus className="h-4 w-4" /> Add Menu Item
+            </Button>
+          </div>
+        </div>
+
+        {menuItems.length === 0 ? (
+          <Card className="border-dashed border-2 border-border/70 p-8 text-center bg-muted/10">
+            <div className="max-w-md mx-auto space-y-3">
+              <Coffee className="h-10 w-10 text-muted-foreground mx-auto" />
+              <h3 className="font-semibold text-base">No Menu Items Configured Yet</h3>
+              <p className="text-xs text-muted-foreground">
+                Add your drinks, pastries, and specialty items with prices so customers can explore your menu and cashiers can ring up orders faster.
+              </p>
+              <Button onClick={handleOpenAddMenuItem} variant="outline" size="sm" className="mt-2 gap-1.5">
+                <Plus className="h-4 w-4" /> Add First Menu Item
+              </Button>
+            </div>
+          </Card>
+        ) : (
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            {menuItems.map((item) => {
+              const estPts = Math.max(1, Math.round(item.price * (Number(pointsPerTnd) || 10)))
+              return (
+                <Card
+                  key={item.id}
+                  className={`border transition-all ${
+                    item.available
+                      ? 'border-border/60 hover:shadow-md'
+                      : 'border-border/30 opacity-60 bg-muted/20'
+                  }`}
+                >
+                  <CardHeader className="pb-3">
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="flex items-center gap-2.5 min-w-0">
+                        <div className="h-10 w-10 rounded-xl border border-border/50 bg-muted/40 flex items-center justify-center overflow-hidden shrink-0">
+                          {item.imageUrl ? (
+                            <img src={item.imageUrl} alt={item.name} className="h-full w-full object-cover" />
+                          ) : (
+                            <Coffee className="h-5 w-5 text-primary" />
+                          )}
+                        </div>
+                        <div className="min-w-0">
+                          <Badge variant="outline" className="text-[10px] px-1.5 py-0 mb-1 font-medium">
+                            {item.category}
+                          </Badge>
+                          <CardTitle className="text-sm font-bold truncate leading-tight">
+                            {item.name}
+                          </CardTitle>
+                        </div>
+                      </div>
+                      <div className="text-end shrink-0">
+                        <Badge className="font-mono font-bold text-xs bg-primary text-primary-foreground">
+                          {item.price.toFixed(2)} {currency}
+                        </Badge>
+                        <p className="text-[10px] font-mono text-emerald-600 dark:text-emerald-400 font-semibold mt-0.5">
+                          +{estPts} pts
+                        </p>
+                      </div>
+                    </div>
+                    {item.description && (
+                      <CardDescription className="text-xs mt-1.5 line-clamp-2">
+                        {item.description}
+                      </CardDescription>
+                    )}
+                  </CardHeader>
+
+                  <CardFooter className="pt-2 border-t flex items-center justify-between text-xs">
+                    <div className="flex items-center gap-2">
+                      <Switch
+                        checked={item.available}
+                        onCheckedChange={() => handleToggleMenuItemAvailable(item)}
+                      />
+                      <span className="text-[11px] text-muted-foreground">
+                        {item.available ? 'In Stock' : 'Sold Out'}
+                      </span>
+                    </div>
+
+                    <div className="flex items-center gap-1">
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-7 w-7 text-muted-foreground hover:text-foreground"
+                        onClick={() => handleOpenEditMenuItem(item)}
+                      >
+                        <Edit2 className="h-3.5 w-3.5" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-7 w-7 text-muted-foreground hover:text-destructive"
+                        onClick={() => handleDeleteMenuItem(item)}
+                      >
+                        <Trash2 className="h-3.5 w-3.5" />
+                      </Button>
+                    </div>
+                  </CardFooter>
+                </Card>
+              )
+            })}
+          </div>
+        )}
+      </div>
+
+      {/* Add / Edit Menu Item Modal Dialog */}
+      <Dialog open={isMenuModalOpen} onOpenChange={setIsMenuModalOpen}>
+        <DialogContent className="sm:max-w-[460px]">
+          <DialogHeader>
+            <DialogTitle>{editingMenuItem ? 'Edit Menu Item' : 'Add Menu Item'}</DialogTitle>
+            <DialogDescription>
+              Set the item name, category, and price in {currency} for your shared store menu and POS register.
+            </DialogDescription>
+          </DialogHeader>
+
+          <form onSubmit={handleSaveMenuItem} className="space-y-4 py-2">
+            <div className="space-y-2">
+              <Label htmlFor="menuItemName">Item Name</Label>
+              <Input
+                id="menuItemName"
+                placeholder="e.g. Iced Spanish Latte"
+                value={menuItemName}
+                onChange={(e) => setMenuItemName(e.target.value)}
+                required
+              />
+            </div>
+
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-2">
+                <Label htmlFor="menuItemPrice">Price ({currency})</Label>
+                <Input
+                  id="menuItemPrice"
+                  type="number"
+                  step="0.01"
+                  min="0"
+                  placeholder="6.50"
+                  value={menuItemPrice}
+                  onChange={(e) => setMenuItemPrice(e.target.value)}
+                  className="font-mono font-bold"
+                  required
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="menuItemCategory">Category</Label>
+                <Input
+                  id="menuItemCategory"
+                  placeholder="Coffee"
+                  value={menuItemCategory}
+                  onChange={(e) => setMenuItemCategory(e.target.value)}
+                  required
+                />
+              </div>
+            </div>
+
+            {/* Quick Category Pills */}
+            <div className="flex flex-wrap gap-1.5">
+              {MENU_CATEGORIES.map((cat) => (
+                <button
+                  key={cat}
+                  type="button"
+                  onClick={() => setMenuItemCategory(cat)}
+                  className={`px-2.5 py-1 rounded-lg border text-[11px] font-medium transition ${
+                    menuItemCategory === cat
+                      ? 'bg-primary text-primary-foreground border-primary'
+                      : 'bg-muted/40 border-border/60 text-muted-foreground hover:text-foreground'
+                  }`}
+                >
+                  {cat}
+                </button>
+              ))}
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="menuItemDesc">Description (Optional)</Label>
+              <Input
+                id="menuItemDesc"
+                placeholder="e.g. Double shot espresso with condensed milk and oat milk"
+                value={menuItemDesc}
+                onChange={(e) => setMenuItemDesc(e.target.value)}
+              />
+            </div>
+
+            {/* Optional Menu Item Thumbnail */}
+            <div className="space-y-2">
+              <Label>Item Photo / Thumbnail (Optional)</Label>
+              <div className="flex items-center gap-3">
+                <div className="h-12 w-12 rounded-xl border border-dashed border-border flex items-center justify-center overflow-hidden bg-muted/30 shrink-0">
+                  {menuItemImageUrl ? (
+                    <img src={menuItemImageUrl} alt="Menu Item" className="h-full w-full object-cover" />
+                  ) : (
+                    <Coffee className="h-5 w-5 text-muted-foreground/60" />
+                  )}
+                </div>
+                <input
+                  ref={menuFileInputRef}
+                  type="file"
+                  accept="image/png,image/jpeg,image/webp"
+                  onChange={handleMenuItemImageUpload}
+                  className="hidden"
+                />
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  disabled={isOptimizingMenuImg}
+                  onClick={() => menuFileInputRef.current?.click()}
+                  className="text-xs gap-1.5"
+                >
+                  {isOptimizingMenuImg ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Upload className="h-3.5 w-3.5" />}
+                  {menuItemImageUrl ? 'Change Photo' : 'Upload Photo'}
+                </Button>
+                {menuItemImageUrl && (
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setMenuItemImageUrl(null)}
+                    className="text-xs text-destructive"
+                  >
+                    Remove
+                  </Button>
+                )}
+              </div>
+            </div>
+
+            <DialogFooter className="pt-3">
+              <Button type="button" variant="outline" onClick={() => setIsMenuModalOpen(false)}>
+                Cancel
+              </Button>
+              <Button type="submit" disabled={isSavingMenuItem || !menuItemName.trim()}>
+                {isSavingMenuItem ? 'Saving...' : editingMenuItem ? 'Save Changes' : 'Add to Menu'}
+              </Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
 
       {/* Add / Edit Reward Modal Dialog */}
       <Dialog open={isRewardModalOpen} onOpenChange={setIsRewardModalOpen}>

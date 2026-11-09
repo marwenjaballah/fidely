@@ -18,6 +18,7 @@ export const getStoresRoute = createRoute({
             currency: z.string().default('TND'),
             pointsPerTnd: z.coerce.number(),
             welcomePoints: z.coerce.number().optional().default(0),
+            selfServiceEnabled: z.boolean().optional().default(true),
             logoUrl: z.string().nullable().optional(),
           })),
         },
@@ -42,6 +43,7 @@ export const createStoreRoute = createRoute({
             currency: z.string().optional().default('TND'),
             pointsPerTnd: z.coerce.number().positive().optional().default(10),
             welcomePoints: z.coerce.number().nonnegative().optional().default(0),
+            selfServiceEnabled: z.boolean().optional().default(true),
             logoUrl: z.string().nullable().optional(),
           }),
         },
@@ -61,6 +63,7 @@ export const createStoreRoute = createRoute({
             currency: z.string().default('TND'),
             pointsPerTnd: z.coerce.number(),
             welcomePoints: z.coerce.number().optional().default(0),
+            selfServiceEnabled: z.boolean().optional().default(true),
             logoUrl: z.string().nullable().optional(),
           }),
         },
@@ -91,6 +94,7 @@ export const updateStoreRoute = createRoute({
             currency: z.string().optional(),
             pointsPerTnd: z.coerce.number().positive().optional(),
             welcomePoints: z.coerce.number().nonnegative().optional(),
+            selfServiceEnabled: z.boolean().optional(),
             logoUrl: z.string().nullable().optional(),
           }),
         },
@@ -110,6 +114,7 @@ export const updateStoreRoute = createRoute({
             currency: z.string().default('TND'),
             pointsPerTnd: z.coerce.number(),
             welcomePoints: z.coerce.number().optional().default(0),
+            selfServiceEnabled: z.boolean().optional().default(true),
             logoUrl: z.string().nullable().optional(),
           }),
         },
@@ -629,5 +634,145 @@ export const getStoreTransactionsRoute = createRoute({
     },
     400: { description: 'Bad request or unauthorized' },
     401: { description: 'Unauthorized' },
+  },
+});
+
+const MenuItemSchema = z.object({
+  id: z.string(),
+  storeId: z.string(),
+  name: z.string(),
+  description: z.string().nullable(),
+  category: z.string(),
+  price: z.number(),
+  imageUrl: z.string().nullable(),
+  available: z.boolean(),
+  sortOrder: z.number(),
+  createdAt: z.string(),
+  updatedAt: z.string(),
+});
+
+export const getStoreMenuRoute = createRoute({
+  method: 'get',
+  path: '/stores/{id}/menu',
+  tags: ['Merchant'],
+  security: [{ bearerAuth: [] }],
+  request: {
+    params: z.object({
+      id: z.string(),
+    }),
+  },
+  responses: {
+    200: {
+      description: 'List of store menu items',
+      content: {
+        'application/json': {
+          schema: z.array(MenuItemSchema),
+        },
+      },
+    },
+    400: { description: 'Bad request' },
+  },
+});
+
+export const createStoreMenuItemRoute = createRoute({
+  method: 'post',
+  path: '/stores/{id}/menu',
+  tags: ['Merchant'],
+  security: [{ bearerAuth: [] }],
+  request: {
+    params: z.object({
+      id: z.string(),
+    }),
+    body: {
+      content: {
+        'application/json': {
+          schema: z.object({
+            name: z.string().min(1),
+            description: z.string().nullable().optional(),
+            category: z.string().optional().default('Coffee'),
+            price: z.coerce.number().nonnegative(),
+            imageUrl: z.string().nullable().optional(),
+            available: z.boolean().optional().default(true),
+            sortOrder: z.coerce.number().int().optional().default(0),
+          }),
+        },
+      },
+    },
+  },
+  responses: {
+    201: {
+      description: 'Menu item created',
+      content: {
+        'application/json': {
+          schema: MenuItemSchema,
+        },
+      },
+    },
+    400: { description: 'Bad request' },
+  },
+});
+
+export const updateStoreMenuItemRoute = createRoute({
+  method: 'put',
+  path: '/stores/{id}/menu/{menuItemId}',
+  tags: ['Merchant'],
+  security: [{ bearerAuth: [] }],
+  request: {
+    params: z.object({
+      id: z.string(),
+      menuItemId: z.string(),
+    }),
+    body: {
+      content: {
+        'application/json': {
+          schema: z.object({
+            name: z.string().min(1).optional(),
+            description: z.string().nullable().optional(),
+            category: z.string().optional(),
+            price: z.coerce.number().nonnegative().optional(),
+            imageUrl: z.string().nullable().optional(),
+            available: z.boolean().optional(),
+            sortOrder: z.coerce.number().int().optional(),
+          }),
+        },
+      },
+    },
+  },
+  responses: {
+    200: {
+      description: 'Menu item updated',
+      content: {
+        'application/json': {
+          schema: MenuItemSchema,
+        },
+      },
+    },
+    400: { description: 'Bad request' },
+  },
+});
+
+export const deleteStoreMenuItemRoute = createRoute({
+  method: 'delete',
+  path: '/stores/{id}/menu/{menuItemId}',
+  tags: ['Merchant'],
+  security: [{ bearerAuth: [] }],
+  request: {
+    params: z.object({
+      id: z.string(),
+      menuItemId: z.string(),
+    }),
+  },
+  responses: {
+    200: {
+      description: 'Menu item deleted successfully',
+      content: {
+        'application/json': {
+          schema: z.object({
+            message: z.string(),
+          }),
+        },
+      },
+    },
+    400: { description: 'Bad request or menu item not found' },
   },
 });

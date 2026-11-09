@@ -6,6 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
+import { Switch } from '@/components/ui/switch';
 import {
   Sparkles,
   Gift,
@@ -20,6 +21,8 @@ import {
   Search,
   UserCheck,
   X,
+  Bell,
+  UtensilsCrossed,
 } from 'lucide-react';
 import { posAudio } from '../lib/pos-audio';
 import { posHaptics } from '@/lib/haptics';
@@ -35,6 +38,14 @@ interface StoreReward {
   active?: boolean;
 }
 
+interface StoreMenuItem {
+  id: string;
+  name: string;
+  description?: string | null;
+  category: string;
+  price: number;
+}
+
 export interface SearchedCustomer {
   id: string;
   fullName: string;
@@ -48,6 +59,7 @@ interface TransactionPanelProps {
   storeName?: string;
   currency?: string;
   pointsPerTnd?: number;
+  selfServiceEnabled?: boolean;
   controlledTab?: 'issue' | 'redeem';
   onTabChange?: (tab: 'issue' | 'redeem') => void;
   onProcess: (
@@ -56,7 +68,9 @@ interface TransactionPanelProps {
     rewardId?: string,
     rewardName?: string,
     customerQrToken?: string,
-    customerName?: string
+    customerName?: string,
+    trackOrder?: boolean,
+    itemsSummary?: string
   ) => Promise<boolean>;
 }
 
@@ -81,6 +95,7 @@ export function TransactionPanel({
   storeName,
   currency = 'TND',
   pointsPerTnd = 10,
+  selfServiceEnabled = true,
   controlledTab,
   onTabChange,
   onProcess,
@@ -101,6 +116,31 @@ export function TransactionPanel({
   const [spendAmount, setSpendAmount] = useState('');
   const [showNumpad, setShowNumpad] = useState(false);
 
+  // Self-service order ready tracking & menu items
+  const [trackOrder, setTrackOrder] = useState<boolean>(selfServiceEnabled ?? true);
+  const [itemsSummary, setItemsSummary] = useState('');
+  const [menuItems, setMenuItems] = useState<StoreMenuItem[]>([]);
+
+  useEffect(() => {
+    setTrackOrder(selfServiceEnabled ?? true);
+  }, [storeId, selfServiceEnabled]);
+
+  const fetchMenuItems = useCallback(async () => {
+    if (!storeId) return;
+    try {
+      const api = getApiClient();
+      const { data } = await api.get<StoreMenuItem[]>('/api/v1/transactions/store-menu', {
+        params: { storeId },
+      });
+      setMenuItems(data || []);
+    } catch {
+      setMenuItems([]);
+    }
+  }, [storeId]);
+
+  useEffect(() => {
+    fetchMenuItems();
+  }, [fetchMenuItems]);
 
   // Phone lookup state
   const [phoneQuery, setPhoneQuery] = useState('');
@@ -196,6 +236,15 @@ export function TransactionPanel({
     setSpendAmount((current + amount).toString());
   };
 
+  const handleTapMenuItem = (item: StoreMenuItem) => {
+    posAudio.playClick();
+    posHaptics.tap();
+    const current = parseFloat(spendAmount) || 0;
+    const next = Math.round((current + Number(item.price)) * 100) / 100;
+    setSpendAmount(next.toString());
+    setItemsSummary((prev) => (prev ? `${prev}, ${item.name}` : item.name));
+  };
+
   const handleSetExact = (amount: number) => {
     posAudio.playClick();
     posHaptics.tap();
@@ -206,6 +255,7 @@ export function TransactionPanel({
     posAudio.playClick();
     posHaptics.tap();
     setSpendAmount('');
+    setItemsSummary('');
   };
 
   // Numpad key tap
@@ -229,13 +279,32 @@ export function TransactionPanel({
     posAudio.playClick();
     posHaptics.tap();
     if (matchedCustomer) {
-      const success = await onProcess('issue', Number(spendAmount), undefined, undefined, matchedCustomer.qrToken, matchedCustomer.fullName);
+      const success = await onProcess(
+        'issue',
+        Number(spendAmount),
+        undefined,
+        undefined,
+        matchedCustomer.qrToken,
+        matchedCustomer.fullName,
+        trackOrder,
+        itemsSummary.trim() || undefined
+      );
       if (success) {
         setSpendAmount('');
+        setItemsSummary('');
         setMatchedCustomer(null);
       }
     } else {
-      await onProcess('issue', Number(spendAmount));
+      await onProcess(
+        'issue',
+        Number(spendAmount),
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        trackOrder,
+        itemsSummary.trim() || undefined
+      );
     }
   };
 
@@ -248,7 +317,7 @@ export function TransactionPanel({
     posAudio.playClick();
     posHaptics.tap();
     // Redeeming rewards or deducting points ALWAYS requires scanning the customer's QR pass
-    await onProcess('redeem', 0, targetId, targetName);
+    await onProcess('redeem', 0, targetId, targetName, undefined, undefined, trackOrder, itemsSummary.trim() || targetName);
   };
 
   return (
@@ -433,11 +502,47 @@ export function TransactionPanel({
               </div>
             </div>
 
+            {/* Quick Store Menu Items Picker */}
+            {menuItems.length > 0 && (
+              <div className="space-y-2">
+                <div className="flex items-center justify-between text-[11px] text-muted-foreground font-semibold">
+                  <span className="flex items-center gap-1.5">
+                    <UtensilsCrossed className="w-3.5 h-3.5 text-primary" />
+                    <span>Tap Store Menu Item to Add</span>
+                  </span>
+                  {(spendAmount || itemsSummary) && (
+                    <button
+                      type="button"
+                      onClick={handleClear}
+                      className="text-destructive hover:underline font-bold"
+                    >
+                      {t('cashier_clear_btn')}
+                    </button>
+                  )}
+                </div>
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 max-h-36 overflow-y-auto pe-1">
+                  {menuItems.map((item) => (
+                    <button
+                      key={item.id}
+                      type="button"
+                      onClick={() => handleTapMenuItem(item)}
+                      className="flex flex-col items-start justify-between p-2.5 rounded-xl border border-border/70 bg-muted/30 hover:bg-primary/10 hover:border-primary/40 transition-all text-start active:scale-[0.98]"
+                    >
+                      <span className="text-xs font-bold text-foreground line-clamp-1">{item.name}</span>
+                      <span className="text-[11px] font-mono font-bold text-primary mt-0.5" dir="ltr">
+                        +{Number(item.price).toFixed(2)} {currency}
+                      </span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+
             {/* Quick Preset Chips */}
             <div className="space-y-1.5">
               <div className="flex items-center justify-between text-[11px] text-muted-foreground font-semibold">
                 <span>{t('cashier_quick_add_title')}</span>
-                {spendAmount && (
+                {spendAmount && menuItems.length === 0 && (
                   <button
                     type="button"
                     onClick={handleClear}
@@ -499,6 +604,36 @@ export function TransactionPanel({
               </div>
             )}
 
+            {/* Self-Service Order Ready Digital Buzzer Toggle */}
+            <div className="p-3.5 rounded-2xl border border-amber-500/30 bg-amber-500/5 space-y-2.5 text-start">
+              <div className="flex items-center justify-between gap-3">
+                <div className="flex items-center gap-2.5">
+                  <div className="w-8 h-8 rounded-xl bg-amber-500/15 text-amber-500 flex items-center justify-center shrink-0">
+                    <Bell className="w-4 h-4" />
+                  </div>
+                  <div>
+                    <p className="text-xs font-bold text-foreground">
+                      Notify customer when order is ready
+                    </p>
+                    <p className="text-[11px] text-muted-foreground">
+                      Queues a self-service digital buzzer on the customer&apos;s pass
+                    </p>
+                  </div>
+                </div>
+                <Switch checked={trackOrder} onCheckedChange={setTrackOrder} />
+              </div>
+
+              {trackOrder && (
+                <Input
+                  type="text"
+                  placeholder="Order items / note (e.g. 2x Espresso, 1x Croissant)"
+                  value={itemsSummary}
+                  onChange={(e) => setItemsSummary(e.target.value)}
+                  className="h-9 text-xs rounded-xl bg-background border-border/60"
+                />
+              )}
+            </div>
+
             {/* Submit / Action Button */}
             <Button
               type="submit"
@@ -527,6 +662,24 @@ export function TransactionPanel({
         {/* REDEEM REWARD TAB */}
         <TabsContent value="redeem" className="p-5 sm:p-6 space-y-5 m-0">
           <form onSubmit={handleRedeemSubmit} className="space-y-5">
+            {/* Self-Service Order Ready Digital Buzzer Toggle */}
+            <div className="p-3.5 rounded-2xl border border-amber-500/30 bg-amber-500/5 flex items-center justify-between gap-3 text-start">
+              <div className="flex items-center gap-2.5">
+                <div className="w-8 h-8 rounded-xl bg-amber-500/15 text-amber-500 flex items-center justify-center shrink-0">
+                  <Bell className="w-4 h-4" />
+                </div>
+                <div>
+                  <p className="text-xs font-bold text-foreground">
+                    Notify customer when order is ready
+                  </p>
+                  <p className="text-[11px] text-muted-foreground">
+                    Queues a self-service digital buzzer for this redeemed reward
+                  </p>
+                </div>
+              </div>
+              <Switch checked={trackOrder} onCheckedChange={setTrackOrder} />
+            </div>
+
             <div className="flex items-center justify-between">
               <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
                 {t('cashier_select_perk_prompt')}

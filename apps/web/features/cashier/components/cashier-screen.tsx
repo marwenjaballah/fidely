@@ -13,7 +13,7 @@ import { createCookieAuthApiClient, refreshAuthSession } from '@/lib/api-client'
 import { AUTH_ROUTES } from '@/features/auth/services/auth-service';
 import { useI18n } from '@/lib/i18n';
 import { ResponsiveCashierView } from '@/features/cashier/components/responsive-cashier-view';
-import { CashierStoreInfo, RecentTx } from '@/features/cashier/components/mobile/cashier-mobile-view';
+import { CashierStoreInfo, RecentTx, CashierServiceOrder } from '@/features/cashier/components/mobile/cashier-mobile-view';
 import {
   isOfflineModeEnabled,
   queueOfflineTransaction,
@@ -51,12 +51,18 @@ export function CashierScreen({ isMerchant = false }: CashierScreenProps) {
   const [recentTxs, setRecentTxs] = useState<RecentTx[]>([]);
   const [isLoadingRecent, setIsLoadingRecent] = useState(false);
 
+  // Active self-service orders queue (PREPARING / READY)
+  const [activeOrders, setActiveOrders] = useState<CashierServiceOrder[]>([]);
+  const [isUpdatingOrderId, setIsUpdatingOrderId] = useState<string | null>(null);
+
   // Desktop scan state
   const [scanMode, setScanMode] = useState<{
     active: boolean;
     type: 'issue' | 'redeem' | null;
     value: any;
     rewardName?: string;
+    trackOrder?: boolean;
+    itemsSummary?: string;
   }>({
     active: false,
     type: null,
@@ -102,6 +108,48 @@ export function CashierScreen({ isMerchant = false }: CashierScreenProps) {
     }
   }, []);
 
+  const fetchActiveOrders = useCallback(async (storeId?: string) => {
+    if (!storeId) return;
+    try {
+      const client = getCashierApiClient();
+      const { data } = await client.get<CashierServiceOrder[]>('/api/v1/transactions/orders', {
+        params: { storeId },
+      });
+      setActiveOrders(data || []);
+    } catch (err) {
+      console.error('Failed to load active self-service orders:', err);
+    }
+  }, []);
+
+  const handleUpdateOrderStatus = async (
+    orderId: string,
+    status: 'PREPARING' | 'READY' | 'COMPLETED' | 'CANCELLED'
+  ) => {
+    setIsUpdatingOrderId(orderId);
+    try {
+      const client = getCashierApiClient();
+      await client.post(`/api/v1/transactions/orders/${encodeURIComponent(orderId)}/status`, {
+        status,
+      });
+      if (status === 'READY') {
+        posAudio.playSuccess();
+        posHaptics.pointsIssued();
+      } else {
+        posAudio.playClick();
+        posHaptics.tap();
+      }
+      if (activeStore?.id) {
+        await fetchActiveOrders(activeStore.id);
+      }
+    } catch (err) {
+      console.error('Failed to update order status:', err);
+      posAudio.playError();
+      posHaptics.error();
+    } finally {
+      setIsUpdatingOrderId(null);
+    }
+  };
+
   useEffect(() => {
     if (hasHydrated) {
       if (!isAuthenticated) {
@@ -129,8 +177,13 @@ export function CashierScreen({ isMerchant = false }: CashierScreenProps) {
   useEffect(() => {
     if (activeStore?.id) {
       fetchRecentTransactions(activeStore.id);
+      fetchActiveOrders(activeStore.id);
+      const interval = setInterval(() => {
+        fetchActiveOrders(activeStore.id);
+      }, 6000);
+      return () => clearInterval(interval);
     }
-  }, [activeStore?.id, fetchRecentTransactions]);
+  }, [activeStore?.id, fetchRecentTransactions, fetchActiveOrders]);
 
   // Automatically flush offline transaction queue whenever internet connectivity resumes
   useEffect(() => {
@@ -169,7 +222,9 @@ export function CashierScreen({ isMerchant = false }: CashierScreenProps) {
     type: 'issue' | 'redeem',
     value: any,
     qrToken: string,
-    rewardName?: string
+    rewardName?: string,
+    trackOrder?: boolean,
+    itemsSummary?: string
   ): Promise<boolean> => {
     if (!activeStore) {
       posAudio.playError();
@@ -232,24 +287,28 @@ export function CashierScreen({ isMerchant = false }: CashierScreenProps) {
             pointsIssued: number;
             storeName: string;
             customerName: string;
+            serviceOrder?: CashierServiceOrder | null;
           }>('/api/v1/transactions/issue', {
             qrToken,
             amountTnd: Number(value),
             storeId: activeStore.id,
+            trackOrder: Boolean(trackOrder),
+            itemsSummary: itemsSummary || undefined,
           });
 
           posAudio.playSuccess();
           posHaptics.pointsIssued();
           const customerDisplayName = data.customerName || t('cashier_customer_label') || 'Customer';
+          const orderSuffix = data.serviceOrder ? ` • Order #${data.serviceOrder.orderNumber} queued!` : '';
           setFeedback({
             state: 'success',
             type: 'issue',
             title: t('cashier_tx_issue_title') || 'Points Awarded!',
             message:
-              t('pos_points_awarded_feedback', {
+              (t('pos_points_awarded_feedback', {
                 points: data.pointsIssued,
                 name: customerDisplayName,
-              }) || `+${data.pointsIssued} points awarded to ${customerDisplayName}`,
+              }) || `+${data.pointsIssued} points awarded to ${customerDisplayName}`) + orderSuffix,
             points: data.pointsIssued,
             customerName: customerDisplayName,
             newBalance: data.newBalance,
@@ -257,6 +316,9 @@ export function CashierScreen({ isMerchant = false }: CashierScreenProps) {
           });
 
           fetchRecentTransactions(activeStore.id);
+          if (data.serviceOrder) {
+            fetchActiveOrders(activeStore.id);
+          }
           return true;
         } catch (apiErr: any) {
           const isNetworkError =
@@ -298,23 +360,27 @@ export function CashierScreen({ isMerchant = false }: CashierScreenProps) {
           voucherCode: string;
           rewardName: string;
           storeName: string;
+          serviceOrder?: CashierServiceOrder | null;
         }>('/api/v1/transactions/redeem', {
           qrToken,
           rewardId: String(value),
           storeId: activeStore.id,
+          trackOrder: Boolean(trackOrder),
+          itemsSummary: itemsSummary || undefined,
         });
 
         posAudio.playSuccess();
         posHaptics.rewardClaimed();
         const finalRewardName = rewardName || data.rewardName || 'Reward';
+        const orderSuffix = data.serviceOrder ? ` • Order #${data.serviceOrder.orderNumber} queued!` : '';
         setFeedback({
           state: 'success',
           type: 'redeem',
           title: t('cashier_tx_redeem_title') || 'Reward Claimed!',
           message:
-            t('pos_voucher_redeemed_feedback', {
+            (t('pos_voucher_redeemed_feedback', {
               title: finalRewardName,
-            }) || `Reward "${finalRewardName}" successfully redeemed!`,
+            }) || `Reward "${finalRewardName}" successfully redeemed!`) + orderSuffix,
           rewardName: finalRewardName,
           voucherCode: data.voucherCode,
           newBalance: data.newBalance,
@@ -322,6 +388,9 @@ export function CashierScreen({ isMerchant = false }: CashierScreenProps) {
         });
 
         fetchRecentTransactions(activeStore.id);
+        if (data.serviceOrder) {
+          fetchActiveOrders(activeStore.id);
+        }
         return true;
       }
       return false;
@@ -345,16 +414,27 @@ export function CashierScreen({ isMerchant = false }: CashierScreenProps) {
     rewardId?: string,
     rewardName?: string,
     customerQrToken?: string,
-    customerName?: string
+    customerName?: string,
+    trackOrder?: boolean,
+    itemsSummary?: string
   ): Promise<boolean> => {
     if (customerQrToken) {
-      return await executeTransaction(type, type === 'issue' ? amount : rewardId, customerQrToken, rewardName);
+      return await executeTransaction(
+        type,
+        type === 'issue' ? amount : rewardId,
+        customerQrToken,
+        rewardName,
+        trackOrder,
+        itemsSummary
+      );
     } else {
       setScanMode({
         active: true,
         type,
         value: type === 'issue' ? amount : rewardId,
         rewardName,
+        trackOrder,
+        itemsSummary,
       });
       return false;
     }
@@ -362,9 +442,9 @@ export function CashierScreen({ isMerchant = false }: CashierScreenProps) {
 
   const handleScanSuccess = async (decodedToken: string) => {
     if (!scanMode.type || !scanMode.value) return;
-    const { type, value, rewardName } = scanMode;
+    const { type, value, rewardName, trackOrder, itemsSummary } = scanMode;
     setScanMode({ active: false, type: null, value: null });
-    await executeTransaction(type, value, decodedToken, rewardName);
+    await executeTransaction(type, value, decodedToken, rewardName, trackOrder, itemsSummary);
   };
 
   return (
@@ -394,6 +474,9 @@ export function CashierScreen({ isMerchant = false }: CashierScreenProps) {
         onProcess={handleProcess}
         recentTxs={recentTxs}
         isLoadingRecent={isLoadingRecent}
+        activeOrders={activeOrders}
+        isUpdatingOrderId={isUpdatingOrderId}
+        onUpdateOrderStatus={handleUpdateOrderStatus}
         onLogout={handleLogout}
         cashierEmail={profile?.email}
         scanMode={scanMode}

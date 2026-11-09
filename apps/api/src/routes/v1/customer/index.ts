@@ -5,6 +5,8 @@ import {
   joinStoreRoute,
   getStoreBySlugRoute,
   refreshQrCodeRoute,
+  getCustomerActiveOrdersRoute,
+  acknowledgeCustomerOrderRoute,
 } from './customer.route.js';
 import { CustomerService } from '../../../services/customer.service.js';
 import { requireUser } from '../../../utils/auth.js';
@@ -59,6 +61,33 @@ router.openapi(refreshQrCodeRoute, async (c) => {
 
   try {
     const result = await service.refreshQrToken(user.id, membershipId);
+    return c.json(result, 200);
+  } catch (error: any) {
+    return c.json({ error: error.message }, error.status || 400) as any;
+  }
+});
+
+router.openapi(getCustomerActiveOrdersRoute, async (c) => {
+  const user = requireUser(c);
+  const prisma = c.get('prisma');
+  const service = new CustomerService(prisma);
+
+  try {
+    const orders = await service.getCustomerActiveOrders(user.id);
+    return c.json(orders, 200);
+  } catch (error: any) {
+    return c.json({ error: error.message }, error.status || 400) as any;
+  }
+});
+
+router.openapi(acknowledgeCustomerOrderRoute, async (c) => {
+  const user = requireUser(c);
+  const { orderId } = c.req.valid('param');
+  const prisma = c.get('prisma');
+  const service = new CustomerService(prisma);
+
+  try {
+    const result = await service.acknowledgeOrder(user.id, orderId);
     return c.json(result, 200);
   } catch (error: any) {
     return c.json({ error: error.message }, error.status || 400) as any;

@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react'
 import Link from 'next/link'
-import { CustomerMembership, AvailableStore } from '@/store/customer-store'
+import { CustomerMembership, AvailableStore, CustomerActiveOrder } from '@/store/customer-store'
 import { AppleWalletPass } from '@/components/common/apple-wallet-card'
 import { FidelyLogo } from '@/components/common/fidely-logo'
 import { BRAND_NAME } from '@/lib/brand'
@@ -43,6 +43,9 @@ import {
   Smartphone,
   Settings,
   User,
+  BellRing,
+  UtensilsCrossed,
+  Share2,
 } from 'lucide-react'
 import { format } from 'date-fns'
 import { useI18n } from '@/lib/i18n'
@@ -51,6 +54,8 @@ interface CustomerDesktopViewProps {
   memberships: CustomerMembership[]
   activeMembership: CustomerMembership | null
   availableStores: AvailableStore[]
+  activeOrders?: CustomerActiveOrder[]
+  onAcknowledgeOrder?: (orderId: string) => Promise<void> | void
   onSelectMembership: (id: string) => void
   onRefreshQr: (id: string) => Promise<void> | void
   onJoinStore: (storeId: string) => Promise<void>
@@ -69,6 +74,8 @@ export function CustomerDesktopView({
   memberships,
   activeMembership,
   availableStores,
+  activeOrders = [],
+  onAcknowledgeOrder,
   onSelectMembership,
   onRefreshQr,
   onJoinStore,
@@ -308,6 +315,75 @@ export function CustomerDesktopView({
               </div>
             )}
 
+            {/* ── Live Self-Service Order Ready Digital Buzzer Banner ── */}
+            {activeOrders.length > 0 && (
+              <div className="space-y-2.5">
+                {activeOrders.map((order) => {
+                  const isReady = order.status === 'READY'
+                  return (
+                    <div
+                      key={order.id}
+                      className={`p-4 rounded-2xl border flex items-center justify-between gap-4 transition-all text-start shadow-sm ${
+                        isReady
+                          ? 'border-emerald-500/50 bg-emerald-500/15 animate-pulse'
+                          : 'border-amber-500/40 bg-amber-500/10'
+                      }`}
+                    >
+                      <div className="flex items-center gap-3.5">
+                        <div
+                          className={`h-11 w-11 rounded-2xl flex items-center justify-center shrink-0 font-mono font-black text-sm ${
+                            isReady
+                              ? 'bg-emerald-500 text-white shadow-md shadow-emerald-500/30'
+                              : 'bg-amber-500/20 text-amber-600 dark:text-amber-400'
+                          }`}
+                        >
+                          #{order.orderNumber}
+                        </div>
+                        <div>
+                          <div className="flex items-center gap-2">
+                            <p className="text-sm font-extrabold tracking-tight text-foreground">
+                              {isReady
+                                ? `Order #${order.orderNumber} is READY for pickup!`
+                                : `Order #${order.orderNumber} • Preparing at ${order.storeName || activeMembership?.storeName || 'Store'}`}
+                            </p>
+                            <Badge
+                              variant={isReady ? 'default' : 'secondary'}
+                              className={`text-[10px] font-bold ${
+                                isReady
+                                  ? 'bg-emerald-600 text-white'
+                                  : 'bg-amber-500/20 text-amber-700 dark:text-amber-300'
+                              }`}
+                            >
+                              {isReady ? 'READY AT COUNTER' : 'PREPARING'}
+                            </Badge>
+                          </div>
+                          <p className="text-xs text-muted-foreground mt-0.5">
+                            {order.itemsSummary
+                              ? `${order.itemsSummary} — `
+                              : ''}
+                            {isReady
+                              ? 'Head to the counter to collect your order!'
+                              : "We'll buzz your screen as soon as the cashier marks your order ready."}
+                          </p>
+                        </div>
+                      </div>
+
+                      {isReady && onAcknowledgeOrder && (
+                        <Button
+                          size="sm"
+                          onClick={() => onAcknowledgeOrder(order.id)}
+                          className="h-9 rounded-xl text-xs font-bold gap-1.5 bg-emerald-600 hover:bg-emerald-700 text-white shrink-0 shadow-xs"
+                        >
+                          <Check className="w-3.5 h-3.5" />
+                          <span>Picked Up</span>
+                        </Button>
+                      )}
+                    </div>
+                  )
+                })}
+              </div>
+            )}
+
             {/* ── Horizontal Coffee Passes Pills ── */}
             {memberships.length > 1 && (
               <div className="flex items-center gap-2 overflow-x-auto pb-2 scrollbar-none">
@@ -364,12 +440,15 @@ export function CustomerDesktopView({
                   </p>
                 </div>
 
-                {/* Right: Rewards, Vouchers, & History Tabs (7 cols) */}
+                {/* Right: Rewards, Menu, Vouchers, & History Tabs (7 cols) */}
                 <div className="lg:col-span-7 space-y-6">
                   <Tabs defaultValue="rewards" dir={dir} className="w-full">
-                    <TabsList className="grid grid-cols-3 w-full bg-muted/60 p-1 rounded-2xl">
+                    <TabsList className="grid grid-cols-4 w-full bg-muted/60 p-1 rounded-2xl">
                       <TabsTrigger value="rewards" className="rounded-xl text-xs gap-1">
                         <Gift className="h-3.5 w-3.5" /> {t('customer_bottom_nav_perks') || 'Perks'}
+                      </TabsTrigger>
+                      <TabsTrigger value="menu" className="rounded-xl text-xs gap-1">
+                        <UtensilsCrossed className="h-3.5 w-3.5" /> Menu ({(activeMembership.menuItems || []).length})
                       </TabsTrigger>
                       <TabsTrigger value="claimed" className="rounded-xl text-xs gap-1">
                         <CheckCircle2 className="h-3.5 w-3.5" /> {t('customer_tab_claimed') || 'Claimed'} ({activeMembership.vouchers.length})
@@ -426,6 +505,94 @@ export function CustomerDesktopView({
                                       ? t('customizer_reward_active') || 'Ready'
                                       : `${reward.pointsCost - activeMembership.pointsBalance} ${t('pts') || 'pts'} left`}
                                   </Badge>
+                                </div>
+                              )
+                            })}
+                          </div>
+                        )}
+                      </div>
+                    </TabsContent>
+
+                    {/* Store Menu & Prices Tab */}
+                    <TabsContent value="menu" className="mt-4 space-y-3">
+                      <div className="rounded-2xl border border-border/70 bg-card p-4 shadow-sm text-start">
+                        <div className="flex items-center justify-between gap-2 mb-3">
+                          <div>
+                            <h3 className="font-bold text-sm flex items-center gap-1.5">
+                              <UtensilsCrossed className="w-4 h-4 text-primary" />
+                              <span>{activeMembership.storeName} Menu &amp; Prices</span>
+                            </h3>
+                            <p className="text-xs text-muted-foreground mt-0.5">
+                              Earn {activeMembership.pointsPerTnd} pts per 1 {activeMembership.currency || 'TND'} spent.
+                            </p>
+                          </div>
+                          <Button
+                            asChild
+                            variant="outline"
+                            size="sm"
+                            className="h-8 text-xs font-semibold gap-1.5 rounded-xl"
+                          >
+                            <Link href={`/store/${activeMembership.storeSlug}?tab=menu`} target="_blank">
+                              <Share2 className="w-3.5 h-3.5" />
+                              <span>Public Menu</span>
+                            </Link>
+                          </Button>
+                        </div>
+
+                        {!activeMembership.menuItems || activeMembership.menuItems.length === 0 ? (
+                          <div className="p-8 text-center space-y-2">
+                            <Coffee className="h-8 w-8 text-muted-foreground/40 mx-auto" />
+                            <p className="text-xs text-muted-foreground">
+                              No menu items published for this store yet.
+                            </p>
+                          </div>
+                        ) : (
+                          <div className="space-y-2.5">
+                            {activeMembership.menuItems.map((item) => {
+                              const ptsEarned = Math.max(
+                                1,
+                                Math.round(Number(item.price) * (activeMembership.pointsPerTnd || 10))
+                              )
+                              return (
+                                <div
+                                  key={item.id}
+                                  className="p-3.5 rounded-2xl border border-border/60 bg-muted/20 flex items-center justify-between gap-3"
+                                >
+                                  <div className="flex items-center gap-3 min-w-0">
+                                    {item.imageUrl ? (
+                                      <img
+                                        src={item.imageUrl}
+                                        alt={item.name}
+                                        className="w-12 h-12 rounded-xl object-cover border border-border/50 shrink-0"
+                                      />
+                                    ) : (
+                                      <div className="w-12 h-12 rounded-xl bg-primary/10 text-primary flex items-center justify-center shrink-0">
+                                        <Coffee className="w-5 h-5" />
+                                      </div>
+                                    )}
+                                    <div className="min-w-0 text-start">
+                                      <div className="flex items-center gap-2">
+                                        <p className="font-semibold text-sm text-foreground truncate">{item.name}</p>
+                                        <Badge variant="outline" className="text-[10px] px-1.5 py-0">
+                                          {item.category}
+                                        </Badge>
+                                      </div>
+                                      {item.description && (
+                                        <p className="text-xs text-muted-foreground line-clamp-1 mt-0.5">
+                                          {item.description}
+                                        </p>
+                                      )}
+                                      <span className="inline-block text-[11px] font-mono font-bold text-emerald-600 dark:text-emerald-400 mt-0.5">
+                                        +{ptsEarned} pts earned
+                                      </span>
+                                    </div>
+                                  </div>
+
+                                  <div className="text-end shrink-0">
+                                    <span className="text-sm font-black font-mono text-foreground" dir="ltr">
+                                      {Number(item.price).toFixed(2)} {activeMembership.currency || 'TND'}
+                                    </span>
+                                  </div>
                                 </div>
                               )
                             })}

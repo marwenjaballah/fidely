@@ -10,6 +10,7 @@ export interface Store {
   currency?: string
   pointsPerTnd: number
   welcomePoints?: number
+  selfServiceEnabled?: boolean
   logoUrl?: string | null
 }
 
@@ -46,6 +47,20 @@ export interface Reward {
   pointsCost: number
   active: boolean
   createdAt: string
+}
+
+export interface MenuItem {
+  id: string
+  storeId: string
+  name: string
+  description: string | null
+  category: string
+  price: number
+  imageUrl: string | null
+  available: boolean
+  sortOrder: number
+  createdAt: string
+  updatedAt: string
 }
 
 export interface StoreTransaction {
@@ -95,6 +110,7 @@ export interface MerchantState {
   staff: Staff[]
   availableStaff: AvailableStaff[]
   rewards: Reward[]
+  menuItems: MenuItem[]
   analytics: Analytics | null
   loading: boolean
   error: string | null
@@ -116,6 +132,33 @@ export interface MerchantState {
   createReward: (storeId: string, data: { name: string; description?: string; pointsCost: number }) => Promise<Reward>
   updateReward: (storeId: string, rewardId: string, data: { name?: string; description?: string; pointsCost?: number; active?: boolean }) => Promise<Reward>
   deleteReward: (storeId: string, rewardId: string) => Promise<void>
+  fetchMenu: (storeId: string) => Promise<void>
+  createMenuItem: (
+    storeId: string,
+    data: {
+      name: string
+      description?: string | null
+      category?: string
+      price: number
+      imageUrl?: string | null
+      available?: boolean
+      sortOrder?: number
+    }
+  ) => Promise<MenuItem>
+  updateMenuItem: (
+    storeId: string,
+    menuItemId: string,
+    data: {
+      name?: string
+      description?: string | null
+      category?: string
+      price?: number
+      imageUrl?: string | null
+      available?: boolean
+      sortOrder?: number
+    }
+  ) => Promise<MenuItem>
+  deleteMenuItem: (storeId: string, menuItemId: string) => Promise<void>
   fetchAnalytics: (storeId: string) => Promise<void>
   fetchTransactions: (
     storeId: string,
@@ -145,6 +188,7 @@ export const useMerchantStore = create<MerchantState>((set, get) => ({
   staff: [],
   availableStaff: [],
   rewards: [],
+  menuItems: [],
   analytics: null,
   loading: false,
   error: null,
@@ -396,6 +440,71 @@ export const useMerchantStore = create<MerchantState>((set, get) => ({
       set({ rewards, loading: false, error: null })
     } catch (err) {
       const message = err instanceof ApiError ? err.message : 'Failed to delete reward.'
+      set({ error: message, loading: false })
+      throw err
+    }
+  },
+
+  fetchMenu: async (storeId: string) => {
+    set({ loading: true, error: null })
+    try {
+      const client = getMerchantClient()
+      const { data } = await client.get<MenuItem[]>(`/api/v1/merchant/stores/${storeId}/menu`)
+      set({ menuItems: data || [], loading: false, error: null })
+    } catch (err) {
+      const message = err instanceof ApiError ? err.message : 'Failed to load menu items.'
+      set({ error: message, loading: false })
+    }
+  },
+
+  createMenuItem: async (storeId, data) => {
+    set({ loading: true, error: null })
+    try {
+      const client = getMerchantClient()
+      const { data: newItem } = await client.post<MenuItem>(`/api/v1/merchant/stores/${storeId}/menu`, data)
+      const menuItems = [...get().menuItems, newItem].sort(
+        (a, b) => a.sortOrder - b.sortOrder || a.category.localeCompare(b.category) || a.name.localeCompare(b.name)
+      )
+      set({ menuItems, loading: false, error: null })
+      return newItem
+    } catch (err) {
+      const message = err instanceof ApiError ? err.message : 'Failed to create menu item.'
+      set({ error: message, loading: false })
+      throw err
+    }
+  },
+
+  updateMenuItem: async (storeId, menuItemId, data) => {
+    set({ loading: true, error: null })
+    try {
+      const client = getMerchantClient()
+      const { data: updatedItem } = await client.put<MenuItem>(
+        `/api/v1/merchant/stores/${storeId}/menu/${menuItemId}`,
+        data
+      )
+      const menuItems = get()
+        .menuItems.map((item) => (item.id === menuItemId ? updatedItem : item))
+        .sort(
+          (a, b) => a.sortOrder - b.sortOrder || a.category.localeCompare(b.category) || a.name.localeCompare(b.name)
+        )
+      set({ menuItems, loading: false, error: null })
+      return updatedItem
+    } catch (err) {
+      const message = err instanceof ApiError ? err.message : 'Failed to update menu item.'
+      set({ error: message, loading: false })
+      throw err
+    }
+  },
+
+  deleteMenuItem: async (storeId, menuItemId) => {
+    set({ loading: true, error: null })
+    try {
+      const client = getMerchantClient()
+      await client.delete(`/api/v1/merchant/stores/${storeId}/menu/${menuItemId}`)
+      const menuItems = get().menuItems.filter((item) => item.id !== menuItemId)
+      set({ menuItems, loading: false, error: null })
+    } catch (err) {
+      const message = err instanceof ApiError ? err.message : 'Failed to delete menu item.'
       set({ error: message, loading: false })
       throw err
     }

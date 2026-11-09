@@ -27,9 +27,11 @@ import {
   Coins,
   RefreshCw,
   Loader2,
+  BellRing,
+  Check,
 } from 'lucide-react'
 import { useI18n } from '@/lib/i18n'
-import { CashierStoreInfo, RecentTx } from '../mobile/cashier-mobile-view'
+import { CashierStoreInfo, CashierServiceOrder, RecentTx } from '../mobile/cashier-mobile-view'
 import { PosOfflineSettings } from '../pos-offline-settings'
 
 interface CashierDesktopViewProps {
@@ -42,10 +44,18 @@ interface CashierDesktopViewProps {
     rewardId?: string,
     rewardName?: string,
     customerQrToken?: string,
-    customerName?: string
+    customerName?: string,
+    trackOrder?: boolean,
+    itemsSummary?: string
   ) => Promise<boolean>
   recentTxs: RecentTx[]
   isLoadingRecent: boolean
+  activeOrders?: CashierServiceOrder[]
+  isUpdatingOrderId?: string | null
+  onUpdateOrderStatus?: (
+    orderId: string,
+    status: 'PREPARING' | 'READY' | 'COMPLETED' | 'CANCELLED'
+  ) => Promise<void>
   onLogout: () => void
   cashierEmail?: string
   scanMode: {
@@ -53,6 +63,8 @@ interface CashierDesktopViewProps {
     type: 'issue' | 'redeem' | null
     value: any
     rewardName?: string
+    trackOrder?: boolean
+    itemsSummary?: string
   }
   onScanSuccess: (decodedToken: string) => void
   onCancelScan: () => void
@@ -68,6 +80,9 @@ export function CashierDesktopView({
   onProcess,
   recentTxs,
   isLoadingRecent,
+  activeOrders = [],
+  isUpdatingOrderId = null,
+  onUpdateOrderStatus,
   onLogout,
   cashierEmail,
   scanMode,
@@ -181,6 +196,108 @@ export function CashierDesktopView({
               </p>
             </div>
 
+            {/* Active Self-Service Orders Queue (Digital Buzzer Board) */}
+            <div className="rounded-3xl border border-amber-500/40 bg-card p-5 shadow-sm text-start space-y-3">
+              <div className="flex items-center justify-between">
+                <h3 className="font-bold text-xs uppercase tracking-wider text-foreground flex items-center gap-2">
+                  <BellRing className="w-4 h-4 text-amber-500" />
+                  <span>Self-Service Order Queue</span>
+                </h3>
+                <Badge
+                  variant="outline"
+                  className="text-[10px] font-mono border-amber-500/30 text-amber-600 dark:text-amber-400"
+                >
+                  {activeOrders.length} Active
+                </Badge>
+              </div>
+
+              {activeOrders.length === 0 ? (
+                <div className="py-6 text-center text-xs text-muted-foreground">
+                  No active self-service orders in queue.
+                </div>
+              ) : (
+                <div className="space-y-2.5 max-h-[260px] overflow-y-auto pe-1">
+                  {activeOrders.map((order) => {
+                    const isReady = order.status === 'READY'
+                    const isUpdating = isUpdatingOrderId === order.id
+                    return (
+                      <div
+                        key={order.id}
+                        className={`p-3 rounded-2xl border flex items-center justify-between gap-3 transition-all ${
+                          isReady
+                            ? 'bg-emerald-500/10 border-emerald-500/40'
+                            : 'bg-muted/25 border-border/60'
+                        }`}
+                      >
+                        <div className="min-w-0 flex-1 space-y-0.5">
+                          <div className="flex items-center gap-2">
+                            <span className="font-mono font-black text-xs px-2 py-0.5 rounded-lg bg-primary/15 text-primary">
+                              #{order.orderNumber}
+                            </span>
+                            <span className="text-xs font-bold text-foreground truncate">
+                              {order.customerName}
+                            </span>
+                            <Badge
+                              variant="secondary"
+                              className={`text-[10px] px-1.5 py-0 ${
+                                isReady
+                                  ? 'bg-emerald-500/15 text-emerald-600 dark:text-emerald-400'
+                                  : 'bg-amber-500/15 text-amber-600 dark:text-amber-400'
+                              }`}
+                            >
+                              {isReady ? 'READY' : 'PREPARING'}
+                            </Badge>
+                          </div>
+                          {order.itemsSummary && (
+                            <p className="text-[11px] text-muted-foreground truncate">
+                              {order.itemsSummary}
+                            </p>
+                          )}
+                        </div>
+
+                        <div className="shrink-0">
+                          {!isReady ? (
+                            <Button
+                              size="sm"
+                              disabled={isUpdating}
+                              onClick={() => onUpdateOrderStatus?.(order.id, 'READY')}
+                              className="h-8 rounded-xl text-xs font-bold gap-1.5 bg-amber-500 hover:bg-amber-600 text-white px-3 shadow-xs"
+                            >
+                              {isUpdating ? (
+                                <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                              ) : (
+                                <>
+                                  <BellRing className="w-3.5 h-3.5" />
+                                  <span>Notify Ready</span>
+                                </>
+                              )}
+                            </Button>
+                          ) : (
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              disabled={isUpdating}
+                              onClick={() => onUpdateOrderStatus?.(order.id, 'COMPLETED')}
+                              className="h-8 rounded-xl text-xs font-bold gap-1.5 border-emerald-500/50 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/15 px-3"
+                            >
+                              {isUpdating ? (
+                                <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                              ) : (
+                                <>
+                                  <Check className="w-3.5 h-3.5" />
+                                  <span>Picked Up</span>
+                                </>
+                              )}
+                            </Button>
+                          )}
+                        </div>
+                      </div>
+                    )
+                  })}
+                </div>
+              )}
+            </div>
+
             {/* Recent Shift Transactions */}
             <div className="rounded-3xl border border-border/70 bg-card p-5 shadow-sm text-start space-y-3">
               <div className="flex items-center justify-between">
@@ -232,6 +349,7 @@ export function CashierDesktopView({
               storeName={activeStore?.name}
               currency={activeStore?.currency}
               pointsPerTnd={activeStore?.pointsPerTnd}
+              selfServiceEnabled={activeStore?.selfServiceEnabled}
               onProcess={onProcess}
             />
           </div>

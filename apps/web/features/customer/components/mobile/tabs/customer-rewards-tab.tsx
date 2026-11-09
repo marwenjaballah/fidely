@@ -1,6 +1,7 @@
 'use client'
 
 import React, { useState } from 'react'
+import Link from 'next/link'
 import { CustomerMembership } from '@/store/customer-store'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -14,6 +15,9 @@ import {
   Lock,
   Sparkles,
   ArrowUpRight,
+  UtensilsCrossed,
+  Coffee,
+  Share2,
 } from 'lucide-react'
 import { useI18n } from '@/lib/i18n'
 import { format } from 'date-fns'
@@ -25,7 +29,7 @@ interface CustomerRewardsTabProps {
 
 export function CustomerRewardsTab({ activeMembership }: CustomerRewardsTabProps) {
   const { t, dir } = useI18n()
-  const [subTab, setSubTab] = useState<'rewards' | 'claimed' | 'history'>('rewards')
+  const [subTab, setSubTab] = useState<'rewards' | 'menu' | 'claimed' | 'history'>('rewards')
 
   if (!activeMembership) {
     return (
@@ -43,6 +47,7 @@ export function CustomerRewardsTab({ activeMembership }: CustomerRewardsTabProps
 
   const points = activeMembership.pointsBalance || 0
   const rewards = activeMembership.rewards || []
+  const menuItems = activeMembership.menuItems || []
   const vouchers = activeMembership.vouchers || []
   const transactions = activeMembership.transactions || []
 
@@ -51,7 +56,7 @@ export function CustomerRewardsTab({ activeMembership }: CustomerRewardsTabProps
 
   return (
     <div className="space-y-4 text-start" dir={dir}>
-      {/* Sub-navigation Switcher: Perks | Claimed | History */}
+      {/* Sub-navigation Switcher: Perks | Menu | Claimed | History */}
       <div className="flex items-center p-1 rounded-2xl bg-muted/60 border border-border/50 gap-1">
         <button
           type="button"
@@ -59,7 +64,7 @@ export function CustomerRewardsTab({ activeMembership }: CustomerRewardsTabProps
             posHaptics.tap()
             setSubTab('rewards')
           }}
-          className={`flex-1 py-2 text-xs font-bold rounded-xl transition-all flex items-center justify-center gap-1.5 ${
+          className={`flex-1 py-2 text-xs font-bold rounded-xl transition-all flex items-center justify-center gap-1 ${
             subTab === 'rewards'
               ? 'bg-background text-foreground shadow-xs'
               : 'text-muted-foreground hover:text-foreground'
@@ -78,19 +83,19 @@ export function CustomerRewardsTab({ activeMembership }: CustomerRewardsTabProps
           type="button"
           onClick={() => {
             posHaptics.tap()
-            setSubTab('claimed')
+            setSubTab('menu')
           }}
-          className={`flex-1 py-2 text-xs font-bold rounded-xl transition-all flex items-center justify-center gap-1.5 ${
-            subTab === 'claimed'
+          className={`flex-1 py-2 text-xs font-bold rounded-xl transition-all flex items-center justify-center gap-1 ${
+            subTab === 'menu'
               ? 'bg-background text-foreground shadow-xs'
               : 'text-muted-foreground hover:text-foreground'
           }`}
         >
-          <CheckCircle2 className="h-3.5 w-3.5" />
-          <span>{t('customer_tab_claimed') || 'Claimed'}</span>
-          {vouchers.length > 0 && (
+          <UtensilsCrossed className="h-3.5 w-3.5" />
+          <span>Menu</span>
+          {menuItems.length > 0 && (
             <Badge variant="secondary" className="text-[10px] px-1.5 py-0 h-4 font-mono font-bold">
-              {vouchers.length}
+              {menuItems.length}
             </Badge>
           )}
         </button>
@@ -99,9 +104,25 @@ export function CustomerRewardsTab({ activeMembership }: CustomerRewardsTabProps
           type="button"
           onClick={() => {
             posHaptics.tap()
+            setSubTab('claimed')
+          }}
+          className={`flex-1 py-2 text-xs font-bold rounded-xl transition-all flex items-center justify-center gap-1 ${
+            subTab === 'claimed'
+              ? 'bg-background text-foreground shadow-xs'
+              : 'text-muted-foreground hover:text-foreground'
+          }`}
+        >
+          <CheckCircle2 className="h-3.5 w-3.5" />
+          <span>{t('customer_tab_claimed') || 'Claimed'}</span>
+        </button>
+
+        <button
+          type="button"
+          onClick={() => {
+            posHaptics.tap()
             setSubTab('history')
           }}
-          className={`flex-1 py-2 text-xs font-bold rounded-xl transition-all flex items-center justify-center gap-1.5 ${
+          className={`flex-1 py-2 text-xs font-bold rounded-xl transition-all flex items-center justify-center gap-1 ${
             subTab === 'history'
               ? 'bg-background text-foreground shadow-xs'
               : 'text-muted-foreground hover:text-foreground'
@@ -232,7 +253,95 @@ export function CustomerRewardsTab({ activeMembership }: CustomerRewardsTabProps
         </div>
       )}
 
-      {/* ── SUB-TAB 2: CLAIMED REWARDS (Already Fulfilled at Counter) ── */}
+      {/* ── SUB-TAB 2: STORE MENU & PRICES ── */}
+      {subTab === 'menu' && (
+        <div className="rounded-3xl border border-border/70 bg-card p-4 shadow-xs space-y-3">
+          <div className="flex items-center justify-between gap-2">
+            <div>
+              <div className="flex items-center gap-1.5">
+                <UtensilsCrossed className="w-4 h-4 text-primary" />
+                <h3 className="font-bold text-xs uppercase tracking-wider text-foreground">
+                  {activeMembership.storeName} Menu
+                </h3>
+              </div>
+              <p className="text-[11px] text-muted-foreground mt-0.5">
+                Earn {activeMembership.pointsPerTnd} pts per 1 {activeMembership.currency || 'TND'} spent.
+              </p>
+            </div>
+            <Button
+              asChild
+              variant="outline"
+              size="sm"
+              className="h-7 px-2.5 text-[11px] font-semibold gap-1 rounded-xl shrink-0"
+            >
+              <Link href={`/store/${activeMembership.storeSlug}?tab=menu`} target="_blank">
+                <Share2 className="w-3 h-3" />
+                <span>Share</span>
+              </Link>
+            </Button>
+          </div>
+
+          {menuItems.length === 0 ? (
+            <div className="py-12 text-center text-xs text-muted-foreground space-y-2">
+              <Coffee className="h-8 w-8 text-muted-foreground/30 mx-auto" />
+              <p>No menu items published for this store yet.</p>
+            </div>
+          ) : (
+            <div className="space-y-2">
+              {menuItems.map((item) => {
+                const ptsEarned = Math.max(
+                  1,
+                  Math.round(Number(item.price) * (activeMembership.pointsPerTnd || 10))
+                )
+                return (
+                  <div
+                    key={item.id}
+                    className="p-3 rounded-2xl border border-border/60 bg-muted/20 flex items-center justify-between gap-3"
+                  >
+                    <div className="flex items-center gap-2.5 min-w-0">
+                      {item.imageUrl ? (
+                        <img
+                          src={item.imageUrl}
+                          alt={item.name}
+                          className="w-10 h-10 rounded-xl object-cover border border-border/50 shrink-0"
+                        />
+                      ) : (
+                        <div className="w-10 h-10 rounded-xl bg-primary/10 text-primary flex items-center justify-center shrink-0">
+                          <Coffee className="w-4 h-4" />
+                        </div>
+                      )}
+                      <div className="min-w-0 text-start">
+                        <div className="flex items-center gap-1.5">
+                          <p className="font-bold text-xs text-foreground truncate">{item.name}</p>
+                          <Badge variant="outline" className="text-[9px] px-1.5 py-0">
+                            {item.category}
+                          </Badge>
+                        </div>
+                        {item.description && (
+                          <p className="text-[11px] text-muted-foreground line-clamp-1 mt-0.5">
+                            {item.description}
+                          </p>
+                        )}
+                        <span className="inline-block text-[10px] font-mono font-bold text-emerald-600 dark:text-emerald-400">
+                          +{ptsEarned} pts
+                        </span>
+                      </div>
+                    </div>
+
+                    <div className="text-end shrink-0">
+                      <span className="text-xs font-black font-mono text-foreground" dir="ltr">
+                        {Number(item.price).toFixed(2)} {activeMembership.currency || 'TND'}
+                      </span>
+                    </div>
+                  </div>
+                )
+              })}
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* ── SUB-TAB 3: CLAIMED REWARDS (Already Fulfilled at Counter) ── */}
       {subTab === 'claimed' && (
         <div className="rounded-3xl border border-border/70 bg-card p-4 shadow-xs space-y-3">
           <div className="flex items-center gap-2">

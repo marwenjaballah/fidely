@@ -21,6 +21,7 @@ export class TransactionsService {
         primaryColor: s.primaryColor,
         currency: s.currency || 'TND',
         pointsPerTnd: Number(s.pointsPerTnd),
+        selfServiceEnabled: s.selfServiceEnabled !== undefined ? Boolean(s.selfServiceEnabled) : true,
         isOwner: true,
       }));
     }
@@ -43,6 +44,7 @@ export class TransactionsService {
       primaryColor: s.primaryColor,
       currency: s.currency || 'TND',
       pointsPerTnd: Number(s.pointsPerTnd),
+      selfServiceEnabled: s.selfServiceEnabled !== undefined ? Boolean(s.selfServiceEnabled) : true,
       isOwner: s.ownerId === userId,
     }));
   }
@@ -231,6 +233,67 @@ export class TransactionsService {
   }
 
   /**
+   * Helper to create a ServiceOrder inside a Prisma transaction with a daily sequential orderNumber (#101, #102, ...).
+   */
+  private async createServiceOrderInTx(
+    tx: Prisma.TransactionClient,
+    params: {
+      storeId: string;
+      storeName: string;
+      membershipId: string;
+      cashierId: string;
+      transactionId?: string;
+      customerName: string;
+      itemsSummary?: string | null;
+    }
+  ) {
+    const startOfToday = new Date();
+    startOfToday.setHours(0, 0, 0, 0);
+
+    let nextOrderNumber = 101;
+    if ((tx as any).serviceOrder) {
+      const latestOrder = await (tx as any).serviceOrder.findFirst({
+        where: {
+          storeId: params.storeId,
+          createdAt: { gte: startOfToday },
+        },
+        orderBy: { orderNumber: 'desc' },
+        select: { orderNumber: true },
+      });
+
+      if (latestOrder && typeof latestOrder.orderNumber === 'number') {
+        nextOrderNumber = latestOrder.orderNumber + 1;
+      }
+
+      const createdOrder = await (tx as any).serviceOrder.create({
+        data: {
+          storeId: params.storeId,
+          membershipId: params.membershipId,
+          cashierId: params.cashierId,
+          transactionId: params.transactionId || null,
+          orderNumber: nextOrderNumber,
+          status: 'PREPARING',
+          itemsSummary: params.itemsSummary?.trim() || null,
+        },
+      });
+
+      return {
+        id: createdOrder.id,
+        storeId: createdOrder.storeId,
+        storeName: params.storeName,
+        orderNumber: createdOrder.orderNumber,
+        status: createdOrder.status as 'PREPARING' | 'READY' | 'COMPLETED' | 'CANCELLED',
+        itemsSummary: createdOrder.itemsSummary || null,
+        customerName: params.customerName,
+        createdAt: createdOrder.createdAt ? createdOrder.createdAt.toISOString() : new Date().toISOString(),
+        readyAt: createdOrder.readyAt ? createdOrder.readyAt.toISOString() : null,
+      };
+    }
+
+    return null;
+  }
+
+  /**
    * Issues points based on store loyalty multiplier.
    */
   async issuePoints(
@@ -239,7 +302,11 @@ export class TransactionsService {
     qrToken: string,
     amountTnd: number,
     storeId?: string,
-    idempotencyKey?: string
+    idempotencyKey?: string,
+    options?: {
+      trackOrder?: boolean;
+      itemsSummary?: string;
+    }
   ) {
     if (amountTnd <= 0) {
       throw new HTTPException(400, { message: 'Transaction amount must be greater than 0.' });
@@ -261,6 +328,7 @@ export class TransactionsService {
           pointsIssued: existingTx.pointsAffected,
           storeName: existingTx.store.name,
           customerName: existingTx.membership.customer.fullName || existingTx.membership.customer.email,
+          serviceOrder: null,
         };
       }
     }
@@ -303,7 +371,7 @@ export class TransactionsService {
       });
 
       // Log transaction with exact store, cashier, and idempotency key
-      await tx.transaction.create({
+      const createdTx = await tx.transaction.create({
         data: {
           storeId: store.id,
           cashierId,
@@ -315,11 +383,27 @@ export class TransactionsService {
         },
       });
 
+      const customerDisplayName = customer.fullName || customer.email?.split('@')[0] || 'Customer';
+      let serviceOrder = null;
+
+      if (options?.trackOrder) {
+        serviceOrder = await this.createServiceOrderInTx(tx, {
+          storeId: store.id,
+          storeName: store.name,
+          membershipId: membership.id,
+          cashierId,
+          transactionId: createdTx?.id,
+          customerName: customerDisplayName,
+          itemsSummary: options.itemsSummary,
+        });
+      }
+
       return {
         newBalance: updatedMembership.pointsBalance,
         pointsIssued: pointsToIssue,
         storeName: store.name,
         customerName: customer.fullName || customer.email,
+        serviceOrder,
       };
     });
   }
@@ -332,7 +416,11 @@ export class TransactionsService {
     cashierRole: string | undefined,
     qrToken: string,
     rewardId: string,
-    storeId?: string
+    storeId?: string,
+    options?: {
+      trackOrder?: boolean;
+      itemsSummary?: string;
+    }
   ) {
     // 1. Authorize cashier and resolve store
     const store = await this.resolveAndValidateCashierStore(cashierId, cashierRole, storeId);
@@ -407,7 +495,7 @@ export class TransactionsService {
       });
 
       // Log transaction
-      await tx.transaction.create({
+      const createdTx = await tx.transaction.create({
         data: {
           storeId: store.id,
           cashierId,
@@ -434,13 +522,150 @@ export class TransactionsService {
         voucherCode = voucher.code;
       }
 
+      const customerDisplayName = customer.fullName || customer.email?.split('@')[0] || 'Customer';
+      let serviceOrder = null;
+
+      if (options?.trackOrder) {
+        serviceOrder = await this.createServiceOrderInTx(tx, {
+          storeId: store.id,
+          storeName: store.name,
+          membershipId: membership.id,
+          cashierId,
+          transactionId: createdTx?.id,
+          customerName: customerDisplayName,
+          itemsSummary: options.itemsSummary || `Reward: ${rewardName}`,
+        });
+      }
+
       return {
         newBalance: updatedMembership.pointsBalance,
         voucherCode,
         rewardName,
         storeName: store.name,
+        serviceOrder,
       };
     });
+  }
+
+  /**
+   * Retrieves available menu items for the target store for the cashier POS.
+   */
+  async getStoreMenu(userId: string, userRole: string | undefined, storeId?: string) {
+    const store = await this.resolveAndValidateCashierStore(userId, userRole, storeId);
+    const items = await this.prisma.menuItem.findMany({
+      where: { storeId: store.id, available: true },
+      orderBy: [{ sortOrder: 'asc' }, { category: 'asc' }, { name: 'asc' }],
+    });
+    return items.map((item) => ({
+      id: item.id,
+      name: item.name,
+      description: item.description,
+      category: item.category,
+      price: Number(item.price),
+      imageUrl: item.imageUrl,
+      available: item.available,
+    }));
+  }
+
+  /**
+   * Retrieves active self-service orders (PREPARING and READY) for the cashier's store.
+   */
+  async getActiveOrders(userId: string, userRole: string | undefined, storeId?: string) {
+    const store = await this.resolveAndValidateCashierStore(userId, userRole, storeId);
+    const cutoff = new Date(Date.now() - 12 * 60 * 60 * 1000); // last 12 hours
+
+    const orders = await this.prisma.serviceOrder.findMany({
+      where: {
+        storeId: store.id,
+        status: { in: ['PREPARING', 'READY'] },
+        createdAt: { gte: cutoff },
+      },
+      orderBy: [{ status: 'asc' }, { createdAt: 'asc' }],
+      include: {
+        membership: {
+          include: {
+            customer: {
+              select: {
+                fullName: true,
+                email: true,
+                phone: true,
+              },
+            },
+          },
+        },
+      },
+    });
+
+    return orders.map((o) => ({
+      id: o.id,
+      storeId: o.storeId,
+      storeName: store.name,
+      orderNumber: o.orderNumber,
+      status: o.status,
+      itemsSummary: o.itemsSummary,
+      customerName:
+        o.membership?.customer?.fullName ||
+        o.membership?.customer?.email?.split('@')[0] ||
+        'Customer',
+      customerPhone: o.membership?.customer?.phone || null,
+      createdAt: o.createdAt.toISOString(),
+      readyAt: o.readyAt ? o.readyAt.toISOString() : null,
+    }));
+  }
+
+  /**
+   * Updates the status of a self-service order (e.g., PREPARING -> READY -> COMPLETED).
+   */
+  async updateOrderStatus(
+    userId: string,
+    userRole: string | undefined,
+    orderId: string,
+    status: 'PREPARING' | 'READY' | 'COMPLETED' | 'CANCELLED'
+  ) {
+    const order = await this.prisma.serviceOrder.findUnique({
+      where: { id: orderId },
+      include: {
+        membership: {
+          include: {
+            customer: {
+              select: { fullName: true, email: true },
+            },
+          },
+        },
+      },
+    });
+
+    if (!order) {
+      throw new HTTPException(404, { message: 'Order not found.' });
+    }
+
+    const store = await this.resolveAndValidateCashierStore(userId, userRole, order.storeId);
+    const now = new Date();
+
+    const updated = await this.prisma.serviceOrder.update({
+      where: { id: orderId },
+      data: {
+        status,
+        ...(status === 'READY' ? { readyAt: now } : {}),
+        ...(status === 'COMPLETED' || status === 'CANCELLED' ? { completedAt: now } : {}),
+      },
+    });
+
+    return {
+      id: updated.id,
+      storeId: updated.storeId,
+      storeName: store.name,
+      orderNumber: updated.orderNumber,
+      status: updated.status,
+      itemsSummary: updated.itemsSummary,
+      customerName:
+        order.membership?.customer?.fullName ||
+        order.membership?.customer?.email?.split('@')[0] ||
+        'Customer',
+      createdAt: updated.createdAt.toISOString(),
+      readyAt: updated.readyAt ? updated.readyAt.toISOString() : null,
+      completedAt: updated.completedAt ? updated.completedAt.toISOString() : null,
+    };
   }
 
   /**

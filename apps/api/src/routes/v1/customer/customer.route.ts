@@ -1,5 +1,29 @@
 import { createRoute, z } from '@hono/zod-openapi';
 
+const PublicMenuItemSchema = z.object({
+  id: z.string(),
+  name: z.string(),
+  description: z.string().nullable().optional(),
+  category: z.string(),
+  price: z.number(),
+  imageUrl: z.string().nullable().optional(),
+  available: z.boolean(),
+});
+
+const CustomerActiveOrderSchema = z.object({
+  id: z.string(),
+  storeId: z.string(),
+  storeName: z.string(),
+  storeSlug: z.string().optional(),
+  primaryColor: z.string().optional(),
+  logoUrl: z.string().nullable().optional(),
+  orderNumber: z.number(),
+  status: z.enum(['PREPARING', 'READY', 'COMPLETED', 'CANCELLED']),
+  itemsSummary: z.string().nullable().optional(),
+  createdAt: z.string(),
+  readyAt: z.string().nullable().optional(),
+});
+
 export const getCustomerOverviewRoute = createRoute({
   method: 'get',
   path: '/overview',
@@ -18,6 +42,7 @@ export const getCustomerOverviewRoute = createRoute({
                 storeName: z.string(),
                 storeSlug: z.string(),
                 primaryColor: z.string(),
+                currency: z.string().optional().default('TND'),
                 pointsPerTnd: z.number(),
                 logoUrl: z.string().nullable().optional(),
                 pointsBalance: z.number(),
@@ -32,6 +57,8 @@ export const getCustomerOverviewRoute = createRoute({
                     active: z.boolean(),
                   })
                 ),
+                menuItems: z.array(PublicMenuItemSchema).optional().default([]),
+                activeOrders: z.array(CustomerActiveOrderSchema).optional().default([]),
                 vouchers: z.array(
                   z.object({
                     id: z.string(),
@@ -60,6 +87,7 @@ export const getCustomerOverviewRoute = createRoute({
                 name: z.string(),
                 slug: z.string(),
                 primaryColor: z.string(),
+                currency: z.string().optional().default('TND'),
                 pointsPerTnd: z.number(),
                 logoUrl: z.string().nullable().optional(),
                 rewardsCount: z.number(),
@@ -101,8 +129,10 @@ export const getStoreBySlugRoute = createRoute({
             name: z.string(),
             slug: z.string(),
             primaryColor: z.string(),
+            currency: z.string().optional().default('TND'),
             pointsPerTnd: z.number(),
             welcomePoints: z.number().optional().default(0),
+            selfServiceEnabled: z.boolean().optional().default(true),
             logoUrl: z.string().nullable().optional(),
             rewards: z.array(
               z.object({
@@ -113,6 +143,7 @@ export const getStoreBySlugRoute = createRoute({
                 active: z.boolean(),
               })
             ),
+            menuItems: z.array(PublicMenuItemSchema).optional().default([]),
           }),
         },
       },
@@ -127,6 +158,52 @@ export const getStoreBySlugRoute = createRoute({
         },
       },
     },
+  },
+});
+
+export const getCustomerActiveOrdersRoute = createRoute({
+  method: 'get',
+  path: '/active-orders',
+  tags: ['Customer'],
+  security: [{ bearerAuth: [] }],
+  responses: {
+    200: {
+      description: 'Active self-service orders for the customer across enrolled stores',
+      content: {
+        'application/json': {
+          schema: z.array(CustomerActiveOrderSchema),
+        },
+      },
+    },
+    401: { description: 'Unauthorized' },
+  },
+});
+
+export const acknowledgeCustomerOrderRoute = createRoute({
+  method: 'post',
+  path: '/orders/{orderId}/acknowledge',
+  tags: ['Customer'],
+  security: [{ bearerAuth: [] }],
+  request: {
+    params: z.object({
+      orderId: z.string(),
+    }),
+  },
+  responses: {
+    200: {
+      description: 'Order acknowledged and marked completed',
+      content: {
+        'application/json': {
+          schema: z.object({
+            id: z.string(),
+            status: z.string(),
+            completedAt: z.string(),
+          }),
+        },
+      },
+    },
+    401: { description: 'Unauthorized' },
+    404: { description: 'Order not found' },
   },
 });
 

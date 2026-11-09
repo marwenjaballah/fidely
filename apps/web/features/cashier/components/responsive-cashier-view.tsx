@@ -2,7 +2,7 @@
 
 import React from 'react'
 import { ResponsiveView } from '@/components/common/responsive-view'
-import { CashierMobileView, CashierStoreInfo, RecentTx } from './mobile/cashier-mobile-view'
+import { CashierMobileView, CashierStoreInfo, CashierServiceOrder, RecentTx } from './mobile/cashier-mobile-view'
 import { CashierDesktopView } from './desktop/cashier-desktop-view'
 
 interface ResponsiveCashierViewProps {
@@ -15,10 +15,18 @@ interface ResponsiveCashierViewProps {
     rewardId?: string,
     rewardName?: string,
     customerQrToken?: string,
-    customerName?: string
+    customerName?: string,
+    trackOrder?: boolean,
+    itemsSummary?: string
   ) => Promise<boolean>
   recentTxs: RecentTx[]
   isLoadingRecent: boolean
+  activeOrders?: CashierServiceOrder[]
+  isUpdatingOrderId?: string | null
+  onUpdateOrderStatus?: (
+    orderId: string,
+    status: 'PREPARING' | 'READY' | 'COMPLETED' | 'CANCELLED'
+  ) => Promise<void>
   onLogout: () => void
   cashierEmail?: string
   scanMode: {
@@ -26,6 +34,8 @@ interface ResponsiveCashierViewProps {
     type: 'issue' | 'redeem' | null
     value: any
     rewardName?: string
+    trackOrder?: boolean
+    itemsSummary?: string
   }
   onScanSuccess: (decodedToken: string) => void
   onCancelScan: () => void
@@ -45,6 +55,9 @@ export function ResponsiveCashierView(props: ResponsiveCashierViewProps) {
           onProcess={props.onProcess}
           recentTxs={props.recentTxs}
           isLoadingRecent={props.isLoadingRecent}
+          activeOrders={props.activeOrders}
+          isUpdatingOrderId={props.isUpdatingOrderId}
+          onUpdateOrderStatus={props.onUpdateOrderStatus}
           onLogout={props.onLogout}
           cashierEmail={props.cashierEmail}
           apiClient={props.apiClient}

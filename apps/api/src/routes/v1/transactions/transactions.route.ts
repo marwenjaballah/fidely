@@ -18,6 +18,7 @@ export const getCashierStoresRoute = createRoute({
               primaryColor: z.string(),
               currency: z.string().default('TND'),
               pointsPerTnd: z.number(),
+              selfServiceEnabled: z.boolean().optional().default(true),
               isOwner: z.boolean(),
             })
           ),
@@ -26,6 +27,20 @@ export const getCashierStoresRoute = createRoute({
     },
     401: { description: 'Unauthorized' },
   },
+});
+
+const ServiceOrderSchema = z.object({
+  id: z.string(),
+  storeId: z.string(),
+  storeName: z.string(),
+  orderNumber: z.number(),
+  status: z.enum(['PREPARING', 'READY', 'COMPLETED', 'CANCELLED']),
+  itemsSummary: z.string().nullable().optional(),
+  customerName: z.string(),
+  customerPhone: z.string().nullable().optional(),
+  createdAt: z.string(),
+  readyAt: z.string().nullable().optional(),
+  completedAt: z.string().nullable().optional(),
 });
 
 export const issuePointsRoute = createRoute({
@@ -42,6 +57,8 @@ export const issuePointsRoute = createRoute({
             amountTnd: z.number().positive().describe('The amount of TND spent'),
             storeId: z.string().optional().describe('Target store ID where the transaction takes place'),
             idempotencyKey: z.string().optional().describe('Unique idempotency key for offline sync deduplication'),
+            trackOrder: z.boolean().optional().describe('Whether to queue a self-service order for ready notification'),
+            itemsSummary: z.string().optional().describe('Summary of items ordered for self-service counter notification'),
           }),
         },
       },
@@ -57,6 +74,7 @@ export const issuePointsRoute = createRoute({
             pointsIssued: z.number(),
             storeName: z.string(),
             customerName: z.string(),
+            serviceOrder: ServiceOrderSchema.nullable().optional(),
           }),
         },
       },
@@ -97,6 +115,8 @@ export const redeemRewardRoute = createRoute({
             qrToken: z.string().describe('The scanned QR code token of the customer'),
             rewardId: z.string().describe('The ID of the reward to redeem'),
             storeId: z.string().optional().describe('Target store ID where redemption takes place'),
+            trackOrder: z.boolean().optional().describe('Whether to queue a self-service order for ready notification'),
+            itemsSummary: z.string().optional().describe('Summary of reward/items ordered'),
           }),
         },
       },
@@ -112,6 +132,7 @@ export const redeemRewardRoute = createRoute({
             voucherCode: z.string(),
             rewardName: z.string(),
             storeName: z.string(),
+            serviceOrder: ServiceOrderSchema.nullable().optional(),
           }),
         },
       },
@@ -242,5 +263,99 @@ export const lookupCustomerByPhoneRoute = createRoute({
     400: { description: 'Bad request' },
     401: { description: 'Unauthorized' },
     403: { description: 'Forbidden' },
+  },
+});
+
+export const getCashierStoreMenuRoute = createRoute({
+  method: 'get',
+  path: '/store-menu',
+  tags: ['Transactions'],
+  security: [{ bearerAuth: [] }],
+  request: {
+    query: z.object({
+      storeId: z.string().optional().describe('Target store ID to fetch menu items for'),
+    }),
+  },
+  responses: {
+    200: {
+      description: 'Available menu items for the selected store',
+      content: {
+        'application/json': {
+          schema: z.array(
+            z.object({
+              id: z.string(),
+              name: z.string(),
+              description: z.string().nullable().optional(),
+              category: z.string(),
+              price: z.number(),
+              imageUrl: z.string().nullable().optional(),
+              available: z.boolean(),
+            })
+          ),
+        },
+      },
+    },
+    400: { description: 'Bad request' },
+    401: { description: 'Unauthorized' },
+    403: { description: 'Forbidden' },
+  },
+});
+
+export const getActiveOrdersRoute = createRoute({
+  method: 'get',
+  path: '/orders',
+  tags: ['Transactions'],
+  security: [{ bearerAuth: [] }],
+  request: {
+    query: z.object({
+      storeId: z.string().optional().describe('Target store ID to fetch active self-service orders for'),
+    }),
+  },
+  responses: {
+    200: {
+      description: 'Active self-service orders (PREPARING and READY)',
+      content: {
+        'application/json': {
+          schema: z.array(ServiceOrderSchema),
+        },
+      },
+    },
+    400: { description: 'Bad request' },
+    401: { description: 'Unauthorized' },
+    403: { description: 'Forbidden' },
+  },
+});
+
+export const updateOrderStatusRoute = createRoute({
+  method: 'post',
+  path: '/orders/{orderId}/status',
+  tags: ['Transactions'],
+  security: [{ bearerAuth: [] }],
+  request: {
+    params: z.object({
+      orderId: z.string(),
+    }),
+    body: {
+      content: {
+        'application/json': {
+          schema: z.object({
+            status: z.enum(['PREPARING', 'READY', 'COMPLETED', 'CANCELLED']),
+          }),
+        },
+      },
+    },
+  },
+  responses: {
+    200: {
+      description: 'Updated self-service order status',
+      content: {
+        'application/json': {
+          schema: ServiceOrderSchema,
+        },
+      },
+    },
+    400: { description: 'Bad request' },
+    403: { description: 'Forbidden' },
+    404: { description: 'Order not found' },
   },
 });

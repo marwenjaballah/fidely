@@ -132,6 +132,53 @@ class POSAudioEngine {
       osc.stop(now + 0.04);
     } catch {}
   }
+
+  /**
+   * Coffee Counter "Order Ready" Digital Buzzer Chime
+   * Plays an unmistakable two-stage resonant bell chime + pager vibration pattern.
+   */
+  playOrderReadyBuzzer() {
+    if (typeof navigator !== 'undefined' && 'vibrate' in navigator) {
+      try {
+        navigator.vibrate([180, 90, 180, 90, 350]);
+      } catch {}
+    }
+
+    const ctx = this.getContext();
+    if (!ctx) return;
+
+    try {
+      const now = ctx.currentTime;
+      // Warm hospitality dual-bell chime (G5 -> B5 -> D6 -> G6) repeated twice
+      const sequence = [
+        { freq: 783.99, offset: 0.0, duration: 0.25 },
+        { freq: 987.77, offset: 0.12, duration: 0.25 },
+        { freq: 1174.66, offset: 0.24, duration: 0.3 },
+        { freq: 1567.98, offset: 0.38, duration: 0.55 },
+        { freq: 1174.66, offset: 0.85, duration: 0.25 },
+        { freq: 1567.98, offset: 1.0, duration: 0.65 },
+      ];
+
+      sequence.forEach(({ freq, offset, duration }) => {
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(freq, now + offset);
+
+        gain.gain.setValueAtTime(0.22, now + offset);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + offset + duration);
+
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+
+        osc.start(now + offset);
+        osc.stop(now + offset + duration + 0.02);
+      });
+    } catch (e) {
+      console.warn('Order Ready Buzzer audio error:', e);
+    }
+  }
 }
 
 export const posAudio = new POSAudioEngine();
