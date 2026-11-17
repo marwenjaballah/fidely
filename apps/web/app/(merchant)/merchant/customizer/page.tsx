@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useState, useRef } from 'react'
+import { usePathname } from 'next/navigation'
 import { useMerchantStore, Reward, MenuItem } from '@/store/merchant-store'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
@@ -65,10 +66,10 @@ const CURRENCY_PRESETS = ['TND', 'EUR', 'USD', 'GBP', 'SAR', 'AED', 'CAD']
 const MULTIPLIER_PRESETS = [5, 10, 15, 20, 25]
 
 /**
- * Client-side icon optimizer: crops to a square, resizes to maxDimension,
- * and compresses to a lightweight WebP/PNG data URL (< 25KB).
+ * Client-side image optimizer: center-crops to a square, uses progressive
+ * step-down resampling for crisp Retina quality, and encodes to WebP (with JPEG fallback).
  */
-async function optimizeIcon(file: File, maxDimension = 128): Promise<string> {
+async function optimizeIcon(file: File, maxDimension = 256, quality = 0.9): Promise<string> {
   return new Promise((resolve, reject) => {
     if (!file.type.startsWith('image/')) {
       reject(new Error('Selected file is not an image'))
@@ -79,6 +80,44 @@ async function optimizeIcon(file: File, maxDimension = 128): Promise<string> {
     reader.onload = (e) => {
       const img = new Image()
       img.onload = () => {
+        const minSide = Math.min(img.width, img.height)
+        const sx = (img.width - minSide) / 2
+        const sy = (img.height - minSide) / 2
+        const targetSize = Math.min(minSide, maxDimension)
+
+        // Progressive step-down by 50% per pass prevents aliasing on high-MP phone photos
+        let curSize = minSide
+        let stepCanvas = document.createElement('canvas')
+        let stepCtx = stepCanvas.getContext('2d')
+        if (!stepCtx) {
+          reject(new Error('Canvas rendering context not available'))
+          return
+        }
+
+        if (curSize > targetSize * 2) {
+          curSize = Math.max(targetSize, Math.floor(curSize / 2))
+          stepCanvas.width = curSize
+          stepCanvas.height = curSize
+          stepCtx.imageSmoothingEnabled = true
+          stepCtx.imageSmoothingQuality = 'high'
+          stepCtx.drawImage(img, sx, sy, minSide, minSide, 0, 0, curSize, curSize)
+
+          while (curSize > targetSize * 2) {
+            const nextSize = Math.max(targetSize, Math.floor(curSize / 2))
+            const nextCanvas = document.createElement('canvas')
+            const nextCtx = nextCanvas.getContext('2d')
+            if (!nextCtx) break
+            nextCanvas.width = nextSize
+            nextCanvas.height = nextSize
+            nextCtx.imageSmoothingEnabled = true
+            nextCtx.imageSmoothingQuality = 'high'
+            nextCtx.drawImage(stepCanvas, 0, 0, curSize, curSize, 0, 0, nextSize, nextSize)
+            stepCanvas = nextCanvas
+            stepCtx = nextCtx
+            curSize = nextSize
+          }
+        }
+
         const canvas = document.createElement('canvas')
         const ctx = canvas.getContext('2d')
         if (!ctx) {
@@ -86,19 +125,21 @@ async function optimizeIcon(file: File, maxDimension = 128): Promise<string> {
           return
         }
 
-        const minSide = Math.min(img.width, img.height)
-        const sx = (img.width - minSide) / 2
-        const sy = (img.height - minSide) / 2
-
-        canvas.width = Math.min(minSide, maxDimension)
-        canvas.height = Math.min(minSide, maxDimension)
-
+        canvas.width = targetSize
+        canvas.height = targetSize
         ctx.imageSmoothingEnabled = true
         ctx.imageSmoothingQuality = 'high'
 
-        ctx.drawImage(img, sx, sy, minSide, minSide, 0, 0, canvas.width, canvas.height)
+        if (curSize !== minSide) {
+          ctx.drawImage(stepCanvas, 0, 0, curSize, curSize, 0, 0, targetSize, targetSize)
+        } else {
+          ctx.drawImage(img, sx, sy, minSide, minSide, 0, 0, targetSize, targetSize)
+        }
 
-        const dataUrl = canvas.toDataURL('image/webp', 0.85)
+        let dataUrl = canvas.toDataURL('image/webp', quality)
+        if (!dataUrl.startsWith('data:image/webp')) {
+          dataUrl = canvas.toDataURL('image/jpeg', quality)
+        }
         resolve(dataUrl)
       }
       img.onerror = () => reject(new Error('Failed to decode image'))
@@ -122,6 +163,7 @@ function slugifyClient(text: string): string {
 }
 
 export default function CustomizerAndRewardsPage() {
+  const pathname = usePathname()
   const {
     activeStore,
     updateStore,
@@ -139,6 +181,16 @@ export default function CustomizerAndRewardsPage() {
   } = useMerchantStore()
   const { toast } = useToast()
   const { t } = useI18n()
+
+  const [activeSection, setActiveSection] = useState<'all' | 'menu' | 'rewards' | 'brand'>(
+    pathname?.startsWith('/merchant/menu') ? 'menu' : 'all'
+  )
+
+  useEffect(() => {
+    if (pathname?.startsWith('/merchant/menu')) {
+      setActiveSection('menu')
+    }
+  }, [pathname])
 
   // Store Customizer Form State
   const [name, setName] = useState('')
@@ -209,7 +261,7 @@ export default function CustomizerAndRewardsPage() {
     if (!file) return
     setIsOptimizingIcon(true)
     try {
-      const optimized = await optimizeIcon(file, 128)
+      const optimized = await optimizeIcon(file, 256, 0.9)
       setLogoUrl(optimized)
       toast({
         title: t('customizer_icon_active'),
@@ -389,7 +441,7 @@ export default function CustomizerAndRewardsPage() {
     if (!file) return
     setIsOptimizingMenuImg(true)
     try {
-      const optimized = await optimizeIcon(file, 160)
+      const optimized = await optimizeIcon(file, 320, 0.9)
       setMenuItemImageUrl(optimized)
     } catch (err: any) {
       toast({
@@ -516,13 +568,24 @@ export default function CustomizerAndRewardsPage() {
       {/* Top Header */}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">{t('customizer_title')}</h1>
+          <h1 className="text-3xl font-bold tracking-tight">
+            {activeSection === 'menu' ? 'Store Menu & Pricing Studio' : t('customizer_title')}
+          </h1>
           <p className="text-muted-foreground text-sm mt-1">
-            {t('customizer_subtitle')}
+            {activeSection === 'menu'
+              ? `Manage your store's menu items and prices (${currency}) for customers and POS checkout.`
+              : t('customizer_subtitle')}
           </p>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
+          <Button onClick={handleOpenAddMenuItem} size="sm" className="gap-1.5 text-xs">
+            <Plus className="h-3.5 w-3.5" /> Add Menu Item
+          </Button>
+          <Button variant="outline" size="sm" onClick={handleCopyMenuLink} className="gap-1.5 text-xs">
+            {copiedMenuLink ? <Check className="h-3.5 w-3.5 text-emerald-500" /> : <Share2 className="h-3.5 w-3.5" />}
+            {copiedMenuLink ? 'Menu Link Copied!' : 'Share Menu Link'}
+          </Button>
           <Button variant="outline" size="sm" onClick={handleCopyPublicLink} className="gap-1.5 text-xs">
             {copiedLink ? <Check className="h-3.5 w-3.5 text-emerald-500" /> : <Copy className="h-3.5 w-3.5" />}
             {copiedLink ? t('customizer_copied_link') : t('customizer_copy_link')}
@@ -535,7 +598,36 @@ export default function CustomizerAndRewardsPage() {
         </div>
       </div>
 
+      {/* Section Filter Pills */}
+      <div className="flex flex-wrap items-center gap-2 border-b border-border/60 pb-3">
+        {[
+          { id: 'all' as const, label: 'All Studio Sections', icon: Sparkles },
+          { id: 'menu' as const, label: `Store Menu & Prices (${menuItems.length})`, icon: UtensilsCrossed },
+          { id: 'rewards' as const, label: `Rewards Catalog (${rewards.length})`, icon: Gift },
+          { id: 'brand' as const, label: 'Brand & Digital Card', icon: Palette },
+        ].map((tab) => {
+          const Icon = tab.icon
+          const isCurrent = activeSection === tab.id
+          return (
+            <button
+              key={tab.id}
+              type="button"
+              onClick={() => setActiveSection(tab.id)}
+              className={`flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-bold transition-all ${
+                isCurrent
+                  ? 'bg-primary text-primary-foreground shadow-sm'
+                  : 'bg-muted/50 text-muted-foreground hover:text-foreground hover:bg-muted'
+              }`}
+            >
+              <Icon className="h-3.5 w-3.5" />
+              <span>{tab.label}</span>
+            </button>
+          )
+        })}
+      </div>
+
       {/* 2-Column Store Styling & Live Simulator */}
+      {(activeSection === 'all' || activeSection === 'brand') && (
       <div className="grid gap-8 lg:grid-cols-12 items-start">
         {/* Left Column: Form Controls */}
         <div className="lg:col-span-7 space-y-6">
@@ -975,25 +1067,31 @@ export default function CustomizerAndRewardsPage() {
           </p>
         </div>
       </div>
+      )}
 
-      <Separator />
+      {(activeSection === 'all' || activeSection === 'brand') && (
+        <>
+          <Separator />
 
-      {/* Counter QR Stand & Marketing Flyer Studio */}
-      <StoreQRStandCard
-        store={{
-          id: activeStore.id,
-          name: name || activeStore.name,
-          slug: activeStore.slug,
-          primaryColor: primaryColor || activeStore.primaryColor,
-          logoUrl: logoUrl,
-          pointsPerTnd: Number(pointsPerTnd) || activeStore.pointsPerTnd || 10,
-          welcomePoints: Number(welcomePoints) || activeStore.welcomePoints || 0,
-        }}
-      />
+          {/* Counter QR Stand & Marketing Flyer Studio */}
+          <StoreQRStandCard
+            store={{
+              id: activeStore.id,
+              name: name || activeStore.name,
+              slug: activeStore.slug,
+              primaryColor: primaryColor || activeStore.primaryColor,
+              logoUrl: logoUrl,
+              pointsPerTnd: Number(pointsPerTnd) || activeStore.pointsPerTnd || 10,
+              welcomePoints: Number(welcomePoints) || activeStore.welcomePoints || 0,
+            }}
+          />
+        </>
+      )}
 
-      <Separator />
+      {activeSection === 'all' && <Separator />}
 
       {/* Rewards & Perks Studio */}
+      {(activeSection === 'all' || activeSection === 'rewards') && (
       <div className="space-y-6">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div>
@@ -1097,11 +1195,13 @@ export default function CustomizerAndRewardsPage() {
           </div>
         )}
       </div>
+      )}
 
-      <Separator />
+      {activeSection === 'all' && <Separator />}
 
       {/* Store Menu & Pricing Studio (Shareable Menu) */}
-      <div className="space-y-6">
+      {(activeSection === 'all' || activeSection === 'menu') && (
+      <div id="store-menu" className="space-y-6">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <h2 className="text-xl font-bold tracking-tight flex items-center gap-2">
@@ -1225,6 +1325,7 @@ export default function CustomizerAndRewardsPage() {
           </div>
         )}
       </div>
+      )}
 
       {/* Add / Edit Menu Item Modal Dialog */}
       <Dialog open={isMenuModalOpen} onOpenChange={setIsMenuModalOpen}>

@@ -87,7 +87,13 @@ export default function DashboardLayout({
             return items
         }
 
-        if (pathname.startsWith('/merchant/customizer') || pathname.startsWith('/merchant/rewards')) {
+        if (pathname.startsWith('/merchant/menu')) {
+            items.push({
+                title: 'Store Menu & Prices',
+                href: '/merchant/menu',
+                isLast: true,
+            })
+        } else if (pathname.startsWith('/merchant/customizer') || pathname.startsWith('/merchant/rewards')) {
             items.push({
                 title: t('nav_customizer'),
                 href: '/merchant/customizer',

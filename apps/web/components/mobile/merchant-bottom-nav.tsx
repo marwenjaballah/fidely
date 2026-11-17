@@ -14,6 +14,7 @@ import {
   X,
   CreditCard,
   QrCode,
+  UtensilsCrossed,
 } from 'lucide-react'
 import {
   Drawer,
@@ -246,6 +247,20 @@ export function MerchantBottomNav() {
             <p className="text-[11px] font-bold text-muted-foreground uppercase tracking-wider px-1 text-start">
               {t('nav_merchant_settings') || 'Management & Staff'}
             </p>
+
+            <Link
+              href="/merchant/menu"
+              onClick={() => setMoreDrawerOpen(false)}
+              className="flex items-center gap-3 p-3 rounded-2xl border border-border/60 bg-card hover:bg-muted/40 transition active:scale-[0.98]"
+            >
+              <div className="h-9 w-9 rounded-xl bg-amber-500/10 text-amber-500 flex items-center justify-center">
+                <UtensilsCrossed className="h-4 w-4" />
+              </div>
+              <div className="text-start">
+                <p className="text-xs font-bold">Store Menu &amp; Prices</p>
+                <p className="text-[11px] text-muted-foreground">Manage menu items, prices &amp; public link</p>
+              </div>
+            </Link>
 
             <Link
               href="/merchant/staff"
